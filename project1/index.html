@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>calculadora</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+          <button class="clear" onclick="clearEntry()">C</button>
+          <button class="clear" onclick="allClear()">AC</button>
+          <button class="op" onclick="inputOp('/')">/</button>
+          <button class="op" onclick="inputOp('-')">−</button>
+      
+          <button class="digit" onclick="inputDigit('7')">7</button>
+          <button class="digit" onclick="inputDigit('8')">8</button>
+          <button class="digit" onclick="inputDigit('9')">9</button>
+          <button class="op" onclick="inputOp('+')">+</button>
+      
+          <button class="digit" onclick="inputDigit('4')">4</button>
+          <button class="digit" onclick="inputDigit('5')">5</button>
+          <button class="digit" onclick="inputDigit('6')">6</button>
+          <div></div>
+      
+          <button class="digit" onclick="inputDigit('1')">1</button>
+          <button class="digit" onclick="inputDigit('2')">2</button>
+          <button class="digit" onclick="inputDigit('3')">3</button>
+          <div></div>
+      
+          <button class="digit" onclick="inputDigit('0')">0</button>
+          <button class="equal" onclick="calculate()">=</button>
+        </div>
+      </div>
+ 
+<script src="script.js"></script>
+</body>
+</html>
