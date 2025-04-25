@@ -1,0 +1,20 @@
+meta {
+  name: models put
+  type: http
+  seq: 9
+}
+
+put {
+  url: http://localhost:3000/models/1
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": 3,
+    "name":"chevrolet",
+    "brandId": 8
+  }
+  
+}

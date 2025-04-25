@@ -1,0 +1,11 @@
+meta {
+  name: delete models
+  type: http
+  seq: 10
+}
+
+delete {
+  url: http://localhost:3000/models/5
+  body: json
+  auth: inherit
+}

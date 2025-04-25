@@ -1,0 +1,17 @@
+meta {
+  name: Put
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:3000/brands/5
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "arthur"
+  }
+}
