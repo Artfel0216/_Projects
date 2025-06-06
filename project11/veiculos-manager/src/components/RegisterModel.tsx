@@ -93,7 +93,7 @@ function RegisterModel() {
     <div>
       <h1>Gerenciador de Veículos</h1>
 
-      <h2>Cadastrar Modelo</h2>
+      <h2 className="">Cadastrar Modelo</h2>
       <input
         type="text"
         placeholder="Nome do modelo"

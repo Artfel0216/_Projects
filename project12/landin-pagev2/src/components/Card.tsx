@@ -8,7 +8,7 @@ interface Testimonial {
   author_title?: string;
   rating?: number;
   author_avatar?: {
-    url?: string;
+  url?: string;
   };
 }
 
