@@ -1,7 +1,1 @@
-body { font-family: Arial; padding: 20px; background: linear-gradient(to top, #001f3f, #003366, #b3d9ff) }
-h1 { color: #333; }
-.container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
-input, select, button { margin: 10px 0; padding: 10px; width: 100%; box-sizing: border-box; }
-.list { margin-top: 20px; }
-.item { padding: 10px; border-bottom: 1px solid #ccc; }
-.item button { margin-left: 10px; }
+@import "tailwindcss";

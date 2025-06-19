@@ -68,7 +68,7 @@ function RegisterBrand() {
 
   return (
     <div>
-      <h1>Gerenciador de Veículos</h1>
+      <h1 className="text-[2rem]">Gerenciador de Veículos</h1>
 
       <h2>Cadastrar Marca</h2>
       <input
