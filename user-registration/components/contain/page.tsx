@@ -12,18 +12,19 @@ export default function Contain() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    const currentData = { email, password };
-    const saved = JSON.parse(localStorage.getItem('logins') || '[]');
-    saved.push(currentData);
-    localStorage.setItem('logins', JSON.stringify(saved));
-
-    console.log('Login salvo no LocalStorage!');
-  };
-
   const handleClick = () => {
-    handleLogin();
-    router.push('/inbox');
+    if (!email || !password) {
+      alert('Preencha todos os campos.');
+      return;
+    }
+
+    if (password.length < 8) {
+      alert('A senha deve ter pelo menos 8 caracteres.');
+      return;
+    }
+
+    // Aqui você pode adicionar autenticação real se necessário
+    router.push('/Inbox');
   };
 
   return (
@@ -50,7 +51,6 @@ export default function Contain() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="example@email.com"
             className="w-[20rem] p-3 mt-2 text-black bg-white border-2 border-black rounded"
-            required
           />
         </div>
 
@@ -65,8 +65,6 @@ export default function Contain() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="At least 8 characters"
             className="w-[20rem] p-3 mt-2 text-black bg-white border-2 border-black rounded"
-            required
-            minLength={8}
           />
         </div>
 
@@ -77,7 +75,7 @@ export default function Contain() {
         </div>
 
         <button
-          type="submit"
+          type="button"
           onClick={handleClick}
           className="w-[20rem] h-12 mt-4 bg-[#162D3A] text-white rounded flex items-center justify-center hover:opacity-90"
         >
