@@ -10,12 +10,12 @@ export default function Header({ onCreateProject }: HeaderProps) {
     <header className="w-full h-[4rem] bg-black flex items-center justify-center px-4">
       <div className="flex items-center justify-center gap-8 mx-auto">
         <label htmlFor="projectName" className="sr-only">
-          Nome do Projeto
+          Name of the Project
         </label>
         <input
           id="projectName"
           type="text"
-          placeholder="enter the name of the project"
+          placeholder="Enter the Name of the Project"
           className="w-[20rem] h-[3rem] border-white border-[1px] rounded p-4 text-white font-bold bg-black placeholder-white"
         />
 
