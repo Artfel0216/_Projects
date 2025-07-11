@@ -2,6 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Header from "@/app/components/header/page";
+import {
+  getProjects,
+  createProject,
+  updateProject,
+  deleteProject
+} from '@/app/services/projectService';
 
 interface Project {
   id: number;
@@ -21,15 +27,19 @@ export default function Dashboard() {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const filterModalRef = useRef<HTMLDivElement>(null);
 
-  const filteredProjects = filterDate
-    ? projects.filter(p => p.datetime.startsWith(filterDate))
-    : projects;
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async (date?: string) => {
+    const data = await getProjects(date);
+    setProjects(data);
+  };
 
   useEffect(() => {
     if (showModal && nameInputRef.current) nameInputRef.current.focus();
   }, [showModal]);
 
-  // ESC closes both modals
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -41,7 +51,6 @@ export default function Dashboard() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showModal, showFilterModal]);
 
-  // Click outside to close create modal
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) closeModal();
@@ -61,21 +70,17 @@ export default function Dashboard() {
     setShowFilterModal(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!newProject.name || !newProject.datetime) return;
 
     if (editingId !== null) {
-      setProjects(prev =>
-        prev.map(p => (p.id === editingId ? { ...p, ...newProject } : p))
-      );
+      await updateProject(editingId, newProject);
     } else {
-      setProjects(prev => [
-        ...prev,
-        { id: Date.now(), ...newProject }
-      ]);
+      await createProject(newProject);
     }
 
     closeModal();
+    await fetchProjects(filterDate || undefined);
   };
 
   const handleEdit = (id: number) => {
@@ -87,8 +92,9 @@ export default function Dashboard() {
     }
   };
 
-  const handleDelete = (id: number) => {
-    setProjects(prev => prev.filter(p => p.id !== id));
+  const handleDelete = async (id: number) => {
+    await deleteProject(id);
+    await fetchProjects(filterDate || undefined);
   };
 
   return (
@@ -101,11 +107,11 @@ export default function Dashboard() {
       <section className="mt-8 ml-12">
         <h1 className="text-3xl font-bold">Recent Projects:</h1>
 
-        {filteredProjects.length === 0 ? (
+        {projects.length === 0 ? (
           <p className="text-white mt-8 text-xl font-bold">No projects found.</p>
         ) : (
           <ol className="list-decimal ml-6 mt-6 space-y-4">
-            {filteredProjects.map(project => (
+            {projects.map(project => (
               <li key={project.id} className="flex justify-between items-center">
                 <div className='bg-white w-full rounded mr-4 p-4'>
                   <strong className='text-2xl text-black'>{project.name}</strong>
@@ -133,7 +139,7 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* Creation mode */}
+      {/* Modal: Create/Edit */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div ref={modalRef} className="bg-white text-black p-6 rounded shadow-lg w-[90%] max-w-md">
@@ -175,7 +181,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Filter modal */}
+      {/* Modal: Filter */}
       {showFilterModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div ref={filterModalRef} className="bg-white text-black p-6 rounded shadow-lg w-[90%] max-w-md">
@@ -183,25 +189,30 @@ export default function Dashboard() {
 
             <input
               type="date"
-              onChange={(e) => setFilterDate(e.target.value)}
+              onChange={async (e) => {
+                const date = e.target.value;
+                setFilterDate(date);
+                await fetchProjects(date);
+              }}
               className="w-full border p-2 mb-4 rounded font-bold"
             />
 
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => {
+                onClick={async () => {
                   setFilterDate(null);
                   closeFilterModal();
+                  await fetchProjects();
                 }}
                 className="px-4 py-2 border rounded hover:bg-gray-100"
               >
-                To clean
+                Clear
               </button>
               <button
                 onClick={closeFilterModal}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500"
               >
-                To close
+                Close
               </button>
             </div>
           </div>
