@@ -1,4 +1,4 @@
-// components/header/page.tsx
+
 import { Calendar, LayoutDashboard, Plus } from "lucide-react";
 
 interface HeaderProps {

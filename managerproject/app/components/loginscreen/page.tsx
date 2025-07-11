@@ -9,7 +9,7 @@ export default function LoginScreen() {
   const router = useRouter();
 
   const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault(); // prevents page reloading
+    e.preventDefault(); 
     router.push('/dashboard');
   };
 
