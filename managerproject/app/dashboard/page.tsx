@@ -29,7 +29,7 @@ export default function Dashboard() {
     if (showModal && nameInputRef.current) nameInputRef.current.focus();
   }, [showModal]);
 
-  // ESC fecha ambos os modais
+  // ESC closes both modals
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -41,7 +41,7 @@ export default function Dashboard() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showModal, showFilterModal]);
 
-  // Clique fora fecha modal de criação
+  // Click outside to close create modal
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) closeModal();
@@ -99,10 +99,10 @@ export default function Dashboard() {
       />
 
       <section className="mt-8 ml-12">
-        <h1 className="text-3xl font-bold">Projetos Recentes:</h1>
+        <h1 className="text-3xl font-bold">Recent Projects:</h1>
 
         {filteredProjects.length === 0 ? (
-          <p className="text-white mt-8 text-xl font-bold">Nenhum projeto encontrado.</p>
+          <p className="text-white mt-8 text-xl font-bold">No projects found.</p>
         ) : (
           <ol className="list-decimal ml-6 mt-6 space-y-4">
             {filteredProjects.map(project => (
@@ -118,13 +118,13 @@ export default function Dashboard() {
                     onClick={() => handleEdit(project.id)}
                     className="bg-yellow-400 w-[6rem] h-[3rem] rounded font-bold text-black hover:bg-yellow-300"
                   >
-                    Editar
+                    Edit
                   </button>
                   <button
                     onClick={() => handleDelete(project.id)}
                     className="bg-red-500 w-[6rem] h-[3rem] rounded font-bold text-black hover:bg-red-600"
                   >
-                    Excluir
+                    Delete
                   </button>
                 </div>
               </li>
@@ -133,18 +133,18 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* Modal de criação */}
+      {/* Creation mode */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div ref={modalRef} className="bg-white text-black p-6 rounded shadow-lg w-[90%] max-w-md">
             <h2 className="text-2xl font-bold mb-4">
-              {editingId ? "Editar Projeto" : "Novo Projeto"}
+              {editingId ? "Edit Project" : "New Project"}
             </h2>
 
             <input
               ref={nameInputRef}
               type="text"
-              placeholder="Nome do projeto"
+              placeholder="Name of the Project"
               value={newProject.name}
               onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
               className="w-full border p-2 mb-3 rounded font-bold"
@@ -162,24 +162,24 @@ export default function Dashboard() {
                 onClick={closeModal}
                 className="px-4 py-2 border rounded hover:bg-gray-100"
               >
-                Cancelar
+                Cancel
               </button>
               <button
                 onClick={handleSave}
                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500"
               >
-                Salvar
+                Save
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal de filtro */}
+      {/* Filter modal */}
       {showFilterModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div ref={filterModalRef} className="bg-white text-black p-6 rounded shadow-lg w-[90%] max-w-md">
-            <h2 className="text-xl font-bold mb-4">Filtrar por Data</h2>
+            <h2 className="text-xl font-bold mb-4">Filter by Date</h2>
 
             <input
               type="date"
@@ -195,13 +195,13 @@ export default function Dashboard() {
                 }}
                 className="px-4 py-2 border rounded hover:bg-gray-100"
               >
-                Limpar
+                To clean
               </button>
               <button
                 onClick={closeFilterModal}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500"
               >
-                Fechar
+                To close
               </button>
             </div>
           </div>
