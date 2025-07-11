@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Header from "@/app/components/header/page";
 
 interface Project {
@@ -12,28 +12,70 @@ interface Project {
 export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [newProject, setNewProject] = useState({ name: '', datetime: '' });
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [filterDate, setFilterDate] = useState<string | null>(null);
+
+  const modalRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const filterModalRef = useRef<HTMLDivElement>(null);
+
+  const filteredProjects = filterDate
+    ? projects.filter(p => p.datetime.startsWith(filterDate))
+    : projects;
+
+  useEffect(() => {
+    if (showModal && nameInputRef.current) nameInputRef.current.focus();
+  }, [showModal]);
+
+  // ESC fecha ambos os modais
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showModal) closeModal();
+        if (showFilterModal) closeFilterModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showModal, showFilterModal]);
+
+  // Clique fora fecha modal de criação
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) closeModal();
+      if (filterModalRef.current && !filterModalRef.current.contains(e.target as Node)) closeFilterModal();
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const closeModal = () => {
+    setShowModal(false);
+    setNewProject({ name: '', datetime: '' });
+    setEditingId(null);
+  };
+
+  const closeFilterModal = () => {
+    setShowFilterModal(false);
+  };
 
   const handleSave = () => {
     if (!newProject.name || !newProject.datetime) return;
 
     if (editingId !== null) {
-      // Editar
       setProjects(prev =>
         prev.map(p => (p.id === editingId ? { ...p, ...newProject } : p))
       );
     } else {
-      // Criar
       setProjects(prev => [
         ...prev,
         { id: Date.now(), ...newProject }
       ]);
     }
 
-    setNewProject({ name: '', datetime: '' });
-    setEditingId(null);
-    setShowModal(false);
+    closeModal();
   };
 
   const handleEdit = (id: number) => {
@@ -49,38 +91,38 @@ export default function Dashboard() {
     setProjects(prev => prev.filter(p => p.id !== id));
   };
 
-  const sortedProjects = [...projects].sort(
-    (a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
-  );
-
   return (
     <main className="bg-black min-h-screen text-white p-4">
-      <Header onCreateProject={() => setShowModal(true)} />
+      <Header
+        onCreateProject={() => setShowModal(true)}
+        onOpenCalendarModal={() => setShowFilterModal(true)}
+      />
 
-      <section className="mt-[2rem] ml-[3rem]">
-        <h1 className="text-[2rem] font-bold">Projetos Recentes:</h1>
-        {sortedProjects.length === 0 ? (
-          <p className="text-white mt-[2rem] font-bold text-[1.3rem]">Nenhum projeto ainda.</p>
+      <section className="mt-8 ml-12">
+        <h1 className="text-3xl font-bold">Projetos Recentes:</h1>
+
+        {filteredProjects.length === 0 ? (
+          <p className="text-white mt-8 text-xl font-bold">Nenhum projeto encontrado.</p>
         ) : (
-          <ol className="list-decimal ml-6 mt-4 space-y-1">
-            {sortedProjects.map(project => (
+          <ol className="list-decimal ml-6 mt-6 space-y-4">
+            {filteredProjects.map(project => (
               <li key={project.id} className="flex justify-between items-center">
-                <div className='bg-white w-full rounded mr-[1rem] p-4'>
-                  <strong className='text-[2rem] text-black'>{project.name}</strong> :{" "}
-                  <span className="text-black text-[1.1rem] font-bold ml-[36rem]">
+                <div className='bg-white w-full rounded mr-4 p-4'>
+                  <strong className='text-2xl text-black'>{project.name}</strong>
+                  <span className="text-black text-lg font-bold ml-12">
                     {new Date(project.datetime).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex gap-4">
                   <button
                     onClick={() => handleEdit(project.id)}
-                    className="bg-[#FFEB3B] w-[6rem] h-[3rem] rounded font-bold cursor-pointer flex items-center justify-center text-black hover:bg-yellow-400 transition-colors"
+                    className="bg-yellow-400 w-[6rem] h-[3rem] rounded font-bold text-black hover:bg-yellow-300"
                   >
                     Editar
                   </button>
                   <button
                     onClick={() => handleDelete(project.id)}
-                    className="bg-[#F44336] w-[6rem] h-[3rem] rounded font-bold cursor-pointer flex items-center justify-center text-black hover:bg-red-600 transition-colors"
+                    className="bg-red-500 w-[6rem] h-[3rem] rounded font-bold text-black hover:bg-red-600"
                   >
                     Excluir
                   </button>
@@ -91,38 +133,75 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* Modal */}
+      {/* Modal de criação */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white text-black p-6 rounded shadow-lg w-[90%] max-w-md">
-            <h2 className="text-xl font-bold mb-4">
-              {editingId ? "Edit Project" : "New Project"}
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div ref={modalRef} className="bg-white text-black p-6 rounded shadow-lg w-[90%] max-w-md">
+            <h2 className="text-2xl font-bold mb-4">
+              {editingId ? "Editar Projeto" : "Novo Projeto"}
             </h2>
+
             <input
+              ref={nameInputRef}
               type="text"
-              placeholder="Name of the project"
+              placeholder="Nome do projeto"
               value={newProject.name}
               onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-              className="w-full border p-2 mb-3 rounded text-black placeholder-black cursor-pointer font-bold"
+              className="w-full border p-2 mb-3 rounded font-bold"
             />
+
             <input
               type="datetime-local"
               value={newProject.datetime}
               onChange={(e) => setNewProject({ ...newProject, datetime: e.target.value })}
-              className="w-full border p-2 mb-4 rounded cursor-pointer font-bold"
+              className="w-full border p-2 mb-4 rounded font-bold"
             />
+
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 border rounded cursor-pointer"
+                onClick={closeModal}
+                className="px-4 py-2 border rounded hover:bg-gray-100"
               >
-                Cancel
+                Cancelar
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 bg-green-600 text-white rounded cursor-pointer"
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500"
               >
-               Save
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de filtro */}
+      {showFilterModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div ref={filterModalRef} className="bg-white text-black p-6 rounded shadow-lg w-[90%] max-w-md">
+            <h2 className="text-xl font-bold mb-4">Filtrar por Data</h2>
+
+            <input
+              type="date"
+              onChange={(e) => setFilterDate(e.target.value)}
+              className="w-full border p-2 mb-4 rounded font-bold"
+            />
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setFilterDate(null);
+                  closeFilterModal();
+                }}
+                className="px-4 py-2 border rounded hover:bg-gray-100"
+              >
+                Limpar
+              </button>
+              <button
+                onClick={closeFilterModal}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500"
+              >
+                Fechar
               </button>
             </div>
           </div>
