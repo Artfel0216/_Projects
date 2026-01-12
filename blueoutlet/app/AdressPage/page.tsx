@@ -57,7 +57,7 @@ export default function AddressPage() {
     if (!form.cep.trim()) {
       newErrors.cep = "CEP é obrigatório";
     } else if (!/^\d{8}$/.test(form.cep)) {
-      newErrors.cep = "CEP inválido (use 8 números)";
+      newErrors.cep = "CEP inválido (8 números)";
     }
 
     setErrors(newErrors);
@@ -75,30 +75,42 @@ export default function AddressPage() {
   /* ================= STYLES ================= */
   const inputBase = (hasError?: boolean) => `
     w-full rounded-xl border
-    ${hasError ? "border-red-500" : "border-blue-100"}
-    bg-white px-4 py-3 pl-11
-    text-gray-700 placeholder:text-gray-400
+    ${hasError ? "border-red-500" : "border-white/20"}
+    bg-white/10 backdrop-blur-md
+    px-4 py-3 pl-11
+    text-white placeholder:text-white/60
     focus:outline-none focus:ring-2
-    ${hasError ? "focus:ring-red-500" : "focus:ring-blue-600"}
+    ${hasError ? "focus:ring-red-500" : "focus:ring-white/40"}
     transition-all duration-300
   `;
 
   const iconStyle =
-    "absolute left-4 top-1/2 -translate-y-1/2 text-blue-600";
+    "absolute left-4 top-1/2 -translate-y-1/2 text-white/80";
 
   /* ================= JSX ================= */
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 px-4">
+    <main className="min-h-screen flex items-center justify-center bg-black px-4">
       <motion.section
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-2xl bg-white rounded-3xl shadow-xl p-8 md:p-10"
+        className="
+          w-full max-w-2xl
+          rounded-3xl
+          border border-white/20
+          bg-white/10
+          backdrop-blur-xl
+          shadow-2xl
+          p-8 md:p-10
+          text-white
+        "
       >
         {/* HEADER */}
         <header className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-blue-700">Endereço</h1>
-          <p className="text-gray-500">Preencha seus dados com segurança</p>
+          <h1 className="text-3xl font-bold">Endereço</h1>
+          <p className="text-white/70">
+            Preencha seus dados com segurança
+          </p>
         </header>
 
         {/* FORM */}
@@ -115,7 +127,7 @@ export default function AddressPage() {
                 onChange={handleChange}
               />
               {errors.name && (
-                <span className="text-sm text-red-600">{errors.name}</span>
+                <span className="text-sm text-red-400">{errors.name}</span>
               )}
             </div>
 
@@ -130,7 +142,7 @@ export default function AddressPage() {
                 onChange={handleChange}
               />
               {errors.cpf && (
-                <span className="text-sm text-red-600">{errors.cpf}</span>
+                <span className="text-sm text-red-400">{errors.cpf}</span>
               )}
             </div>
 
@@ -145,7 +157,7 @@ export default function AddressPage() {
                 onChange={handleChange}
               />
               {errors.phone && (
-                <span className="text-sm text-red-600">{errors.phone}</span>
+                <span className="text-sm text-red-400">{errors.phone}</span>
               )}
             </div>
 
@@ -162,18 +174,19 @@ export default function AddressPage() {
                 />
               </div>
               {errors.cep && (
-                <span className="text-sm text-red-600">{errors.cep}</span>
+                <span className="text-sm text-red-400">{errors.cep}</span>
               )}
               <a
                 href="https://buscacepinter.correios.com.br/"
                 target="_blank"
-                className="mt-1 text-sm text-blue-600 hover:underline"
+                rel="noopener noreferrer"
+                className="mt-1 text-sm text-white/70 hover:underline"
               >
-                Não sei meu CEP?
+                Não sei meu CEP
               </a>
             </div>
 
-            {/* Número (opcional) */}
+            {/* Número */}
             <div className="relative">
               <Hash className={iconStyle} />
               <input
@@ -196,7 +209,9 @@ export default function AddressPage() {
                 onChange={handleChange}
               />
               {errors.street && (
-                <span className="text-sm text-red-600">{errors.street}</span>
+                <span className="text-sm text-red-400">
+                  {errors.street}
+                </span>
               )}
             </div>
 
@@ -221,9 +236,15 @@ export default function AddressPage() {
 
           <motion.button
             type="submit"
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.97 }}
-            className="mt-8 w-full rounded-xl bg-blue-700 py-4 font-semibold text-white hover:bg-blue-800"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
+            className="
+              mt-8 w-full rounded-xl
+              bg-white text-black
+              py-4 font-semibold
+              hover:bg-gray-200
+              transition-all
+            "
           >
             Salvar endereço
           </motion.button>

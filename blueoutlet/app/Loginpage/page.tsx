@@ -10,8 +10,6 @@ import {
   User,
   LogIn,
   UserPlus,
-  Sun,
-  Moon,
 } from "lucide-react";
 
 import outeltFundo from "@/public/outeltFundo.jpg";
@@ -25,271 +23,137 @@ type UserType = {
 export default function LoginPage() {
   const router = useRouter();
 
-  /* 🔄 ESTADOS */
   const [isRegister, setIsRegister] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
   const [form, setForm] = useState<UserType>({
     name: "",
     email: "",
     password: "",
   });
 
-  /* 🌗 TEMA */
+  /* 🔐 Verifica login */
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark";
-    if (savedTheme) setTheme(savedTheme);
-  }, []);
+    const loggedUser = localStorage.getItem("loggedUser");
+    if (loggedUser) router.replace("/");
+  }, [router]);
 
-  useEffect(() => {
-    const root = document.documentElement;
-    theme === "dark"
-      ? root.classList.add("dark")
-      : root.classList.remove("dark");
-
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () =>
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-
-  /* 📦 LOCAL STORAGE */
-  const getUsers = (): UserType[] =>
-    JSON.parse(localStorage.getItem("users") || "[]");
-
-  const saveUsers = (users: UserType[]) =>
-    localStorage.setItem("users", JSON.stringify(users));
-
-  /* 📝 REGISTRO */
- const handleRegister = () => {
-  // 🚨 validação
-  if (
-    !form.name.trim() ||
-    !form.email.trim() ||
-    !form.password.trim()
-  ) {
-    alert("⚠️ Preencha todos os campos para criar a conta!");
-    return;
-  }
-
-  const users = getUsers();
-
-  const userExists = users.some(
-    (user) => user.email === form.email
-  );
-
-  if (userExists) {
-    alert("❌ Este email já está cadastrado!");
-    return;
-  }
-
-  saveUsers([...users, form]);
-  alert("✅ Conta criada com sucesso!");
-
-  setIsRegister(false);
-  setForm({ name: "", email: "", password: "" });
-};
-
-  /* 🔐 LOGIN */
- const handleLogin = () => {
-  // 🚨 validação
-  if (!form.email.trim() || !form.password.trim()) {
-    alert("⚠️ Preencha email e senha para continuar!");
-    return;
-  }
-
-  const users = getUsers();
-
-  const validUser = users.find(
-    (user) =>
-      user.email === form.email &&
-      user.password === form.password
-  );
-
-  if (!validUser) {
-    alert("❌ Email ou senha inválidos!");
-    return;
-  }
-
-  localStorage.setItem("loggedUser", JSON.stringify(validUser));
-  alert("✅ Login realizado com sucesso!");
-
-  // ✅ rota correta (App Router)
-  router.push("/AdressPage");
-};
-
-
-  /* 🎨 CLASSES */
+  /* 🎨 CLASSES MONO PREMIUM */
   const inputClass = `
-    w-full p-3 pl-10 rounded-lg
-    bg-white dark:bg-zinc-900
-    text-black dark:text-white
-    placeholder:text-gray-500 dark:placeholder:text-gray-300
-    border border-gray-300 dark:border-zinc-700
-    focus:outline-none focus:ring-2 focus:ring-blue-600
-    transition-colors
+    w-full p-3 pl-10 rounded-xl
+    bg-white/90
+    text-black
+    placeholder:text-gray-500
+    border border-black/10
+    focus:outline-none focus:ring-2 focus:ring-black
+    transition
   `;
 
   const iconClass =
-    "absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-white";
+    "absolute left-3 top-1/2 -translate-y-1/2 text-black";
 
   return (
-    <main className="flex h-screen w-full bg-white dark:bg-zinc-900 transition-colors">
-      
-      {/* 🌗 BOTÃO DE TEMA */}
-      <button
-        onClick={toggleTheme}
-        aria-label="Alternar tema"
-        className="fixed top-6 right-6 z-50 p-3 rounded-full bg-zinc-200 dark:bg-zinc-800"
-      >
-        {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-      </button>
-
-      {/* 🖼️ IMAGEM LATERAL */}
+    <main className="flex h-screen w-full bg-white">
+      {/* 🖼️ IMAGEM COM OVERLAY */}
       <aside className="relative w-1/2 hidden md:block">
         <Image
           src={outeltFundo}
-          alt="Imagem de fundo decorativa"
+          alt="Imagem decorativa"
           fill
-          className="object-cover opacity-40"
           priority
+          className="object-cover grayscale"
         />
-        <div className="absolute inset-0 bg-[#0a1f44]/80" />
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       </aside>
 
-      {/* 📋 FORMULÁRIO */}
+      {/* 🧊 GLASS CARD */}
       <section className="w-full md:w-1/2 flex items-center justify-center">
         <AnimatePresence mode="wait">
-          {!isRegister ? (
-            <motion.section
-              key="login"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              className="w-full max-w-md p-8"
-            >
-              <header className="mb-6">
-                <h1 className="text-3xl font-bold flex items-center gap-2">
-                  <LogIn /> Login
-                </h1>
-              </header>
+          <motion.section
+            key={isRegister ? "register" : "login"}
+            initial={{ opacity: 0, scale: 0.96, filter: "blur(12px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, scale: 0.96, filter: "blur(12px)" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            whileHover={{
+              rotateX: 6,
+              rotateY: -6,
+              scale: 1.03,
+            }}
+            style={{ perspective: 1200 }}
+            className="
+              w-full max-w-md p-10 rounded-3xl
+              bg-black/60 text-white
+              backdrop-blur-2xl
+              border border-white/10
+              shadow-[0_30px_80px_rgba(0,0,0,0.5)]
+              transform-gpu
+            "
+          >
+            <h1 className="text-3xl font-semibold flex gap-2 mb-8">
+              {isRegister ? <UserPlus /> : <LogIn />}
+              {isRegister ? "Registro" : "Login"}
+            </h1>
 
-              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                <div className="relative">
-                  <Mail className={iconClass} />
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    value={form.email}
-                    className={inputClass}
-                    onChange={(e) =>
-                      setForm({ ...form, email: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="relative">
-                  <Lock className={iconClass} />
-                  <input
-                    type="password"
-                    placeholder="Senha"
-                    value={form.password}
-                    className={inputClass}
-                    onChange={(e) =>
-                      setForm({ ...form, password: e.target.value })
-                    }
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleLogin}
-                  className="w-full bg-blue-700 text-white py-3 rounded-lg hover:bg-blue-800 transition"
-                >
-                  Entrar
-                </button>
-              </form>
-
-              <p className="mt-6 text-center text-gray-600 dark:text-gray-300">
-                Não tem conta?{" "}
-                <button
-                  onClick={() => setIsRegister(true)}
-                  className="text-blue-600 font-semibold hover:underline"
-                >
-                  Criar conta
-                </button>
-              </p>
-            </motion.section>
-          ) : (
-            <motion.section
-              key="register"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 50 }}
-              className="w-full max-w-md p-8"
-            >
-              <header className="mb-6">
-                <h1 className="text-3xl font-bold flex items-center gap-2">
-                  <UserPlus /> Registro
-                </h1>
-              </header>
-
-              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <div className="space-y-4">
+              {isRegister && (
                 <div className="relative">
                   <User className={iconClass} />
                   <input
                     placeholder="Nome"
-                    value={form.name}
                     className={inputClass}
+                    value={form.name}
                     onChange={(e) =>
                       setForm({ ...form, name: e.target.value })
                     }
                   />
                 </div>
+              )}
 
-                <div className="relative">
-                  <Mail className={iconClass} />
-                  <input
-                    placeholder="Email"
-                    value={form.email}
-                    className={inputClass}
-                    onChange={(e) =>
-                      setForm({ ...form, email: e.target.value })
-                    }
-                  />
-                </div>
+              <div className="relative">
+                <Mail className={iconClass} />
+                <input
+                  placeholder="Email"
+                  className={inputClass}
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm({ ...form, email: e.target.value })
+                  }
+                />
+              </div>
 
-                <div className="relative">
-                  <Lock className={iconClass} />
-                  <input
-                    type="password"
-                    placeholder="Senha"
-                    value={form.password}
-                    className={inputClass}
-                    onChange={(e) =>
-                      setForm({ ...form, password: e.target.value })
-                    }
-                  />
-                </div>
+              <div className="relative">
+                <Lock className={iconClass} />
+                <input
+                  type="password"
+                  placeholder="Senha"
+                  className={inputClass}
+                  value={form.password}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
+                />
+              </div>
 
+              <button
+                className="
+                  w-full py-3 rounded-xl
+                  bg-white text-black font-semibold
+                  hover:bg-gray-200 transition
+                "
+              >
+                {isRegister ? "Registrar" : "Entrar"}
+              </button>
+
+              <p className="text-center text-sm text-white/80">
+                {isRegister ? "Já tem conta?" : "Não tem conta?"}{" "}
                 <button
-                  type="button"
-                  onClick={handleRegister}
-                  className="w-full bg-blue-700 text-white py-3 rounded-lg hover:bg-blue-800 transition"
+                  onClick={() => setIsRegister(!isRegister)}
+                  className="underline font-medium"
                 >
-                  Registrar
+                  {isRegister ? "Entrar" : "Criar conta"}
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsRegister(false)}
-                  className="w-full py-3 rounded-lg border flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
-                >
-                  <LogIn size={18} />
-                  Voltar para login
-                </button>
-              </form>
-            </motion.section>
-          )}
+              </p>
+            </div>
+          </motion.section>
         </AnimatePresence>
       </section>
     </main>
