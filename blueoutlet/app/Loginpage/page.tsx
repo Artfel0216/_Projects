@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Mail,
   Lock,
@@ -30,13 +30,61 @@ export default function LoginPage() {
     password: "",
   });
 
-  /* 🔐 Verifica login */
-  useEffect(() => {
-    const loggedUser = localStorage.getItem("loggedUser");
-    if (loggedUser) router.replace("/");
-  }, [router]);
+  function handleAuth() {
+    if (!form.email || !form.password) return;
 
-  /* 🎨 CLASSES MONO PREMIUM */
+    const storedUsers: UserType[] =
+      JSON.parse(localStorage.getItem("users") || "[]");
+
+    const existingUser = storedUsers.find(
+      (user) => user.email === form.email
+    );
+
+    /* 🔑 USUÁRIO JÁ EXISTE → LOGIN */
+    if (existingUser) {
+      if (existingUser.password !== form.password) {
+        alert("Senha incorreta");
+        return;
+      }
+
+      localStorage.setItem(
+        "loggedUser",
+        JSON.stringify({
+          name: existingUser.name,
+          email: existingUser.email,
+        })
+
+      );
+
+      router.push("/MenProductPage");
+      return;
+    }
+
+    /* 🆕 USUÁRIO NÃO EXISTE → REGISTRO */
+    if (!form.name) {
+      alert("Informe seu nome para criar a conta");
+      return;
+    }
+
+    const newUser: UserType = {
+      name: form.name,
+      email: form.email,
+      password: form.password,
+    };
+
+    localStorage.setItem(
+      "users",
+      JSON.stringify([...storedUsers, newUser])
+    );
+
+    localStorage.setItem(
+      "loggedUser",
+      JSON.stringify({ name: form.name, email: form.email })
+    );
+
+    router.push("/AdressPage");
+  }
+
   const inputClass = `
     w-full p-3 pl-10 rounded-xl
     bg-white/90
@@ -52,7 +100,6 @@ export default function LoginPage() {
 
   return (
     <main className="flex h-screen w-full bg-white">
-      {/* 🖼️ IMAGEM COM OVERLAY */}
       <aside className="relative w-1/2 hidden md:block">
         <Image
           src={outeltFundo}
@@ -64,7 +111,6 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       </aside>
 
-      {/* 🧊 GLASS CARD */}
       <section className="w-full md:w-1/2 flex items-center justify-center">
         <AnimatePresence mode="wait">
           <motion.section
@@ -73,19 +119,11 @@ export default function LoginPage() {
             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, scale: 0.96, filter: "blur(12px)" }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            whileHover={{
-              rotateX: 6,
-              rotateY: -6,
-              scale: 1.03,
-            }}
-            style={{ perspective: 1200 }}
             className="
               w-full max-w-md p-10 rounded-3xl
               bg-black/60 text-white
               backdrop-blur-2xl
               border border-white/10
-              shadow-[0_30px_80px_rgba(0,0,0,0.5)]
-              transform-gpu
             "
           >
             <h1 className="text-3xl font-semibold flex gap-2 mb-8">
@@ -134,6 +172,7 @@ export default function LoginPage() {
               </div>
 
               <button
+                onClick={handleAuth}
                 className="
                   w-full py-3 rounded-xl
                   bg-white text-black font-semibold
