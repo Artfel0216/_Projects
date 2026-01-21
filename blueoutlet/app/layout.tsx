@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "E-commerce Blue Outlet",
-  description: "Loja de roupas online - Blue Outlet",
+  title: "E-commerce Freitas outlet Calçados ",
+  description: "Loja de Calçados online - Freitas Outlet Calçados",
 };
 
 export default function RootLayout({

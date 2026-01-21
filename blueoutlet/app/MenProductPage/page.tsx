@@ -10,27 +10,19 @@ import {
 } from "framer-motion";
 import { useState, useRef } from "react";
 import LogoFreitasOutlet from "@/public/LogoFreitasOutlet.png";
+import Contain from "@/app/components/Contain/page";
 
 import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
 
-/* ========================= */
-/* Tipos */
-/* ========================= */
 type StyleType = "Todos" | "Social" | "Casual" | "Esportivo";
 type CategoryType = "Masculino" | "Feminino" | "Kids";
 
-/* ========================= */
-/* Glow por categoria */
-/* ========================= */
 const glowColors: Record<CategoryType, string> = {
   Masculino: "rgba(0,180,255,0.45)",
   Feminino: "rgba(255,0,150,0.45)",
   Kids: "rgba(255,200,0,0.45)",
 };
 
-/* ========================= */
-/* Mock Produtos */
-/* ========================= */
 const shoes = [
   {
     id: 1,
@@ -58,9 +50,6 @@ const shoes = [
   },
 ];
 
-/* ========================= */
-/* Página */
-/* ========================= */
 export default function MenProductPage() {
   const [filter, setFilter] = useState<StyleType>("Todos");
   const [category, setCategory] = useState<CategoryType>("Masculino");
@@ -70,7 +59,6 @@ export default function MenProductPage() {
 
   const containerRef = useRef(null);
 
-  /* Scroll */
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
@@ -78,8 +66,8 @@ export default function MenProductPage() {
 
   const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.18]);
   const bgRotate = useTransform(scrollYProgress, [0, 1], [0, 8]);
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.3]); // Adicionei para o logo suavizar ao descer
 
-  /* Mouse */
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
@@ -103,11 +91,11 @@ export default function MenProductPage() {
         mouseX.set(e.clientX - window.innerWidth / 2);
         mouseY.set(e.clientY - window.innerHeight / 2);
       }}
-      className="relative min-h-screen bg-black text-white overflow-hidden"
+      className="relative min-h-screen bg-black text-white overflow-x-hidden"
     >
-      {/* ================= LOGO BACKGROUND ================= */}
+      {/* Background Fixo */}
       <motion.div
-        style={{ scale: bgScale, rotate: bgRotate }}
+        style={{ scale: bgScale, rotate: bgRotate, opacity: bgOpacity }}
         className="fixed inset-0 flex items-center justify-center pointer-events-none z-0"
       >
         <motion.div
@@ -115,7 +103,6 @@ export default function MenProductPage() {
           animate={{ y: [0, -14, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         >
-          {/* Glow dinâmico */}
           <motion.div
             style={{
               background: `radial-gradient(circle at ${glowX} ${glowY}, ${glowColors[category]}, transparent 60%)`,
@@ -123,7 +110,6 @@ export default function MenProductPage() {
             className="absolute inset-0 blur-3xl"
           />
 
-          {/* Glass emboss */}
           <div className="absolute inset-0 rounded-full backdrop-blur-2xl bg-white/5 shadow-[inset_0_0_60px_rgba(255,255,255,0.15)]" />
 
           <Image
@@ -135,10 +121,8 @@ export default function MenProductPage() {
         </motion.div>
       </motion.div>
 
-      {/* ================= HEADER ================= */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/5 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between relative z-10">
-          {/* Logo Header */}
           <motion.div
             whileHover={{ scale: 1.1 }}
             style={{
@@ -154,27 +138,27 @@ export default function MenProductPage() {
             />
           </motion.div>
 
-          {/* Categorias */}
           <div className="flex gap-4">
-            {(["Masculino", "Feminino", "Kids"] as CategoryType[]).map((cat) => (
-              <motion.button
-                key={cat}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setCategory(cat)}
-                className={`px-4 py-2 rounded-full backdrop-blur-lg border transition
+            {(["Masculino", "Feminino", "Kids"] as CategoryType[]).map(
+              (cat) => (
+                <motion.button
+                  key={cat}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setCategory(cat)}
+                  className={`px-4 py-2 rounded-full backdrop-blur-lg border transition
                   ${
                     category === cat
                       ? "bg-white text-black"
                       : "bg-white/5 border-white/20 hover:bg-white/20"
                   }`}
-              >
-                {cat}
-              </motion.button>
-            ))}
+                >
+                  {cat}
+                </motion.button>
+              )
+            )}
           </div>
 
-          {/* Filtro */}
           <motion.button
             whileHover={{ scale: 1.15, rotate: 6 }}
             onClick={() => setShowFilter(!showFilter)}
@@ -184,7 +168,6 @@ export default function MenProductPage() {
           </motion.button>
         </div>
 
-        {/* ================= FILTER ================= */}
         <AnimatePresence>
           {showFilter && (
             <motion.div
@@ -209,6 +192,11 @@ export default function MenProductPage() {
           )}
         </AnimatePresence>
       </header>
+
+      {/* Alteração Principal Aqui: Adicionado pt-[85vh] para empurrar o conteúdo para baixo */}
+      <main className="relative z-10 w-full flex items-center justify-center pt-[85vh] pb-20">
+        <Contain />
+      </main>
     </section>
   );
 }

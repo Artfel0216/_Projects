@@ -31,7 +31,10 @@ export default function LoginPage() {
   });
 
   function handleAuth() {
-    if (!form.email || !form.password) return;
+    if (!form.email || !form.password) {
+      alert("Preencha todos os campos obrigatórios.");
+      return;
+    }
 
     const storedUsers: UserType[] =
       JSON.parse(localStorage.getItem("users") || "[]");
@@ -40,27 +43,34 @@ export default function LoginPage() {
       (user) => user.email === form.email
     );
 
-    /* 🔑 USUÁRIO JÁ EXISTE → LOGIN */
-    if (existingUser) {
-      if (existingUser.password !== form.password) {
-        alert("Senha incorreta");
-        return;
+    if (!isRegister) {
+      if (existingUser) {
+        if (existingUser.password === form.password) {
+          localStorage.setItem(
+            "loggedUser",
+            JSON.stringify({
+              name: existingUser.name,
+              email: existingUser.email,
+            })
+          );
+          
+          alert("Bem vindo ao Freitas outlet, login Realizado com sucesso !");
+          router.push("/MenProductPage");
+        } else {
+          alert("Senha incorreta");
+        }
+      } else {
+        alert("Você precisa criar uma conta para ter acesso a plataforma");
       }
-
-      localStorage.setItem(
-        "loggedUser",
-        JSON.stringify({
-          name: existingUser.name,
-          email: existingUser.email,
-        })
-
-      );
-
-      router.push("/MenProductPage");
       return;
     }
 
-    /* 🆕 USUÁRIO NÃO EXISTE → REGISTRO */
+    if (existingUser) {
+      alert("Este email já possui cadastro. Faça login.");
+      setIsRegister(false);
+      return;
+    }
+
     if (!form.name) {
       alert("Informe seu nome para criar a conta");
       return;
@@ -82,6 +92,7 @@ export default function LoginPage() {
       JSON.stringify({ name: form.name, email: form.email })
     );
 
+    alert("Conta criada com sucesso!");
     router.push("/AdressPage");
   }
 
