@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { ShoppingCart, CreditCard, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
 
 export default function ContainPage() {
-    // Estado para controlar se o card está expandido ou pequeno
     const [isExpanded, setIsExpanded] = useState(false);
 
     const product = {
@@ -20,7 +19,7 @@ export default function ContainPage() {
     const [currentImage, setCurrentImage] = useState(0);
     const [direction, setDirection] = useState(0);
 
-    const paginate = (newDirection) => {
+    const paginate = (newDirection: number) => {
         setDirection(newDirection);
         setCurrentImage((prev) => {
             let nextIndex = prev + newDirection;
@@ -30,8 +29,8 @@ export default function ContainPage() {
         });
     };
 
-    const variants = {
-        enter: (direction) => ({
+    const variants: Variants = {
+        enter: (direction: number) => ({
             x: direction > 0 ? 300 : -300,
             opacity: 0,
             scale: 0.8
@@ -42,7 +41,7 @@ export default function ContainPage() {
             opacity: 1,
             scale: 1
         },
-        exit: (direction) => ({
+        exit: (direction: number) => ({
             zIndex: 0,
             x: direction < 0 ? 300 : -300,
             opacity: 0,
@@ -51,10 +50,8 @@ export default function ContainPage() {
     };
 
     return (
-        // Alteração aqui: Removido min-h-screen e o bg-gradient
         <div className="w-full flex items-center justify-center p-4">
             <motion.div 
-                // Toggle do estado ao clicar no card
                 onClick={() => setIsExpanded(!isExpanded)}
                 layout
                 initial={{ opacity: 0, y: 50, scale: 0.5 }}
@@ -69,13 +66,11 @@ export default function ContainPage() {
                     stiffness: 200,
                     damping: 20
                 }}
-                // FIX: Substituí bg-white/10 por style={{ backgroundColor }} para evitar erro de oklab
                 style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
                 className={`relative w-full max-w-4xl backdrop-blur-lg border border-white/20 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row transition-colors ${!isExpanded ? 'cursor-pointer hover:bg-white/5' : ''}`}
             >
-                {/* Bloqueia cliques internos quando está pequeno */}
                 <div className={`flex flex-col md:flex-row w-full ${!isExpanded ? 'pointer-events-none' : ''}`}>
-                    <div className="w-full md:w-1/2 h-[400px] md:h-[500px] relative flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
+                    <div className="w-full md:w-1/2 h-100 md:h-125 relative flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
                         <button 
                             onClick={(e) => { e.stopPropagation(); paginate(-1); }}
                             className="absolute left-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/30 backdrop-blur-md border border-white/20 text-white transition-all hover:scale-110"
@@ -150,19 +145,19 @@ export default function ContainPage() {
                                 {product.price}
                             </motion.div>
 
-                            <motion.p 
+                            {/* ALTERAÇÃO AQUI: Troquei motion.p por motion.div para resolver o erro de tipagem */}
+                            <motion.div 
                                 initial={{ opacity: 0 }} 
                                 animate={{ opacity: 1 }} 
                                 transition={{ delay: 0.5 }}
                                 className="text-gray-300 text-sm leading-relaxed"
                             >
                                 Experimente a melhor qualidade de som com cancelamento de ruído líder da indústria. Design leve, conforto luxuoso e bateria de longa duração.
-                            </motion.p>
+                            </motion.div>
                         </div>
 
                         <div className="flex flex-col gap-3 mt-8">
                             <motion.button
-                                // FIX: Cores explícitas em RGBA para evitar conflito com animação
                                 style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
                                 whileHover={{ scale: 1.02, backgroundColor: "rgba(255, 255, 255, 0.2)" }}
                                 whileTap={{ scale: 0.98 }}
@@ -174,7 +169,6 @@ export default function ContainPage() {
                             </motion.button>
 
                             <motion.button
-                                // FIX: Cores explícitas em RGBA
                                 style={{ backgroundColor: "rgba(0, 0, 0, 0.4)" }}
                                 whileHover={{ scale: 1.02, backgroundColor: "rgba(0, 0, 0, 0.6)" }}
                                 whileTap={{ scale: 0.98 }}
