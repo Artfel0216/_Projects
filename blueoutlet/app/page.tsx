@@ -1,10 +1,9 @@
 import LoginPage from "./Loginpage/page";
 
-
 export default function Home() {
   return (
-    <div>
+    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-black">
       <LoginPage />
-    </div>
+    </main>
   );
 }

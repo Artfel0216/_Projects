@@ -1,17 +1,10 @@
 "use client";
 
+import { useState, FormEvent } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import {
-  Mail,
-  Lock,
-  User,
-  LogIn,
-  UserPlus,
-} from "lucide-react";
-
+import { motion, AnimatePresence } from "framer-motion";
+import { Mail, Lock, User, LogIn, UserPlus, ArrowRight } from "lucide-react";
 import outeltFundo from "@/public/outeltFundo.jpg";
 
 type UserType = {
@@ -20,190 +13,181 @@ type UserType = {
   password: string;
 };
 
+const INPUT_STYLES = "w-full p-3 pl-10 rounded-xl bg-white/90 text-black placeholder:text-gray-500 border border-black/10 focus:outline-none focus:ring-2 focus:ring-white/50 transition duration-200";
+const ICON_STYLES = "absolute left-3 top-1/2 -translate-y-1/2 text-black/70";
+
 export default function LoginPage() {
   const router = useRouter();
-
   const [isRegister, setIsRegister] = useState(false);
-  const [form, setForm] = useState<UserType>({
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState<UserType>({
     name: "",
     email: "",
     password: "",
   });
 
-  function handleAuth() {
-    if (!form.email || !form.password) {
-      alert("Preencha todos os campos obrigatórios.");
-      return;
-    }
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setIsLoading(true);
 
-    const storedUsers: UserType[] =
-      JSON.parse(localStorage.getItem("users") || "[]");
-
-    const existingUser = storedUsers.find(
-      (user) => user.email === form.email
-    );
-
-    if (!isRegister) {
-      if (existingUser) {
-        if (existingUser.password === form.password) {
-          localStorage.setItem(
-            "loggedUser",
-            JSON.stringify({
-              name: existingUser.name,
-              email: existingUser.email,
-            })
-          );
-          
-          alert("Bem vindo ao Freitas outlet, login Realizado com sucesso !");
-          router.push("/MenProductPage");
-        } else {
-          alert("Senha incorreta");
-        }
-      } else {
-        alert("Você precisa criar uma conta para ter acesso a plataforma");
+    try {
+      if (!formData.email || !formData.password || (isRegister && !formData.name)) {
+        throw new Error("Preencha todos os campos obrigatórios.");
       }
-      return;
+
+      const storedUsers: UserType[] = JSON.parse(localStorage.getItem("users") || "[]");
+      const existingUser = storedUsers.find((u) => u.email === formData.email);
+
+      if (isRegister) {
+        if (existingUser) throw new Error("Este email já possui cadastro.");
+        
+        const newUser: UserType = { ...formData };
+        localStorage.setItem("users", JSON.stringify([...storedUsers, newUser]));
+        localStorage.setItem("loggedUser", JSON.stringify({ name: newUser.name, email: newUser.email }));
+        
+        alert("Conta criada com sucesso!");
+        router.push("/AdressPage");
+      } else {
+        if (!existingUser) throw new Error("Usuário não encontrado.");
+        if (existingUser.password !== formData.password) throw new Error("Credenciais inválidas.");
+
+        localStorage.setItem("loggedUser", JSON.stringify({ name: existingUser.name, email: existingUser.email }));
+        
+        alert("Login realizado com sucesso!");
+        router.push("/MenProductPage");
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Ocorreu um erro inesperado.");
+    } finally {
+      setIsLoading(false);
     }
-
-    if (existingUser) {
-      alert("Este email já possui cadastro. Faça login.");
-      setIsRegister(false);
-      return;
-    }
-
-    if (!form.name) {
-      alert("Informe seu nome para criar a conta");
-      return;
-    }
-
-    const newUser: UserType = {
-      name: form.name,
-      email: form.email,
-      password: form.password,
-    };
-
-    localStorage.setItem(
-      "users",
-      JSON.stringify([...storedUsers, newUser])
-    );
-
-    localStorage.setItem(
-      "loggedUser",
-      JSON.stringify({ name: form.name, email: form.email })
-    );
-
-    alert("Conta criada com sucesso!");
-    router.push("/AdressPage");
   }
 
-  const inputClass = `
-    w-full p-3 pl-10 rounded-xl
-    bg-white/90
-    text-black
-    placeholder:text-gray-500
-    border border-black/10
-    focus:outline-none focus:ring-2 focus:ring-black
-    transition
-  `;
-
-  const iconClass =
-    "absolute left-3 top-1/2 -translate-y-1/2 text-black";
+  const toggleMode = () => {
+    setIsRegister(!isRegister);
+    setFormData({ name: "", email: "", password: "" });
+  };
 
   return (
-    <main className="flex h-screen w-full bg-white">
-      <aside className="relative w-1/2 hidden md:block">
+    <main className="flex h-screen w-full bg-neutral-900 overflow-hidden">
+      <aside className="relative hidden md:block md:w-1/2 lg:w-2/3">
         <Image
           src={outeltFundo}
-          alt="Imagem decorativa"
+          alt="Interior da loja Freitas Outlet"
           fill
           priority
-          className="object-cover grayscale"
+          className="object-cover opacity-60"
+          sizes="(max-width: 768px) 0vw, 50vw"
         />
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
+        
+        <div className="absolute bottom-10 left-10 text-white z-10 max-w-md">
+          <h2 className="text-4xl font-bold mb-4">Estilo e Qualidade</h2>
+          <p className="text-lg text-gray-200">
+            Descubra as melhores tendências com preços exclusivos. Faça parte do nosso clube de vantagens.
+          </p>
+        </div>
       </aside>
 
-      <section className="w-full md:w-1/2 flex items-center justify-center">
+      <section className="w-full md:w-1/2 lg:w-1/3 flex items-center justify-center p-6 relative z-10">
         <AnimatePresence mode="wait">
-          <motion.section
+          <motion.div
             key={isRegister ? "register" : "login"}
-            initial={{ opacity: 0, scale: 0.96, filter: "blur(12px)" }}
-            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, scale: 0.96, filter: "blur(12px)" }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="
-              w-full max-w-md p-10 rounded-3xl
-              bg-black/60 text-white
-              backdrop-blur-2xl
-              border border-white/10
-            "
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="w-full max-w-sm"
           >
-            <h1 className="text-3xl font-semibold flex gap-2 mb-8">
-              {isRegister ? <UserPlus /> : <LogIn />}
-              {isRegister ? "Registro" : "Login"}
-            </h1>
+            <div className="mb-8 text-center md:text-left">
+              <h1 className="text-3xl font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-3">
+                {isRegister ? <UserPlus className="w-8 h-8" /> : <LogIn className="w-8 h-8" />}
+                {isRegister ? "Criar Conta" : "Bem-vindo de volta"}
+              </h1>
+              <p className="text-gray-400">
+                {isRegister ? "Preencha seus dados para começar." : "Insira suas credenciais para acessar."}
+              </p>
+            </div>
 
-            <div className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {isRegister && (
-                <div className="relative">
-                  <User className={iconClass} />
+                <div className="relative group">
+                  <label htmlFor="name" className="sr-only">Nome Completo</label>
+                  <User className={ICON_STYLES} size={20} />
                   <input
-                    placeholder="Nome"
-                    className={inputClass}
-                    value={form.name}
-                    onChange={(e) =>
-                      setForm({ ...form, name: e.target.value })
-                    }
+                    id="name"
+                    type="text"
+                    name="name"
+                    autoComplete="name"
+                    placeholder="Nome Completo"
+                    className={INPUT_STYLES}
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   />
                 </div>
               )}
 
-              <div className="relative">
-                <Mail className={iconClass} />
+              <div className="relative group">
+                <label htmlFor="email" className="sr-only">Endereço de Email</label>
+                <Mail className={ICON_STYLES} size={20} />
                 <input
-                  placeholder="Email"
-                  className={inputClass}
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm({ ...form, email: e.target.value })
-                  }
+                  id="email"
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  placeholder="seu@email.com"
+                  className={INPUT_STYLES}
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 />
               </div>
 
-              <div className="relative">
-                <Lock className={iconClass} />
+              <div className="relative group">
+                <label htmlFor="password" className="sr-only">Senha</label>
+                <Lock className={ICON_STYLES} size={20} />
                 <input
+                  id="password"
                   type="password"
-                  placeholder="Senha"
-                  className={inputClass}
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm({ ...form, password: e.target.value })
-                  }
+                  name="password"
+                  autoComplete={isRegister ? "new-password" : "current-password"}
+                  placeholder="••••••••"
+                  className={INPUT_STYLES}
+                  value={formData.password}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                 />
               </div>
 
-              <button
-                onClick={handleAuth}
-                className="
-                  w-full py-3 rounded-xl
-                  bg-white text-black font-semibold
-                  hover:bg-gray-200 transition
-                "
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3.5 rounded-xl bg-white text-black font-bold text-lg hover:bg-gray-100 focus:ring-4 focus:ring-white/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-6"
               >
-                {isRegister ? "Registrar" : "Entrar"}
-              </button>
+                {isLoading ? (
+                  <span className="animate-pulse">Processando...</span>
+                ) : (
+                  <>
+                    {isRegister ? "Registrar" : "Entrar"}
+                    <ArrowRight size={20} />
+                  </>
+                )}
+              </motion.button>
+            </form>
 
-              <p className="text-center text-sm text-white/80">
-                {isRegister ? "Já tem conta?" : "Não tem conta?"}{" "}
+            <div className="mt-8 text-center">
+              <p className="text-sm text-gray-400">
+                {isRegister ? "Já possui uma conta?" : "Ainda não tem uma conta?"}{" "}
                 <button
-                  onClick={() => setIsRegister(!isRegister)}
-                  className="underline font-medium"
+                  type="button"
+                  onClick={toggleMode}
+                  className="text-white font-medium hover:underline underline-offset-4 ml-1 focus:outline-none focus:text-gray-200 transition-colors"
                 >
-                  {isRegister ? "Entrar" : "Criar conta"}
+                  {isRegister ? "Fazer Login" : "Cadastre-se"}
                 </button>
               </p>
             </div>
-          </motion.section>
+          </motion.div>
         </AnimatePresence>
       </section>
     </main>
