@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation"; // Importação necessária para navegação
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Filter, ShoppingCart, User } from "lucide-react";
 import LogoFreitasOutlet from "@/public/LogoFreitasOutlet.png";
@@ -20,6 +21,13 @@ interface HeaderProps {
 const CATEGORIES: CategoryType[] = ["Masculino", "Feminino", "Kids"];
 const STYLES: StyleType[] = ["Todos", "Casual", "Social", "Esportivo"];
 
+// Mapa de rotas para fácil manutenção e escalabilidade
+const ROUTES: Partial<Record<CategoryType, string>> = {
+  Feminino: "/WomanPage",
+  Masculino: "/MenProductPage", // Adicionado para consistência
+  // Kids: "/KidsPage",
+};
+
 export default function Header({
   category,
   setCategory,
@@ -27,6 +35,7 @@ export default function Header({
   glowColor,
   cartCount,
 }: HeaderProps) {
+  const router = useRouter(); // Hook de navegação
   const [showFilter, setShowFilter] = useState(false);
   const cartControls = useAnimation();
 
@@ -40,6 +49,16 @@ export default function Header({
     }
   }, [cartCount, cartControls]);
 
+  // Handler unificado para navegação e mudança de estado visual
+  const handleCategoryChange = useCallback((selectedCategory: CategoryType) => {
+    setCategory(selectedCategory); // Atualiza estado visual imediato
+    
+    const route = ROUTES[selectedCategory];
+    if (route) {
+      router.push(route);
+    }
+  }, [router, setCategory]);
+
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between relative z-10">
@@ -48,6 +67,7 @@ export default function Header({
             whileHover={{ scale: 1.05 }}
             style={{ filter: `drop-shadow(0 0 15px ${glowColor})` }}
             className="relative w-28 h-12 cursor-pointer"
+            onClick={() => router.push("/")} // Opcional: Logo volta para Home
           >
             <Image
               src={LogoFreitasOutlet}
@@ -63,7 +83,7 @@ export default function Header({
                 key={cat}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setCategory(cat)}
+                onClick={() => handleCategoryChange(cat)}
                 className={`relative px-5 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
                   category === cat
                     ? "bg-white text-black shadow-lg"
