@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState, ChangeEvent, FormEvent } from "react";
+import { useRouter } from "next/navigation"; // 1. Importação adicionada
 import {
   User,
   MapPin,
@@ -25,6 +26,8 @@ type AddressForm = {
 
 /* ================= COMPONENT ================= */
 export default function AddressPage() {
+  const router = useRouter(); // 2. Inicialização do Router
+  
   const [form, setForm] = useState<AddressForm>({
     name: "",
     cpf: "",
@@ -68,8 +71,14 @@ export default function AddressPage() {
     e.preventDefault();
     if (!validateForm()) return;
 
+    // Salva no LocalStorage
     localStorage.setItem("address", JSON.stringify(form));
-    alert("Endereço salvo com sucesso!");
+    
+    // Feedback visual (opcional)
+    // alert("Endereço salvo com sucesso!");
+
+    // 3. Redirecionamento para a página de produtos masculinos
+    router.push("/MenProductPage");
   };
 
   /* ================= STYLES ================= */
@@ -246,7 +255,7 @@ export default function AddressPage() {
               transition-all
             "
           >
-            Salvar endereço
+            Salvar endereço e Continuar
           </motion.button>
         </form>
       </motion.section>

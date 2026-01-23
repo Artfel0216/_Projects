@@ -1,15 +1,20 @@
+'use client';
+
 import React, { useState, useCallback, KeyboardEvent } from 'react';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
 import { ShoppingCart, CreditCard, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface ContainProps {
   onAddToCart?: () => void;
 }
 
 const PRODUCT_DATA = {
+  id: "sony-wh1000xm5",
   title: "Sony WH-1000XM5",
   brand: "Sony",
-  price: "R$ 2.499,00",
+  price: 2499.00,
+  displayPrice: "R$ 2.499,00",
   description: "Experimente a melhor qualidade de som com cancelamento de ruído líder da indústria. Design leve, conforto luxuoso e bateria de longa duração.",
   images: [
     "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=80&w=1000&auto=format&fit=crop",
@@ -38,7 +43,7 @@ const CAROUSEL_VARIANTS: Variants = {
   })
 };
 
-const TRANSITION_SPRING = {
+const TRANSITION_SPRING: Transition = {
   x: { type: "spring", stiffness: 300, damping: 30 },
   opacity: { duration: 0.2 }
 };
@@ -47,6 +52,8 @@ export default function ContainPage({ onAddToCart }: ContainProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
   const [direction, setDirection] = useState(0);
+  
+  const router = useRouter();
 
   const paginate = useCallback((newDirection: number) => {
     setDirection(newDirection);
@@ -68,6 +75,18 @@ export default function ContainPage({ onAddToCart }: ContainProps) {
       toggleExpand();
     }
   }, [toggleExpand]);
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const queryParams = new URLSearchParams({
+      title: PRODUCT_DATA.title,
+      price: PRODUCT_DATA.price.toString(),
+      image: PRODUCT_DATA.images[0]
+    }).toString();
+
+    router.push(`/PaymentPage?${queryParams}`);
+  };
 
   return (
     <section className="w-full flex items-center justify-center p-4">
@@ -171,7 +190,7 @@ export default function ContainPage({ onAddToCart }: ContainProps) {
                 transition={{ delay: 0.4 }}
                 className="text-3xl font-light text-emerald-400"
               >
-                {PRODUCT_DATA.price}
+                {PRODUCT_DATA.displayPrice}
               </motion.p>
 
               <motion.p
@@ -188,7 +207,7 @@ export default function ContainPage({ onAddToCart }: ContainProps) {
               <motion.button
                 whileHover={{ scale: 1.02, backgroundColor: "rgba(255, 255, 255, 0.2)" }}
                 whileTap={{ scale: 0.98 }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={handleBuyNow} 
                 className="w-full py-4 px-6 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center gap-3 font-semibold text-white transition-all shadow-lg hover:shadow-white/10 group focus:outline-none focus:ring-2 focus:ring-emerald-400"
               >
                 <CreditCard className="group-hover:text-emerald-300 transition-colors" />

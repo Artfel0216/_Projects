@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, LogIn, UserPlus, ArrowRight } from "lucide-react";
 import outeltFundo from "@/public/outeltFundo.jpg";
+import LogoFreitasOutlet from "@/public/LogoFreitasOutlet.png";
 
 type UserType = {
   name: string;
@@ -26,6 +27,48 @@ export default function LoginPage() {
     password: "",
   });
 
+  const getStoredUsers = (): UserType[] => {
+    if (typeof window === "undefined") return [];
+    return JSON.parse(localStorage.getItem("users") || "[]");
+  };
+
+  const saveUserSession = (user: { name: string; email: string }) => {
+    localStorage.setItem("loggedUser", JSON.stringify(user));
+  };
+
+  const performLogin = (users: UserType[]) => {
+    const existingUser = users.find((u) => u.email === formData.email);
+
+    if (!existingUser) {
+      throw new Error("Usuário não encontrado. Verifique seu email.");
+    }
+
+    if (existingUser.password !== formData.password) {
+      throw new Error("Senha incorreta.");
+    }
+
+    saveUserSession({ name: existingUser.name, email: existingUser.email });
+    alert("Login realizado com sucesso!");
+   
+    router.push("/MenProductPage");
+  };
+
+  const performRegister = (users: UserType[]) => {
+    const userExists = users.find((u) => u.email === formData.email);
+
+    if (userExists) {
+      throw new Error("Este email já possui cadastro. Tente fazer login.");
+    }
+
+    const newUser: UserType = { ...formData };
+    localStorage.setItem("users", JSON.stringify([...users, newUser]));
+    saveUserSession({ name: newUser.name, email: newUser.email });
+    
+    alert("Conta criada com sucesso!");
+ 
+    router.push("/AdressPage");
+  };
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setIsLoading(true);
@@ -35,26 +78,12 @@ export default function LoginPage() {
         throw new Error("Preencha todos os campos obrigatórios.");
       }
 
-      const storedUsers: UserType[] = JSON.parse(localStorage.getItem("users") || "[]");
-      const existingUser = storedUsers.find((u) => u.email === formData.email);
+      const storedUsers = getStoredUsers();
 
       if (isRegister) {
-        if (existingUser) throw new Error("Este email já possui cadastro.");
-        
-        const newUser: UserType = { ...formData };
-        localStorage.setItem("users", JSON.stringify([...storedUsers, newUser]));
-        localStorage.setItem("loggedUser", JSON.stringify({ name: newUser.name, email: newUser.email }));
-        
-        alert("Conta criada com sucesso!");
-        router.push("/AdressPage");
+        performRegister(storedUsers);
       } else {
-        if (!existingUser) throw new Error("Usuário não encontrado.");
-        if (existingUser.password !== formData.password) throw new Error("Credenciais inválidas.");
-
-        localStorage.setItem("loggedUser", JSON.stringify({ name: existingUser.name, email: existingUser.email }));
-        
-        alert("Login realizado com sucesso!");
-        router.push("/MenProductPage");
+        performLogin(storedUsers);
       }
     } catch (error) {
       alert(error instanceof Error ? error.message : "Ocorreu um erro inesperado.");
@@ -99,6 +128,23 @@ export default function LoginPage() {
             transition={{ duration: 0.4, ease: "easeInOut" }}
             className="w-full max-w-sm"
           >
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0, y: -20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="flex justify-center mb-8 md:justify-start"
+            >
+              <div className="relative w-48 h-24">
+                <Image
+                  src={LogoFreitasOutlet}
+                  alt="Logo Freitas Outlet"
+                  fill
+                  className="object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+                  priority
+                />
+              </div>
+            </motion.div>
+
             <div className="mb-8 text-center md:text-left">
               <h1 className="text-3xl font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-3">
                 {isRegister ? <UserPlus className="w-8 h-8" /> : <LogIn className="w-8 h-8" />}

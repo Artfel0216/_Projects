@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation"; // Importação necessária para navegação
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Filter, ShoppingCart, User } from "lucide-react";
 import LogoFreitasOutlet from "@/public/LogoFreitasOutlet.png";
@@ -21,11 +21,11 @@ interface HeaderProps {
 const CATEGORIES: CategoryType[] = ["Masculino", "Feminino", "Kids"];
 const STYLES: StyleType[] = ["Todos", "Casual", "Social", "Esportivo"];
 
-// Mapa de rotas para fácil manutenção e escalabilidade
+// Mapa de rotas atualizado com a rota de Kids ativa
 const ROUTES: Partial<Record<CategoryType, string>> = {
   Feminino: "/WomanPage",
-  Masculino: "/MenProductPage", // Adicionado para consistência
-  // Kids: "/KidsPage",
+  Masculino: "/MenProductPage",
+  Kids: "/KidsPage",
 };
 
 export default function Header({
@@ -35,7 +35,7 @@ export default function Header({
   glowColor,
   cartCount,
 }: HeaderProps) {
-  const router = useRouter(); // Hook de navegação
+  const router = useRouter();
   const [showFilter, setShowFilter] = useState(false);
   const cartControls = useAnimation();
 
@@ -49,9 +49,8 @@ export default function Header({
     }
   }, [cartCount, cartControls]);
 
-  // Handler unificado para navegação e mudança de estado visual
   const handleCategoryChange = useCallback((selectedCategory: CategoryType) => {
-    setCategory(selectedCategory); // Atualiza estado visual imediato
+    setCategory(selectedCategory);
     
     const route = ROUTES[selectedCategory];
     if (route) {
@@ -67,7 +66,7 @@ export default function Header({
             whileHover={{ scale: 1.05 }}
             style={{ filter: `drop-shadow(0 0 15px ${glowColor})` }}
             className="relative w-28 h-12 cursor-pointer"
-            onClick={() => router.push("/")} // Opcional: Logo volta para Home
+            onClick={() => router.push("/")}
           >
             <Image
               src={LogoFreitasOutlet}
