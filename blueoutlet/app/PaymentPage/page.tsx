@@ -37,7 +37,7 @@ export default function PaymentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4 font-sans text-white">
+    <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4 font-sans text-white">
       <div className="w-full max-w-5xl bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row animate-fade-in-up">
         
         <div className="w-full md:w-1/2 p-8 flex flex-col justify-between bg-black/40">
@@ -86,7 +86,7 @@ export default function PaymentPage() {
                 <span className="text-sm text-gray-500 line-through mr-2">
                   R$ {(product.price * quantity * 1.2).toFixed(2)}
                 </span>
-                <span className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                <span className="text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-white to-gray-400">
                   R$ {total.toFixed(2)}
                 </span>
               </div>

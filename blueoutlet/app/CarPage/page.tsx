@@ -52,7 +52,7 @@ export default function CarPage() {
   const total = subtotal + shipping;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black font-sans text-white p-4 md:p-8">
+    <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-black font-sans text-white p-4 md:p-8">
       <div className={`max-w-7xl mx-auto transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
         
         <header className="mb-8 flex items-center justify-between animate-slide-down">
@@ -114,7 +114,7 @@ export default function CarPage() {
                       </button>
                     </div>
 
-                    <div className="hidden sm:block text-right min-w-[100px]">
+                    <div className="hidden sm:block text-right min-w-25">
                       <div className="text-xl font-bold">R$ {(item.price * item.quantity).toFixed(2)}</div>
                       <div className="text-xs text-gray-500">R$ {item.price.toFixed(2)} un</div>
                     </div>

@@ -21,7 +21,6 @@ interface HeaderProps {
 const CATEGORIES: CategoryType[] = ["Masculino", "Feminino", "Kids"];
 const STYLES: StyleType[] = ["Todos", "Casual", "Social", "Esportivo"];
 
-// Mapa de rotas atualizado com a rota de Kids ativa
 const ROUTES: Partial<Record<CategoryType, string>> = {
   Feminino: "/WomanPage",
   Masculino: "/MenProductPage",
@@ -114,6 +113,7 @@ export default function Header({
           <motion.button
             whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
             whileTap={{ scale: 0.9 }}
+            onClick={() => router.push("/ProfilePage")} 
             className="p-2.5 rounded-full text-white border border-transparent hover:border-white/20 transition-colors"
           >
             <User size={20} />
@@ -123,7 +123,7 @@ export default function Header({
             animate={cartControls}
             whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => router.push("/CarPage")} // <--- ALTERAÇÃO FEITA AQUI
+            onClick={() => router.push("/CarPage")}
             className="p-2.5 rounded-full text-white border border-transparent hover:border-white/20 transition-colors relative"
           >
             <ShoppingCart size={20} />

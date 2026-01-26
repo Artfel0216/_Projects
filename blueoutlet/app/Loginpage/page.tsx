@@ -108,7 +108,7 @@ export default function LoginPage() {
           className="object-cover opacity-60"
           sizes="(max-width: 768px) 0vw, 50vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-black via-black/40 to-transparent" />
         
         <div className="absolute bottom-10 left-10 text-white z-10 max-w-md">
           <h2 className="text-4xl font-bold mb-4">Estilo e Qualidade</h2>

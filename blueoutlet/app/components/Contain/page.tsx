@@ -179,7 +179,7 @@ export default function ContainPage({ onAddToCart }: ContainProps) {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-4xl font-bold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400"
+                className="text-4xl font-bold leading-tight bg-clip-text text-transparent bg-linear-to-r from-white to-gray-400"
               >
                 {PRODUCT_DATA.title}
               </motion.h1>
