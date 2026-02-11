@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, LogIn, UserPlus, ArrowRight } from "lucide-react";
 import outeltFundo from "@/public/outeltFundo.jpg";
 import LogoFreitasOutlet from "@/public/LogoFreitasOutlet.png";
+import { loginAction, registerAction } from "@/app/actions/auth";
 
 type UserType = {
   name: string;
@@ -14,79 +15,51 @@ type UserType = {
   password: string;
 };
 
-const INPUT_STYLES = "w-full p-3 pl-10 rounded-xl bg-white/90 text-black placeholder:text-gray-500 border border-black/10 focus:outline-none focus:ring-2 focus:ring-white/50 transition duration-200";
-const ICON_STYLES = "absolute left-3 top-1/2 -translate-y-1/2 text-black/70";
+const INPUT_STYLES =
+  "w-full p-3 pl-10 rounded-xl bg-white/90 text-black placeholder:text-gray-500 border border-black/10 focus:outline-none focus:ring-2 focus:ring-white/50 transition duration-200";
+const ICON_STYLES =
+  "absolute left-3 top-1/2 -translate-y-1/2 text-black/70";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isRegister, setIsRegister] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<UserType>({
     name: "",
     email: "",
     password: "",
   });
 
-  const getStoredUsers = (): UserType[] => {
-    if (typeof window === "undefined") return [];
-    return JSON.parse(localStorage.getItem("users") || "[]");
-  };
-
-  const saveUserSession = (user: { name: string; email: string }) => {
-    localStorage.setItem("loggedUser", JSON.stringify(user));
-  };
-
-  const performLogin = (users: UserType[]) => {
-    const existingUser = users.find((u) => u.email === formData.email);
-
-    if (!existingUser) {
-      throw new Error("Usuário não encontrado. Verifique seu email.");
-    }
-
-    if (existingUser.password !== formData.password) {
-      throw new Error("Senha incorreta.");
-    }
-
-    saveUserSession({ name: existingUser.name, email: existingUser.email });
-    alert("Login realizado com sucesso!");
-   
-    router.push("/MenProductPage");
-  };
-
-  const performRegister = (users: UserType[]) => {
-    const userExists = users.find((u) => u.email === formData.email);
-
-    if (userExists) {
-      throw new Error("Este email já possui cadastro. Tente fazer login.");
-    }
-
-    const newUser: UserType = { ...formData };
-    localStorage.setItem("users", JSON.stringify([...users, newUser]));
-    saveUserSession({ name: newUser.name, email: newUser.email });
-    
-    alert("Conta criada com sucesso!");
- 
-    router.push("/AdressPage");
-  };
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
       if (!formData.email || !formData.password || (isRegister && !formData.name)) {
         throw new Error("Preencha todos os campos obrigatórios.");
       }
 
-      const storedUsers = getStoredUsers();
+      const fd = new FormData();
+      fd.append("email", formData.email);
+      fd.append("password", formData.password);
+      if (isRegister) fd.append("name", formData.name);
 
-      if (isRegister) {
-        performRegister(storedUsers);
+      const action = isRegister ? registerAction : loginAction;
+      const response = await action(null, fd);
+
+      if (response?.error) {
+        setError(response.error);
       } else {
-        performLogin(storedUsers);
+        if (isRegister) {
+          router.push("/PageAdress");
+        } else {
+          router.push("/MenProductPage");
+        }
       }
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Ocorreu um erro inesperado.");
+    } catch (err: any) {
+      setError(err.message || "Ocorreu um erro inesperado.");
     } finally {
       setIsLoading(false);
     }
@@ -94,6 +67,7 @@ export default function LoginPage() {
 
   const toggleMode = () => {
     setIsRegister(!isRegister);
+    setError(null);
     setFormData({ name: "", email: "", password: "" });
   };
 
@@ -102,18 +76,17 @@ export default function LoginPage() {
       <aside className="relative hidden md:block md:w-1/2 lg:w-2/3">
         <Image
           src={outeltFundo}
-          alt="Interior da loja Freitas Outlet"
+          alt="Interior da loja"
           fill
           priority
           className="object-cover opacity-60"
           sizes="(max-width: 768px) 0vw, 50vw"
         />
-        <div className="absolute inset-0 bg-linear-to-r from-black via-black/40 to-transparent" />
-        
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
         <div className="absolute bottom-10 left-10 text-white z-10 max-w-md">
           <h2 className="text-4xl font-bold mb-4">Estilo e Qualidade</h2>
           <p className="text-lg text-gray-200">
-            Descubra as melhores tendências com preços exclusivos. Faça parte do nosso clube de vantagens.
+            Descubra as melhores tendências com preços exclusivos.
           </p>
         </div>
       </aside>
@@ -125,113 +98,94 @@ export default function LoginPage() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
             className="w-full max-w-sm"
           >
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0, y: -20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="flex justify-center mb-8 md:justify-start"
-            >
+            <div className="flex justify-center mb-8 md:justify-start">
               <div className="relative w-48 h-24">
                 <Image
                   src={LogoFreitasOutlet}
-                  alt="Logo Freitas Outlet"
+                  alt="Logo"
                   fill
-                  className="object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+                  className="object-contain"
                   priority
                 />
               </div>
-            </motion.div>
+            </div>
 
             <div className="mb-8 text-center md:text-left">
-              <h1 className="text-3xl font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-3">
-                {isRegister ? <UserPlus className="w-8 h-8" /> : <LogIn className="w-8 h-8" />}
-                {isRegister ? "Criar Conta" : "Bem-vindo de volta"}
+              <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+                {isRegister ? <UserPlus /> : <LogIn />}
+                {isRegister ? "Criar Conta" : "Bem-vindo"}
               </h1>
-              <p className="text-gray-400">
-                {isRegister ? "Preencha seus dados para começar." : "Insira suas credenciais para acessar."}
-              </p>
             </div>
+
+            {error && (
+              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/50 text-red-500 text-sm text-center">
+                {error}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {isRegister && (
-                <div className="relative group">
-                  <label htmlFor="name" className="sr-only">Nome Completo</label>
+                <div className="relative">
                   <User className={ICON_STYLES} size={20} />
                   <input
-                    id="name"
                     type="text"
-                    name="name"
-                    autoComplete="name"
                     placeholder="Nome Completo"
                     className={INPUT_STYLES}
                     value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
               )}
 
-              <div className="relative group">
-                <label htmlFor="email" className="sr-only">Endereço de Email</label>
+              <div className="relative">
                 <Mail className={ICON_STYLES} size={20} />
                 <input
-                  id="email"
                   type="email"
-                  name="email"
-                  autoComplete="email"
                   placeholder="seu@email.com"
                   className={INPUT_STYLES}
                   value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
 
-              <div className="relative group">
-                <label htmlFor="password" className="sr-only">Senha</label>
+              <div className="relative">
                 <Lock className={ICON_STYLES} size={20} />
                 <input
-                  id="password"
                   type="password"
-                  name="password"
-                  autoComplete={isRegister ? "new-password" : "current-password"}
                   placeholder="••••••••"
                   className={INPUT_STYLES}
                   value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 rounded-xl bg-white text-black font-bold text-lg hover:bg-gray-100 focus:ring-4 focus:ring-white/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-6"
+                className="w-full py-3.5 rounded-xl bg-white text-black font-bold hover:bg-gray-100 disabled:opacity-70 mt-6 flex items-center justify-center gap-2 transition-colors"
               >
                 {isLoading ? (
-                  <span className="animate-pulse">Processando...</span>
+                  <div className="h-5 w-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                 ) : (
                   <>
                     {isRegister ? "Registrar" : "Entrar"}
                     <ArrowRight size={20} />
                   </>
                 )}
-              </motion.button>
+              </button>
             </form>
 
             <div className="mt-8 text-center">
-              <p className="text-sm text-gray-400">
-                {isRegister ? "Já possui uma conta?" : "Ainda não tem uma conta?"}{" "}
-                <button
-                  type="button"
-                  onClick={toggleMode}
-                  className="text-white font-medium hover:underline underline-offset-4 ml-1 focus:outline-none focus:text-gray-200 transition-colors"
-                >
-                  {isRegister ? "Fazer Login" : "Cadastre-se"}
-                </button>
-              </p>
+              <button
+                onClick={toggleMode}
+                className="text-white hover:underline text-sm transition-all"
+              >
+                {isRegister
+                  ? "Já possui uma conta? Fazer Login"
+                  : "Ainda não tem conta? Cadastre-se"}
+              </button>
             </div>
           </motion.div>
         </AnimatePresence>

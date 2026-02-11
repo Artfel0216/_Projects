@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; // Importação adicionada
+import { useRouter } from 'next/navigation';
 import { Minus, Plus, Trash2, ArrowRight, ShoppingBag, Truck, Tag, ShieldCheck } from 'lucide-react';
 
 export default function CarPage() {
-  const router = useRouter(); // Inicialização do router
-  
+  const router = useRouter();
+
   const [cartItems, setCartItems] = useState([
     {
       id: 1,
@@ -47,6 +47,13 @@ export default function CarPage() {
     setCartItems(prev => prev.filter(item => item.id !== id));
   };
 
+  const handleFinishPurchase = () => {
+    const cartData = encodeURIComponent(JSON.stringify(cartItems));
+    const totalPrice = (cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0) + (subtotal > 400 ? 0 : 25.00)).toFixed(2);
+    
+    router.push(`/PaymentPage?items=${cartData}&total=${totalPrice}`);
+  };
+
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const shipping = subtotal > 400 ? 0 : 25.00;
   const total = subtotal + shipping;
@@ -68,7 +75,7 @@ export default function CarPage() {
             <ShoppingBag size={64} className="text-gray-600 mb-4" />
             <h2 className="text-2xl font-bold text-gray-300">Seu carrinho está vazio</h2>
             <button 
-              onClick={() => router.push('/MenProductPage')} // <--- ALTERAÇÃO AQUI
+              onClick={() => router.push('/MenProductPage')}
               className="mt-6 px-8 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors"
             >
               Voltar às compras
@@ -92,9 +99,6 @@ export default function CarPage() {
                     <div className="flex-1 text-center sm:text-left">
                       <h3 className="text-lg font-bold text-white">{item.name}</h3>
                       <p className="text-sm text-gray-400 mt-1">{item.variant}</p>
-                      <div className="text-lg font-semibold mt-2 sm:hidden">
-                        R$ {(item.price * item.quantity).toFixed(2)}
-                      </div>
                     </div>
 
                     <div className="flex items-center bg-black/30 rounded-lg border border-white/10 p-1">
@@ -127,32 +131,6 @@ export default function CarPage() {
                     </button>
                   </div>
                 ))}
-              </div>
-
-              <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                <h3 className="text-lg font-semibold mb-4 text-gray-300">Você também pode gostar</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-4 p-3 bg-black/20 rounded-xl border border-white/5 hover:border-white/20 transition-all cursor-pointer group">
-                    <div className="w-16 h-16 rounded-lg bg-gray-800 overflow-hidden">
-                      <img src="https://images.unsplash.com/photo-1588156979435-37911d160304?w=200&fit=crop&q=60" alt="Accessory" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm">Carregador Fast Charge</h4>
-                      <p className="text-gray-400 text-xs">R$ 89,90</p>
-                      <button className="text-xs text-white underline mt-1 decoration-gray-500 hover:decoration-white">Adicionar</button>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 p-3 bg-black/20 rounded-xl border border-white/5 hover:border-white/20 transition-all cursor-pointer group">
-                    <div className="w-16 h-16 rounded-lg bg-gray-800 overflow-hidden">
-                      <img src="https://images.unsplash.com/photo-1628144026601-e6307185eb8e?w=200&fit=crop&q=60" alt="Accessory" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm">Cabo USB-C Trançado</h4>
-                      <p className="text-gray-400 text-xs">R$ 49,90</p>
-                      <button className="text-xs text-white underline mt-1 decoration-gray-500 hover:decoration-white">Adicionar</button>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -201,11 +179,6 @@ export default function CarPage() {
                       <span>Frete</span>
                       <span>{shipping === 0 ? <span className="text-white font-bold">GRÁTIS</span> : `R$ ${shipping.toFixed(2)}`}</span>
                     </div>
-                    {shipping > 0 && (
-                      <div className="text-xs text-gray-600 text-right">
-                        Faltam R$ {(400 - subtotal).toFixed(2)} para frete grátis
-                      </div>
-                    )}
                   </div>
 
                   <div className="border-t border-white/10 mt-4 pt-4 mb-6">
@@ -216,7 +189,10 @@ export default function CarPage() {
                     <p className="text-xs text-gray-500 text-right mt-1">em até 10x de R$ {(total/10).toFixed(2)} sem juros</p>
                   </div>
 
-                  <button className="w-full bg-white text-black py-4 rounded-xl font-bold text-lg hover:bg-gray-200 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-white/5 group">
+                  <button 
+                    onClick={handleFinishPurchase}
+                    className="w-full bg-white text-black py-4 rounded-xl font-bold text-lg hover:bg-gray-200 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-white/5 group"
+                  >
                     FINALIZAR COMPRA
                     <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                   </button>
