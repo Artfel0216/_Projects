@@ -5,7 +5,6 @@ import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
 import { ShoppingCart, CreditCard, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-// 1. Definição do Tipo do Produto (Igual ao que vem do seeds/pai)
 export type ProductType = {
   id: number;
   name: string;
@@ -17,7 +16,6 @@ export type ProductType = {
   bgColor: string;
 };
 
-// 2. Atualização da Interface das Props recebidas
 interface ContainProps {
   onAddToCart?: () => void;
   products: ProductType[];
@@ -93,18 +91,18 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
   return (
     <motion.article
       layout
-      initial={{ opacity: 0, y: 50, scale: 0.9 }} // Ajustei levemente scale inicial para grid
+      initial={{ opacity: 0, y: 50, scale: 0.9 }}
       animate={{
         opacity: 1,
         y: 0,
-        scale: isExpanded ? 1.05 : 1, // Ajuste sutil para não sobrepor demais no grid
+        scale: isExpanded ? 1.12 : 1, 
         zIndex: isExpanded ? 50 : 1
       }}
       transition={{
-        duration: 0.8,
+        duration: 0.6,
         type: "spring",
-        stiffness: 200,
-        damping: 20
+        stiffness: 250,
+        damping: 25
       }}
       onClick={toggleExpand}
       onKeyDown={handleKeyDown}
@@ -112,11 +110,11 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
       role="button"
       aria-expanded={isExpanded}
       aria-label={`Ver detalhes do produto ${product.name}`}
-      className={`relative w-full bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row transition-colors outline-none focus:ring-2 focus:ring-white/50 ${!isExpanded ? 'cursor-pointer hover:bg-white/5' : ''}`}
+      className={`relative w-full bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl overflow-hidden flex flex-col md:flex-row transition-all duration-300 outline-none focus:ring-2 focus:ring-white/50 ${isExpanded ? 'shadow-[0_20px_60px_rgba(0,0,0,0.8)] ring-1 ring-white/30' : 'shadow-2xl cursor-pointer hover:bg-white/5'}`}
     >
       <div className={`flex flex-col md:flex-row w-full ${!isExpanded ? 'pointer-events-none' : ''}`}>
         
-        <figure className="w-full md:w-1/2 h-80 md:h-96 relative flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 m-0">
+        <figure className={`w-full md:w-1/2 relative flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 m-0 transition-all duration-500 ${isExpanded ? 'h-96 md:h-[32rem]' : 'h-80 md:h-96'}`}>
           <nav className="absolute inset-x-4 z-10 flex justify-between pointer-events-none">
             <button
               onClick={(e) => { e.stopPropagation(); paginate(-1); }}
@@ -145,7 +143,7 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
                 animate="center"
                 exit="exit"
                 transition={TRANSITION_SPRING}
-                className="absolute w-full h-full object-contain rounded-2xl shadow-lg" // Mudei cover para contain para ver o produto inteiro
+                className="absolute w-full h-full object-contain rounded-2xl shadow-lg"
                 alt={`${product.name} - Vista ${currentImage + 1}`}
               />
             </AnimatePresence>
@@ -168,6 +166,7 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
         <section className="w-full md:w-1/2 p-6 flex flex-col justify-between text-white">
           <header className="space-y-3">
             <motion.div
+              layout
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
@@ -178,28 +177,31 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
             </motion.div>
 
             <motion.h1
+              layout
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-2xl font-bold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400"
+              className={`font-bold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 transition-all duration-300 ${isExpanded ? 'text-3xl md:text-4xl' : 'text-2xl'}`}
             >
               {product.name}
             </motion.h1>
 
             <motion.p
+              layout
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-2xl font-light text-emerald-400"
+              className={`font-light text-emerald-400 transition-all duration-300 ${isExpanded ? 'text-3xl md:text-4xl' : 'text-2xl'}`}
             >
               {displayPrice}
             </motion.p>
 
             <motion.p
+              layout
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="text-gray-300 text-sm leading-relaxed line-clamp-3"
+              className={`text-gray-300 leading-relaxed transition-all duration-300 ${isExpanded ? 'text-base' : 'text-sm line-clamp-3'}`}
             >
               {product.description}
             </motion.p>
@@ -207,6 +209,7 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
 
           <footer className="flex flex-col gap-3 mt-6">
             <motion.button
+              layout
               whileHover={{ scale: 1.02, backgroundColor: "rgba(255, 255, 255, 0.2)" }}
               whileTap={{ scale: 0.98 }}
               onClick={handleBuyNow} 
@@ -217,6 +220,7 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
             </motion.button>
 
             <motion.button
+              layout
               whileHover={{ scale: 1.02, backgroundColor: "rgba(0, 0, 0, 0.6)" }}
               whileTap={{ scale: 0.95 }}
               onClick={(e) => {
@@ -235,11 +239,9 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
   );
 };
 
-// 4. Componente Principal que itera sobre a lista (Ajustado aqui!)
 export default function ContainPage({ onAddToCart, products = [] }: ContainProps) {
   return (
     <section className="w-full max-w-7xl mx-auto p-4">
-      {/* Grid para acomodar os cards (3 por fileira em telas grandes) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products?.map((product) => (
           <ProductCard 
