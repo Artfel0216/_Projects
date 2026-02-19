@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, MouseEvent } from "react";
+import { useState, useRef, useCallback, MouseEvent, useEffect } from "react";
 import Image from "next/image";
 import {
   motion,
@@ -22,6 +22,36 @@ export default function MenProductPage() {
   const [filter, setFilter] = useState<StyleType>("Todos");
   const [category, setCategory] = useState<CategoryType>("Masculino");
   const [cartCount, setCartCount] = useState(0);
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const response = await fetch("/api/products");
+        const data = await response.json();
+
+        const formattedProducts = data.map((product: any) => ({
+          id: product.id,
+          name: product.name,
+          brand: product.name.split(" ")[0],
+          price: product.price,
+          description: product.description,
+          imagePath: product.imagePath.replace("/public", ""),
+        }));
+
+        setProducts(formattedProducts);
+      } catch (error) {
+        console.error("Erro ao buscar produtos:", error);
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
+  const displayedProducts = products.filter((p) => {
+    if (filter === "Todos") return true;
+    return p.name.toLowerCase().includes(filter.toLowerCase());
+  });
 
   const containerRef = useRef<HTMLElement>(null);
   const mouseX = useMotionValue(0);
@@ -39,10 +69,13 @@ export default function MenProductPage() {
   const glowX = useTransform(mouseX, [-300, 300], ["30%", "70%"]);
   const glowY = useTransform(mouseY, [-300, 300], ["30%", "70%"]);
 
-  const handleMouseMove = useCallback((e: MouseEvent<HTMLElement>) => {
-    mouseX.set(e.clientX - window.innerWidth / 2);
-    mouseY.set(e.clientY - window.innerHeight / 2);
-  }, [mouseX, mouseY]);
+  const handleMouseMove = useCallback(
+    (e: MouseEvent<HTMLElement>) => {
+      mouseX.set(e.clientX - window.innerWidth / 2);
+      mouseY.set(e.clientY - window.innerHeight / 2);
+    },
+    [mouseX, mouseY]
+  );
 
   const handleAddToCart = useCallback(() => {
     setCartCount((prev) => prev + 1);
@@ -90,7 +123,10 @@ export default function MenProductPage() {
       />
 
       <main className="relative z-10 w-full flex items-center justify-center pt-[85vh] pb-20">
-        <Contain onAddToCart={handleAddToCart} />
+        <Contain
+          products={displayedProducts}
+          onAddToCart={handleAddToCart}
+        />
       </main>
     </section>
   );
