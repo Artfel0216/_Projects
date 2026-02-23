@@ -1,23 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
-import { CreditCard, QrCode, Smartphone, Minus, Plus, Lock, CheckCircle } from 'lucide-react';
+import React, { useState, Suspense } from 'react';
+import { CreditCard, QrCode, Smartphone, Minus, Plus, Lock, CheckCircle, Ruler } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 
-export default function PaymentPage() {
-  const [product] = useState({
-    id: 1,
-    name: "Headphone Noise Cancelling Pro",
-    description: "Experiência sonora imersiva com cancelamento de ruído ativo e 30h de bateria.",
-    brand: "SoundTech",
-    price: 250.00,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60"
-  });
+function PaymentContent() {
+  const searchParams = useSearchParams();
+
+  const title = searchParams.get('title') || 'Produto Indisponível';
+  const price = parseFloat(searchParams.get('price') || '0');
+  const image = searchParams.get('image') || '/placeholder.png';
+  const size = searchParams.get('size') || '-';
+  const brand = searchParams.get('brand') || 'SNEAKER';
 
   const [quantity, setQuantity] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('credit');
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const total = product.price * quantity;
+  const total = price * quantity;
 
   const handleQuantityChange = (type: string) => {
     if (type === 'decrease' && quantity > 1) {
@@ -43,18 +43,20 @@ export default function PaymentPage() {
         <div className="w-full md:w-1/2 p-8 flex flex-col justify-between bg-black/40">
           <div>
             <span className="bg-white/10 text-gray-200 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide border border-white/10">
-              {product.brand}
+              {brand}
             </span>
-            <h2 className="text-3xl font-bold mt-4 mb-2">{product.name}</h2>
-            <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              {product.description}
-            </p>
+            <h2 className="text-3xl font-bold mt-4 mb-2">{title}</h2>
             
-            <div className="relative group w-full h-64 rounded-2xl overflow-hidden mb-6 border border-white/10">
+            <div className="flex items-center gap-2 mb-6 mt-2 text-emerald-400 font-medium">
+              <Ruler size={18} />
+              <span>Tamanho selecionado: {size}</span>
+            </div>
+            
+            <div className="relative group w-full h-64 rounded-2xl overflow-hidden mb-6 border border-white/10 bg-black/20 flex items-center justify-center p-4">
               <img 
-                src={product.image} 
-                alt={product.name} 
-                className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110 grayscale"
+                src={image} 
+                alt={title} 
+                className="w-full h-full object-contain transform transition-transform duration-500 group-hover:scale-110"
               />
             </div>
           </div>
@@ -64,6 +66,7 @@ export default function PaymentPage() {
               <span className="text-gray-300">Quantidade</span>
               <div className="flex items-center gap-4">
                 <button 
+                  type="button"
                   onClick={() => handleQuantityChange('decrease')}
                   className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-50"
                   disabled={quantity <= 1}
@@ -72,6 +75,7 @@ export default function PaymentPage() {
                 </button>
                 <span className="text-xl font-bold w-8 text-center">{quantity}</span>
                 <button 
+                  type="button"
                   onClick={() => handleQuantityChange('increase')}
                   className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                 >
@@ -84,7 +88,7 @@ export default function PaymentPage() {
               <span className="text-lg text-gray-400">Total a pagar</span>
               <div className="text-right">
                 <span className="text-sm text-gray-500 line-through mr-2">
-                  R$ {(product.price * quantity * 1.2).toFixed(2)}
+                  R$ {(price * quantity * 1.2).toFixed(2)}
                 </span>
                 <span className="text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-white to-gray-400">
                   R$ {total.toFixed(2)}
@@ -100,6 +104,7 @@ export default function PaymentPage() {
           <div className="grid grid-cols-3 gap-2 mb-8 p-1 bg-black/40 rounded-xl border border-white/5">
             {['credit', 'debit', 'pix'].map((method) => (
               <button
+                type="button"
                 key={method}
                 onClick={() => setPaymentMethod(method)}
                 className={`
@@ -118,7 +123,6 @@ export default function PaymentPage() {
           </div>
 
           <form onSubmit={handlePayment} className="space-y-5">
-            
             {paymentMethod === 'pix' ? (
               <div className="flex flex-col items-center justify-center p-8 bg-white/5 rounded-2xl border border-white/10 animate-fade-in">
                 <QrCode size={120} className="text-white mb-4" />
@@ -174,8 +178,8 @@ export default function PaymentPage() {
               )}
             </button>
 
-            <p className="text-center text-xs text-gray-500 mt-4">
-              <Lock size={10} className="inline mr-1" />
+            <p className="text-center text-xs text-gray-500 mt-4 flex items-center justify-center">
+              <Lock size={12} className="mr-1" />
               Pagamento 100% seguro e criptografado.
             </p>
           </form>
@@ -191,5 +195,13 @@ export default function PaymentPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-white">Carregando formulário...</div>}>
+      <PaymentContent />
+    </Suspense>
   );
 }

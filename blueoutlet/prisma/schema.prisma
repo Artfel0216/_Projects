@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -7,48 +7,140 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("USER")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+//////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////
+
+enum Role {
+  USER
+  ADMIN
 }
 
-model Product {
-  id          Int      @id @default(autoincrement())
-  name        String
-  slug        String   @unique
-  description String?
-  price       Float
-  imagePath   String?
-  category    String
-  gender      String
+enum Gender {
+  MASCULINO
+  FEMININO
+  KIDS
+}
 
-  brandId Int
-  brand   Brand @relation(fields: [brandId], references: [id])
+enum Category {
+  CASUAL
+  ESPORTIVO
+  SOCIAL
+}
 
-  sizes ProductSize[]
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELED
+}
+
+
+model User {
+  id       Int    @id @default(autoincrement()) // Considere String @default(uuid()) no futuro
+  name     String
+  email    String @unique
+  password String
+  role     Role   @default(USER)
+
+  orders Order[] // Relação: Um usuário pode ter vários pedidos
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Brand {
-  id       Int       @id @default(autoincrement())
-  name     String    @unique
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  slug String @unique
+
   products Product[]
+
+  createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt @default(now())
+}
+
+model Product {
+  id          Int     @id @default(autoincrement())
+  name        String
+  slug        String  @unique
+  description String? @db.Text
+  price       Decimal @db.Decimal(10, 2)
+
+  gender   Gender
+  category Category
+  isActive Boolean  @default(true)
+
+  brandId Int
+  brand   Brand @relation(fields: [brandId], references: [id])
+
+  images     ProductImage[]
+  sizes      ProductSize[]
+  orderItems OrderItem[] // Relação: Um produto pode estar em vários itens de pedidos
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([gender])
+  @@index([category])
+  @@index([brandId])
+}
+
+model ProductImage {
+  id        Int    @id @default(autoincrement())
+  imagePath String
+  order     Int    @default(0)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt @default(now())
 }
 
 model ProductSize {
-  id        Int      @id @default(autoincrement())
-  size      Int
-  stock     Int      @default(10)
+  id    Int @id @default(autoincrement())
+  size  Int
+  stock Int @default(0)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt @default(now())
+
+  @@unique([productId, size])
+}
+
+
+
+model Order {
+  id     Int         @id @default(autoincrement())
+  total  Decimal     @db.Decimal(10, 2)
+  status OrderStatus @default(PENDING)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id       Int     @id @default(autoincrement())
+  quantity Int     @default(1)
+  price    Decimal @db.Decimal(10, 2) // O preço "congelado" no momento da compra
+  size     Int // O tamanho específico escolhido pelo usuário na hora da compra
+
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   productId Int
   product   Product @relation(fields: [productId], references: [id])
 
-  @@unique([productId, size])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
