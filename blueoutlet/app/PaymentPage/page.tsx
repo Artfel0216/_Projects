@@ -1,8 +1,12 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
-import { CreditCard, QrCode, Smartphone, Minus, Plus, Lock, CheckCircle, Ruler } from 'lucide-react';
+import { CreditCard, QrCode, Smartphone, Minus, Plus, Lock, CheckCircle, Ruler, Copy } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { initMercadoPago } from '@mercadopago/sdk-react';
+
+// Inicialize com a sua PUBLIC KEY (Chave Pública) de Produção
+initMercadoPago('APP_USR-07b3b401-1b38-4bce-beac-1399cebd59b8', { locale: 'pt-BR' });
 
 function PaymentContent() {
   const searchParams = useSearchParams();
@@ -14,8 +18,18 @@ function PaymentContent() {
   const brand = searchParams.get('brand') || 'SNEAKER';
 
   const [quantity, setQuantity] = useState(1);
-  const [paymentMethod, setPaymentMethod] = useState('credit');
+  const [paymentMethod, setPaymentMethod] = useState('pix');
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // Estados para o PIX
+  const [pixData, setPixData] = useState<{ qrCodeBase64: string; copiaECola: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // NOVOS Estados para o Cartão de Crédito
+  const [cardName, setCardName] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
 
   const total = price * quantity;
 
@@ -27,13 +41,55 @@ function PaymentContent() {
     }
   };
 
-  const handlePayment = (e: React.FormEvent) => {
+  const handleCopyPix = () => {
+    if (pixData?.copiaECola) {
+      navigator.clipboard.writeText(pixData.copiaECola);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Por enquanto, vamos tratar apenas o PIX
+    if (paymentMethod !== 'pix') {
+      alert("Vamos configurar a geração do token do cartão de crédito no próximo passo!");
+      return;
+    }
+
     setIsAnimating(true);
-    setTimeout(() => {
-      alert(`Pagamento de R$ ${total.toFixed(2)} processado via ${paymentMethod.toUpperCase()}!`);
+    setPixData(null); // Reseta o PIX anterior, se houver
+
+    try {
+      const response = await fetch('/api/pagamento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transactionAmount: total,
+          email: 'cliente@teste.com' // Idealmente, vem de um input do usuário
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.data.point_of_interaction) {
+        const transactionData = data.data.point_of_interaction.transaction_data;
+        
+        // Salva os dados reais retornados pelo Mercado Pago
+        setPixData({
+          qrCodeBase64: transactionData.qr_code_base64,
+          copiaECola: transactionData.qr_code
+        });
+      } else {
+        alert('Erro ao gerar PIX. Verifique seu token do Mercado Pago.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Erro de conexão com o servidor.');
+    } finally {
       setIsAnimating(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -69,7 +125,7 @@ function PaymentContent() {
                   type="button"
                   onClick={() => handleQuantityChange('decrease')}
                   className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-50"
-                  disabled={quantity <= 1}
+                  disabled={quantity <= 1 || !!pixData} // Desabilita se já gerou o PIX
                 >
                   <Minus size={18} />
                 </button>
@@ -78,6 +134,7 @@ function PaymentContent() {
                   type="button"
                   onClick={() => handleQuantityChange('increase')}
                   className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                  disabled={!!pixData} // Desabilita se já gerou o PIX
                 >
                   <Plus size={18} />
                 </button>
@@ -102,11 +159,14 @@ function PaymentContent() {
           <h3 className="text-2xl font-semibold mb-6">Dados de Pagamento</h3>
 
           <div className="grid grid-cols-3 gap-2 mb-8 p-1 bg-black/40 rounded-xl border border-white/5">
-            {['credit', 'debit', 'pix'].map((method) => (
+            {['pix', 'credit', 'debit'].map((method) => (
               <button
                 type="button"
                 key={method}
-                onClick={() => setPaymentMethod(method)}
+                onClick={() => {
+                  setPaymentMethod(method);
+                  setPixData(null); // Limpa o PIX se trocar de método
+                }}
                 className={`
                   flex flex-col items-center justify-center py-3 rounded-lg text-sm font-medium transition-all duration-300
                   ${paymentMethod === method 
@@ -124,28 +184,67 @@ function PaymentContent() {
 
           <form onSubmit={handlePayment} className="space-y-5">
             {paymentMethod === 'pix' ? (
-              <div className="flex flex-col items-center justify-center p-8 bg-white/5 rounded-2xl border border-white/10 animate-fade-in">
-                <QrCode size={120} className="text-white mb-4" />
-                <p className="text-center text-gray-300 mb-4 text-sm">Escaneie o QR Code ou copie a chave abaixo.</p>
-                <div className="w-full flex bg-black/30 p-2 rounded-lg border border-white/10">
-                  <input readOnly value="00020126580014BR.GOV.BCB.PIX..." className="bg-transparent w-full text-xs text-gray-400 outline-none px-2" />
-                  <button type="button" className="text-white text-xs font-bold hover:text-gray-300">COPIAR</button>
-                </div>
-                <div className="mt-4 flex items-center gap-2 text-white text-sm">
+              <div className="flex flex-col items-center justify-center p-6 bg-white/5 rounded-2xl border border-white/10 animate-fade-in min-h-70">
+                {pixData ? (
+                  
+                  <>
+                    <img 
+                      src={`data:image/png;base64,${pixData.qrCodeBase64}`} 
+                      alt="QR Code PIX" 
+                      className="w-40 h-40 rounded-lg mb-4 shadow-lg border-2 border-white/20"
+                    />
+                    <p className="text-center text-gray-300 mb-3 text-sm">Escaneie o QR Code ou copie a chave abaixo.</p>
+                    <div className="w-full flex items-center bg-black/40 p-2 rounded-lg border border-white/10">
+                      <input 
+                        readOnly 
+                        value={pixData.copiaECola} 
+                        className="bg-transparent w-full text-xs text-gray-400 outline-none px-2 truncate" 
+                      />
+                      <button 
+                        type="button" 
+                        onClick={handleCopyPix}
+                        className="flex items-center gap-1 text-white text-xs font-bold hover:text-emerald-400 transition-colors px-2 py-1 rounded bg-white/10 hover:bg-white/20"
+                      >
+                        {copied ? <CheckCircle size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                        {copied ? 'COPIADO' : 'COPIAR'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <QrCode size={80} className="text-white/30 mb-4" />
+                    <p className="text-center text-gray-400 text-sm">Clique no botão abaixo para gerar seu código PIX.</p>
+                  </>
+                )}
+                <div className="mt-4 flex items-center gap-2 text-emerald-400 text-sm font-medium">
                    <CheckCircle size={16} /> Aprovação imediata
                 </div>
               </div>
             ) : (
+              // FORMULÁRIO DE CARTÃO (Agora com os estados conectados)
               <div className="space-y-4 animate-fade-in">
                 <div className="space-y-2">
                   <label className="text-xs uppercase text-gray-500 tracking-wider">Nome no Cartão</label>
-                  <input type="text" placeholder="SEU NOME COMPLETO" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" required />
+                  <input 
+                    type="text" 
+                    value={cardName}
+                    onChange={(e) => setCardName(e.target.value)}
+                    placeholder="SEU NOME COMPLETO" 
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" 
+                  />
                 </div>
                 
                 <div className="space-y-2">
                   <label className="text-xs uppercase text-gray-500 tracking-wider">Número do Cartão</label>
                   <div className="relative">
-                    <input type="text" placeholder="0000 0000 0000 0000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" required />
+                    <input 
+                      type="text" 
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(e.target.value)}
+                      placeholder="0000 0000 0000 0000" 
+                      maxLength={19}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" 
+                    />
                     <CreditCard className="absolute right-4 top-3 text-gray-500" size={20} />
                   </div>
                 </div>
@@ -153,30 +252,47 @@ function PaymentContent() {
                 <div className="flex gap-4">
                   <div className="w-1/2 space-y-2">
                     <label className="text-xs uppercase text-gray-500 tracking-wider">Validade</label>
-                    <input type="text" placeholder="MM/AA" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" required />
+                    <input 
+                      type="text" 
+                      value={cardExpiry}
+                      onChange={(e) => setCardExpiry(e.target.value)}
+                      placeholder="MM/AA" 
+                      maxLength={5}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" 
+                    />
                   </div>
                   <div className="w-1/2 space-y-2">
                     <label className="text-xs uppercase text-gray-500 tracking-wider">CVV</label>
-                    <input type="text" placeholder="123" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" required />
+                    <input 
+                      type="text" 
+                      value={cardCvv}
+                      onChange={(e) => setCardCvv(e.target.value)}
+                      placeholder="123" 
+                      maxLength={4}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" 
+                    />
                   </div>
                 </div>
               </div>
             )}
 
-            <button 
-              type="submit" 
-              className={`
-                w-full mt-8 py-4 bg-white text-black rounded-xl font-bold text-lg shadow-lg 
-                hover:shadow-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2
-                ${isAnimating ? 'opacity-75 cursor-wait' : ''}
-              `}
-            >
-              {isAnimating ? 'Processando...' : (
-                <>
-                  <Lock size={18} /> Pagar R$ {total.toFixed(2)}
-                </>
-              )}
-            </button>
+            {!pixData && (
+              <button 
+                type="submit" 
+                className={`
+                  w-full mt-8 py-4 bg-white text-black rounded-xl font-bold text-lg shadow-lg 
+                  hover:shadow-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2
+                  ${isAnimating ? 'opacity-75 cursor-wait' : ''}
+                `}
+                disabled={isAnimating}
+              >
+                {isAnimating ? 'Processando...' : (
+                  <>
+                    <Lock size={18} /> {paymentMethod === 'pix' ? 'Gerar PIX de R$' : 'Pagar R$'} {total.toFixed(2)}
+                  </>
+                )}
+              </button>
+            )}
 
             <p className="text-center text-xs text-gray-500 mt-4 flex items-center justify-center">
               <Lock size={12} className="mr-1" />
