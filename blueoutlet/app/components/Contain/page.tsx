@@ -6,7 +6,7 @@ import { ShoppingCart, CreditCard, ChevronLeft, ChevronRight, Tag, Ruler } from 
 import { useRouter } from 'next/navigation';
 
 export type ProductType = {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   brand: string;
@@ -44,7 +44,7 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
   const router = useRouter();
 
   const images = product.images?.length > 0 ? product.images : ["/placeholder.png"];
-  const displayPrice = `R$ ${product.price.toFixed(2).replace('.', ',')}`;
+  const displayPrice = `R$ ${Number(product.price).toFixed(2).replace('.', ',')}`;
 
   const sortedSizes = useMemo(() => {
     if (!product.sizes) return [];
@@ -112,18 +112,18 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
     <motion.article
       layout
       initial={{ opacity: 0, y: 50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: isExpanded ? 1.12 : 1, zIndex: isExpanded ? 50 : 1 }}
+      animate={{ opacity: 1, y: 0, scale: isExpanded ? 1.02 : 1, zIndex: isExpanded ? 50 : 1 }}
       transition={{ duration: 0.6, type: "spring", stiffness: 250, damping: 25 }}
       onClick={toggleExpand}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
       aria-expanded={isExpanded}
-      className={`relative w-full bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl overflow-hidden flex flex-col md:flex-row transition-all duration-300 outline-none focus:ring-2 focus:ring-white/50 ${isExpanded ? 'shadow-[0_20px_60px_rgba(0,0,0,0.8)] ring-1 ring-white/30' : 'shadow-2xl cursor-pointer hover:bg-white/5'}`}
+      className={`relative w-full bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl overflow-hidden flex flex-col md:flex-row transition-all duration-300 outline-none focus:ring-2 focus:ring-white/50 ${isExpanded ? 'md:col-span-2 xl:col-span-2 shadow-[0_20px_60px_rgba(0,0,0,0.8)] ring-1 ring-white/30' : 'col-span-1 shadow-2xl cursor-pointer hover:bg-white/5'}`}
     >
       <div className={`flex flex-col md:flex-row w-full ${!isExpanded ? 'pointer-events-none' : ''}`}>
 
-        <figure className={`w-full md:w-1/2 relative flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 m-0 transition-all duration-500 ${isExpanded ? 'h-96 md:h-140' : 'h-80 md:h-96'}`}>
+        <figure className="w-full md:w-1/2 relative flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 m-0 h-80 md:h-112">
           <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-2xl group">
             
             <AnimatePresence initial={false} custom={direction}>
@@ -276,7 +276,7 @@ export default function ContainPage({ onAddToCart }: ContainProps) {
         const data = await res.json();
         setProducts(data);
       } catch (error) {
-        console.error("Erro ao buscar produtos:", error);
+        console.error(error);
       }
     }
 

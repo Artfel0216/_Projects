@@ -1,39 +1,42 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { Category, Gender } from "@prisma/client";
+import { prisma } from "@/app/lib/prisma";
 
-// DICA: Em projetos reais, esse bloco de instância do Prisma 
-// geralmente é isolado em um arquivo tipo 'src/lib/prisma.ts'
-const globalForPrisma = global as unknown as {
-  prisma: PrismaClient;
-};
-
-const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: ["error"],
-  });
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 100);
+    const category = searchParams.get("category") as Category | null;
+    const gender = searchParams.get("gender") as Gender | null;
+
+    const whereClause: any = { isActive: true };
+    if (category) whereClause.category = category;
+    if (gender) whereClause.gender = gender;
+
     const products = await prisma.product.findMany({
-      where: {
-        isActive: true,
-      },
-      include: {
-        brand: true,
-        images: {
-          orderBy: {
-            order: "asc",
-          },
+      where: whereClause,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        price: true,
+        category: true,
+        gender: true,
+        brand: {
+          select: { name: true },
         },
-        sizes: true,
+        images: {
+          select: { imagePath: true },
+          orderBy: { order: "asc" },
+        },
+        sizes: {
+          select: { size: true, stock: true },
+          orderBy: { size: "asc" },
+        },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 50, 
+      orderBy: { createdAt: "desc" },
+      take: limit,
     });
 
     const formattedProducts = products.map((product) => ({
@@ -41,25 +44,22 @@ export async function GET() {
       name: product.name,
       slug: product.slug,
       brand: product.brand.name,
-      category: product.category, 
-      gender: product.gender,     
-      price: Number(product.price), // CORREÇÃO: Conversão de Decimal para Number
+      category: product.category,
+      gender: product.gender,
+      price: Number(product.price),
       description: product.description ?? "",
-      images:
-        product.images.length > 0
-          ? product.images.map((img) => 
-              // CORREÇÃO: Evita a barra dupla (//) no caminho da imagem
-              img.imagePath.startsWith("/") ? img.imagePath : `/${img.imagePath}`
-            )
-          : ["/placeholder.png"],
+      images: product.images.length > 0
+        ? product.images.map((img) =>
+            img.imagePath.startsWith("/") ? img.imagePath : `/${img.imagePath}`
+          )
+        : ["/placeholder.png"],
       sizes: product.sizes,
     }));
 
     return NextResponse.json(formattedProducts);
   } catch (error) {
-    console.error("Erro ao buscar produtos:", error);
     return NextResponse.json(
-      { error: "Erro interno ao buscar produtos." },
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }

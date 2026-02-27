@@ -33,15 +33,19 @@ export default function MenProductPage() {
         const formattedProducts = data.map((product: any) => ({
           id: product.id,
           name: product.name,
-          brand: product.name.split(" ")[0],
+          slug: product.slug,
+          brand: product.brand,
           price: product.price,
           description: product.description,
-          imagePath: product.imagePath.replace("/public", ""),
+          images: product.images && product.images.length > 0 ? product.images : ["/placeholder.png"],
+          sizes: product.sizes || [],
+          category: product.category,
+          gender: product.gender
         }));
 
         setProducts(formattedProducts);
       } catch (error) {
-        console.error("Erro ao buscar produtos:", error);
+        console.error(error);
       }
     }
 

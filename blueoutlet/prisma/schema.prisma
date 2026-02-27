@@ -7,10 +7,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-//////////////////////////////////////////////////
-// ENUMS
-//////////////////////////////////////////////////
-
 enum Role {
   USER
   ADMIN
@@ -36,111 +32,108 @@ enum OrderStatus {
   CANCELED
 }
 
-
 model User {
-  id       Int    @id @default(autoincrement()) // Considere String @default(uuid()) no futuro
-  name     String
-  email    String @unique
-  password String
-  role     Role   @default(USER)
-
-  orders Order[] // Relação: Um usuário pode ter vários pedidos
-
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  orders    Order[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("users")
 }
 
 model Brand {
-  id   Int    @id @default(autoincrement())
-  name String @unique
-  slug String @unique
+  id        String    @id @default(uuid())
+  name      String    @unique
+  slug      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  products Product[]
-
-  createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt @default(now())
+  @@map("brands")
 }
 
 model Product {
-  id          Int     @id @default(autoincrement())
+  id          String         @id @default(uuid())
   name        String
-  slug        String  @unique
-  description String? @db.Text
-  price       Decimal @db.Decimal(10, 2)
-
-  gender   Gender
-  category Category
-  isActive Boolean  @default(true)
-
-  brandId Int
-  brand   Brand @relation(fields: [brandId], references: [id])
-
-  images     ProductImage[]
-  sizes      ProductSize[]
-  orderItems OrderItem[] // Relação: Um produto pode estar em vários itens de pedidos
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  slug        String         @unique
+  description String?        @db.Text
+  price       Decimal        @db.Decimal(10, 2)
+  gender      Gender
+  category    Category
+  isActive    Boolean        @default(true)
+  brandId     String
+  brand       Brand          @relation(fields: [brandId], references: [id])
+  images      ProductImage[]
+  sizes       ProductSize[]
+  orderItems  OrderItem[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   @@index([gender])
   @@index([category])
   @@index([brandId])
+  @@index([isActive])
+  @@map("products")
 }
 
 model ProductImage {
-  id        Int    @id @default(autoincrement())
+  id        String   @id @default(uuid())
   imagePath String
-  order     Int    @default(0)
-
-  productId Int
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
+  order     Int      @default(0)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
- updatedAt DateTime @updatedAt @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@map("product_images")
 }
 
 model ProductSize {
-  id    Int @id @default(autoincrement())
-  size  Int
-  stock Int @default(0)
-
-  productId Int
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
- updatedAt DateTime @updatedAt @default(now())
-
-  @@unique([productId, size])
-}
-
-
-
-model Order {
-  id     Int         @id @default(autoincrement())
-  total  Decimal     @db.Decimal(10, 2)
-  status OrderStatus @default(PENDING)
-
-  userId Int
-  user   User @relation(fields: [userId], references: [id])
-
-  items OrderItem[]
-
+  id        String   @id @default(uuid())
+  size      Int
+  stock     Int      @default(0)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([productId, size])
+  @@index([productId])
+  @@map("product_sizes")
+}
+
+model Order {
+  id        String      @id @default(uuid())
+  total     Decimal     @db.Decimal(10, 2)
+  status    OrderStatus @default(PENDING)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  items     OrderItem[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId])
+  @@map("orders")
 }
 
 model OrderItem {
-  id       Int     @id @default(autoincrement())
-  quantity Int     @default(1)
-  price    Decimal @db.Decimal(10, 2) // O preço "congelado" no momento da compra
-  size     Int // O tamanho específico escolhido pelo usuário na hora da compra
-
-  orderId Int
-  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  productId Int
-  product   Product @relation(fields: [productId], references: [id])
-
+  id        String   @id @default(uuid())
+  quantity  Int      @default(1)
+  price     Decimal  @db.Decimal(10, 2)
+  size      Int
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
 }
