@@ -33,16 +33,32 @@ enum OrderStatus {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
+  id      String   @id @default(cuid())
+  name    String?
+  email   String   @unique
   password  String
-  role      Role     @default(USER)
-  orders    Order[]
+  phone   String?
+  role    String?
+  bio     String?
+  avatar  String?
+  address Address?
+
+  orders Order[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
 
-  @@map("users")
+model Address {
+  id         String  @id @default(cuid())
+  street     String?
+  number     String?
+  complement String?
+  city       String?
+  state      String?
+  zip        String?
+  userId     String  @unique
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Brand {

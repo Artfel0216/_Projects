@@ -104,7 +104,33 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     validateAndProceed(() => {
-      onAddToCart?.(product, selectedSize!);
+      if (onAddToCart) {
+        onAddToCart(product, selectedSize!);
+      }
+
+      const newItem = {
+        id: `${product.id}-${selectedSize}`,
+        name: product.name,
+        variant: `Tamanho: ${selectedSize} | Marca: ${product.brand}`,
+        price: Number(product.price),
+        quantity: 1,
+        image: images[0]
+      };
+
+      const existingCart = localStorage.getItem('cartItems');
+      let cart = existingCart ? JSON.parse(existingCart) : [];
+
+      const existingItemIndex = cart.findIndex((item: any) => item.id === newItem.id);
+
+      if (existingItemIndex >= 0) {
+        cart[existingItemIndex].quantity += 1;
+      } else {
+        cart.push(newItem);
+      }
+
+      localStorage.setItem('cartItems', JSON.stringify(cart));
+
+      router.push('/CarPage');
     });
   };
 

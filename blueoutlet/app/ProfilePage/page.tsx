@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState, useRef, ChangeEvent } from 'react';
+import React, { useState, useRef, ChangeEvent, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { 
   Camera, 
@@ -14,7 +14,8 @@ import {
   CreditCard,
   Edit3,
   CheckCircle2,
-  X
+  X,
+  Loader2 
 } from 'lucide-react';
 
 interface UserData {
@@ -35,13 +36,15 @@ interface AddressData {
   complement: string;
 }
 
+
 const InputField = ({ 
   label, 
   value, 
   onChange, 
   icon: Icon, 
   placeholder,
-  type = "text" 
+  type = "text",
+  disabled = false
 }: { 
   label: string; 
   value: string; 
@@ -49,19 +52,24 @@ const InputField = ({
   icon: any; 
   placeholder: string;
   type?: string;
+  disabled?: boolean;
 }) => (
   <div className="group space-y-2">
     <label className="text-xs font-medium text-white/40 uppercase tracking-wider ml-1">{label}</label>
     <div className="relative">
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-white transition-colors duration-300">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 transition-colors duration-300">
         <Icon size={18} />
       </div>
       <input
         type={type}
-        value={value}
+        value={value || ""}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full bg-white/3 border border-white/8 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-white/20 focus:outline-none focus:border-white/30 focus:bg-white/5 transition-all duration-300 hover:border-white/20"
+        disabled={disabled}
+        className={`w-full bg-white/3 border rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-white/20 transition-all duration-300 focus:outline-none 
+          ${disabled 
+            ? "border-transparent opacity-60 cursor-not-allowed" 
+            : "border-white/8 hover:border-white/20 focus:border-white/30 focus:bg-white/5"}`}
       />
     </div>
   </div>
@@ -86,44 +94,87 @@ const TabButton = ({ active, label, onClick, icon: Icon }: { active: boolean; la
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'personal' | 'address' | 'orders'>('personal');
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [user, setUser] = useState<UserData>({
-    name: "Alex Noir",
-    email: "alex.noir@design.com",
-    phone: "+55 (11) 99999-9999",
-    role: "Product Designer",
-    bio: "Entusiasta de moda minimalista e tecnologia.",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80"
+    name: "",
+    email: "",
+    phone: "",
+    role: "",
+    bio: "",
+    avatar: null
   });
 
   const [address, setAddress] = useState<AddressData>({
-    street: "Av. Paulista",
-    number: "1000",
-    city: "São Paulo",
-    state: "SP",
-    zip: "01310-100",
-    complement: "Apto 42B"
+    street: "",
+    number: "",
+    city: "",
+    state: "",
+    zip: "",
+    complement: ""
   });
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user) setUser(prev => ({ ...prev, ...data.user }));
+          if (data.address) setAddress(prev => ({ ...prev, ...data.address }));
+        }
+      } catch (error) {
+        console.error("Erro ao carregar os dados:", error);
+      }
+    };
+    
+    loadUserData();
+  }, []);
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setUser(prev => ({ ...prev, avatar: imageUrl }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setUser(prev => ({ ...prev, avatar: base64String }));
+        setIsEditing(true); 
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const removeImage = () => {
     setUser(prev => ({ ...prev, avatar: null }));
+    setIsEditing(true);
   };
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/user', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user, address }),
+      });
+      
+      if (response.ok) {
+        setIsEditing(false); 
+      } else {
+        console.error("Erro ao salvar os dados no servidor");
+      }
+    } catch (error) {
+      console.error("Erro na requisição:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const containerVariants: Variants = {
@@ -140,8 +191,8 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-white selection:text-black relative overflow-x-hidden">
       
-      <div className="fixed top-[-20%] left-[-10%] w-150 h-150 bg-white/2 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-[-10%] right-[-5%] w-125 h-125 bg-white/2 rounded-full blur-[100px] pointer-events-none" />
+      <div className="fixed top-[-20%] left-[-10%] w-[150%] h-[150%] bg-white/2 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-5%] w-[125%] h-[125%] bg-white/2 rounded-full blur-[100px] pointer-events-none" />
 
       <motion.main 
         initial="hidden"
@@ -203,24 +254,28 @@ export default function ProfilePage() {
             <div className="flex-1 text-center md:text-left space-y-3">
               <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-1">{user.name}</h1>
+                  <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-1">{user.name || "Usuário"}</h1>
                   <p className="text-white/50 text-sm font-light tracking-wide flex items-center justify-center md:justify-start gap-2">
-                    <Mail size={14} /> {user.email}
+                    <Mail size={14} /> {user.email || "email@exemplo.com"}
                   </p>
                 </div>
                 
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
+                  disabled={isSaving}
                   onClick={() => isEditing ? handleSave() : setIsEditing(true)}
                   className={`
                     px-6 py-2 rounded-full text-sm font-medium border flex items-center gap-2 transition-all duration-300
                     ${isEditing 
                       ? "bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:bg-gray-100" 
                       : "bg-white/5 text-white border-white/10 hover:bg-white/10"}
+                    ${isSaving ? "opacity-70 cursor-wait" : ""}
                   `}
                 >
-                  {isEditing ? (
+                  {isSaving ? (
+                    <> <Loader2 size={16} className="animate-spin" /> Salvando... </>
+                  ) : isEditing ? (
                     <> <Save size={16} /> Salvar Alterações </>
                   ) : (
                     <> <Edit3 size={16} /> Editar Perfil </>
@@ -233,7 +288,7 @@ export default function ProfilePage() {
                     <CheckCircle2 size={12} /> Cliente Verificado
                  </span>
                  <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/50 text-xs font-medium flex items-center gap-1.5">
-                    <Package size={12} /> 12 Pedidos Realizados
+                    <Package size={12} /> 0 Pedidos Realizados
                  </span>
               </div>
             </div>
@@ -265,7 +320,12 @@ export default function ProfilePage() {
               
               <div className="hidden lg:block h-px bg-white/10 mx-4 my-2" />
               
-              <button className="hidden lg:flex w-full px-6 py-4 items-center gap-2 text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/5 transition-colors">
+              <button 
+                onClick={() => {
+                  window.location.reload();
+                }}
+                className="hidden lg:flex w-full px-6 py-4 items-center gap-2 text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/5 transition-colors"
+              >
                  <X size={16} /> Sair da conta
               </button>
             </div>
@@ -296,6 +356,7 @@ export default function ProfilePage() {
                         value={user.name}
                         onChange={(e) => setUser({...user, name: e.target.value})}
                         placeholder="Seu nome"
+                        disabled={!isEditing}
                       />
                       <InputField 
                         label="Cargo / Profissão"
@@ -303,6 +364,7 @@ export default function ProfilePage() {
                         value={user.role}
                         onChange={(e) => setUser({...user, role: e.target.value})}
                         placeholder="Ex: Designer"
+                        disabled={!isEditing}
                       />
                       <InputField 
                         label="E-mail"
@@ -311,6 +373,7 @@ export default function ProfilePage() {
                         value={user.email}
                         onChange={(e) => setUser({...user, email: e.target.value})}
                         placeholder="seu@email.com"
+                        disabled={!isEditing}
                       />
                       <InputField 
                         label="Telefone / Celular"
@@ -318,6 +381,7 @@ export default function ProfilePage() {
                         value={user.phone}
                         onChange={(e) => setUser({...user, phone: e.target.value})}
                         placeholder="(00) 00000-0000"
+                        disabled={!isEditing}
                       />
                       <div className="md:col-span-2">
                         <InputField 
@@ -326,6 +390,7 @@ export default function ProfilePage() {
                           value={user.bio}
                           onChange={(e) => setUser({...user, bio: e.target.value})}
                           placeholder="Um pouco sobre você..."
+                          disabled={!isEditing}
                         />
                       </div>
                     </div>
@@ -356,6 +421,7 @@ export default function ProfilePage() {
                           value={address.street}
                           onChange={(e) => setAddress({...address, street: e.target.value})}
                           placeholder="Nome da rua"
+                          disabled={!isEditing}
                         />
                       </div>
                       <InputField 
@@ -364,6 +430,7 @@ export default function ProfilePage() {
                         value={address.number}
                         onChange={(e) => setAddress({...address, number: e.target.value})}
                         placeholder="123"
+                        disabled={!isEditing}
                       />
                       <InputField 
                         label="Complemento"
@@ -371,6 +438,7 @@ export default function ProfilePage() {
                         value={address.complement}
                         onChange={(e) => setAddress({...address, complement: e.target.value})}
                         placeholder="Apto, Bloco..."
+                        disabled={!isEditing}
                       />
                       <InputField 
                         label="Cidade"
@@ -378,6 +446,7 @@ export default function ProfilePage() {
                         value={address.city}
                         onChange={(e) => setAddress({...address, city: e.target.value})}
                         placeholder="Cidade"
+                        disabled={!isEditing}
                       />
                        <InputField 
                         label="Estado (UF)"
@@ -385,6 +454,7 @@ export default function ProfilePage() {
                         value={address.state}
                         onChange={(e) => setAddress({...address, state: e.target.value})}
                         placeholder="SP"
+                        disabled={!isEditing}
                       />
                       <InputField 
                         label="CEP"
@@ -392,6 +462,7 @@ export default function ProfilePage() {
                         value={address.zip}
                         onChange={(e) => setAddress({...address, zip: e.target.value})}
                         placeholder="00000-000"
+                        disabled={!isEditing}
                       />
                     </div>
                   </div>

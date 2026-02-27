@@ -4,47 +4,61 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Minus, Plus, Trash2, ArrowRight, ShoppingBag, Truck, Tag, ShieldCheck } from 'lucide-react';
 
+// Criamos uma interface rápida para o TypeScript não reclamar do array vazio
+interface CartItem {
+  id: number;
+  name: string;
+  variant: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
 export default function CarPage() {
   const router = useRouter();
 
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Headphone Noise Cancelling Pro",
-      variant: "Cor: Matte Black",
-      price: 250.00,
-      quantity: 1,
-      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60"
-    },
-    {
-      id: 2,
-      name: "Smartwatch Series 5",
-      variant: "Pulseira: Silicone Preto",
-      price: 120.00,
-      quantity: 1,
-      image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60"
-    }
-  ]);
-
+  // 1. O carrinho agora começa 100% vazio por padrão
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [shippingZip, setShippingZip] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // 2. Quando a página carregar, buscamos os itens reais que o usuário adicionou
   useEffect(() => {
+    const savedCart = localStorage.getItem('cartItems');
+    if (savedCart) {
+      try {
+        setCartItems(JSON.parse(savedCart));
+      } catch (error) {
+        console.error("Erro ao carregar o carrinho:", error);
+      }
+    }
     setIsLoaded(true);
   }, []);
 
   const updateQuantity = (id: number, type: 'increase' | 'decrease') => {
-    setCartItems(prev => prev.map(item => {
-      if (item.id === id) {
-        const newQuantity = type === 'increase' ? item.quantity + 1 : item.quantity - 1;
-        return { ...item, quantity: newQuantity < 1 ? 1 : newQuantity };
-      }
-      return item;
-    }));
+    setCartItems(prev => {
+      const updatedCart = prev.map(item => {
+        if (item.id === id) {
+          const newQuantity = type === 'increase' ? item.quantity + 1 : item.quantity - 1;
+          return { ...item, quantity: newQuantity < 1 ? 1 : newQuantity };
+        }
+        return item;
+      });
+      
+      // 3. Salva a nova quantidade no navegador
+      localStorage.setItem('cartItems', JSON.stringify(updatedCart));
+      return updatedCart;
+    });
   };
 
   const removeItem = (id: number) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
+    setCartItems(prev => {
+      const updatedCart = prev.filter(item => item.id !== id);
+      
+      // 4. Salva o carrinho no navegador após remover o item
+      localStorage.setItem('cartItems', JSON.stringify(updatedCart));
+      return updatedCart;
+    });
   };
 
   const handleFinishPurchase = () => {

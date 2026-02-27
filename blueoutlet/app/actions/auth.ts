@@ -3,17 +3,16 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
-import prisma from "@/app/lib/prisma";
+import { prisma } from "@/app/lib/prisma";
 
-const MAX_AGE = 60 * 60 * 24 * 7; // 7 dias
+const MAX_AGE = 60 * 60 * 24 * 7;
 
-// Definição do tipo de retorno para o useActionState
 type ActionState = {
   error?: string;
   success?: boolean;
 } | null;
 
-async function createSession(userId: number, userName: string) {
+async function createSession(userId: string, userName: string) {
   const cookieStore = await cookies();
   
   cookieStore.set("user_session", JSON.stringify({ id: userId, name: userName }), {
@@ -52,15 +51,13 @@ export async function registerAction(prevState: ActionState, formData: FormData)
       },
     });
 
-    await createSession(user.id, user.name);
+    await createSession(user.id, user.name || "Usuário");
 
   } catch (err) {
     console.error("Erro no registro:", err);
     return { error: "Erro ao criar conta. Tente novamente." };
   }
 
-  // CUIDADO: O nome da pasta deve ser exato. Corrigi para AddressPage (inglês correto)
-  // Se a sua pasta for "AdressPage", mude de volta.
   redirect("/AddressPage"); 
 }
 
@@ -77,12 +74,11 @@ export async function loginAction(prevState: ActionState, formData: FormData): P
       where: { email },
     });
 
-    // Se usuário não existe OU senha não bate
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return { error: "Email ou senha incorretos." };
     }
 
-    await createSession(user.id, user.name);
+    await createSession(user.id, user.name || "Usuário");
 
   } catch (error) {
     console.error("Erro no login:", error);
