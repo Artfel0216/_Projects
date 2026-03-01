@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Minus, Plus, Trash2, ArrowRight, ShoppingBag, Truck, Tag, ShieldCheck } from 'lucide-react';
 
-// Criamos uma interface rápida para o TypeScript não reclamar do array vazio
 interface CartItem {
   id: number;
   name: string;
@@ -17,12 +16,10 @@ interface CartItem {
 export default function CarPage() {
   const router = useRouter();
 
-  // 1. O carrinho agora começa 100% vazio por padrão
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [shippingZip, setShippingZip] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // 2. Quando a página carregar, buscamos os itens reais que o usuário adicionou
   useEffect(() => {
     const savedCart = localStorage.getItem('cartItems');
     if (savedCart) {
@@ -45,7 +42,6 @@ export default function CarPage() {
         return item;
       });
       
-      // 3. Salva a nova quantidade no navegador
       localStorage.setItem('cartItems', JSON.stringify(updatedCart));
       return updatedCart;
     });
@@ -55,7 +51,6 @@ export default function CarPage() {
     setCartItems(prev => {
       const updatedCart = prev.filter(item => item.id !== id);
       
-      // 4. Salva o carrinho no navegador após remover o item
       localStorage.setItem('cartItems', JSON.stringify(updatedCart));
       return updatedCart;
     });

@@ -19,6 +19,7 @@ export type ProductType = {
 };
 
 interface ContainProps {
+  items: any[]
   onAddToCart?: (product: ProductType, size: number) => void;
 }
 

@@ -96,7 +96,7 @@ export default function WomanPage() {
       />
 
       <main className="relative z-10 w-full flex items-center justify-center pt-[85vh] pb-20">
-        <Contain onAddToCart={handleAddToCart} />
+        <Contain items={[]} onAddToCart={handleAddToCart} />
       </main>
     </section>
   );

@@ -128,7 +128,7 @@ export default function MenProductPage() {
 
       <main className="relative z-10 w-full flex items-center justify-center pt-[85vh] pb-20">
         <Contain
-          products={displayedProducts}
+          items={displayedProducts}
           onAddToCart={handleAddToCart}
         />
       </main>
