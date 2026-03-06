@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 
 const client = new MercadoPagoConfig({ 
-  accessToken: 'APP_USR-6719941859075376-022715-542e6867f703f32cd7e5e1aa5ba65466-2998057884' 
+  accessToken: '' 
 });
 
 export async function POST(request: Request) {
