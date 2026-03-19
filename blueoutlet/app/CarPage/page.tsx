@@ -15,7 +15,6 @@ interface CartItem {
 
 export default function CarPage() {
   const router = useRouter();
-
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [shippingZip, setShippingZip] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
@@ -32,6 +31,10 @@ export default function CarPage() {
     setIsLoaded(true);
   }, []);
 
+  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const shipping = subtotal > 400 ? 0 : 25.00;
+  const total = subtotal + shipping;
+
   const updateQuantity = (id: number, type: 'increase' | 'decrease') => {
     setCartItems(prev => {
       const updatedCart = prev.map(item => {
@@ -41,7 +44,6 @@ export default function CarPage() {
         }
         return item;
       });
-      
       localStorage.setItem('cartItems', JSON.stringify(updatedCart));
       return updatedCart;
     });
@@ -50,22 +52,19 @@ export default function CarPage() {
   const removeItem = (id: number) => {
     setCartItems(prev => {
       const updatedCart = prev.filter(item => item.id !== id);
-      
       localStorage.setItem('cartItems', JSON.stringify(updatedCart));
       return updatedCart;
     });
   };
 
   const handleFinishPurchase = () => {
+    if (cartItems.length === 0) return;
+    
     const cartData = encodeURIComponent(JSON.stringify(cartItems));
-    const totalPrice = (cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0) + (subtotal > 400 ? 0 : 25.00)).toFixed(2);
+    const totalPrice = total.toFixed(2);
     
     router.push(`/PaymentPage?items=${cartData}&total=${totalPrice}`);
   };
-
-  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const shipping = subtotal > 400 ? 0 : 25.00;
-  const total = subtotal + shipping;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-black font-sans text-white p-4 md:p-8">
@@ -218,27 +217,12 @@ export default function CarPage() {
       </div>
 
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fadeIn 0.6s ease-out forwards;
-        }
-        .animate-slide-down {
-          animation: slideDown 0.6s ease-out forwards;
-        }
-        .animate-fade-in-up {
-          animation: fadeInUp 0.6s ease-out forwards;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+        .animate-slide-down { animation: slideDown 0.6s ease-out forwards; }
+        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
       `}</style>
     </div>
   );

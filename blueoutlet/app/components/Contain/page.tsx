@@ -5,6 +5,7 @@ import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
 import { ShoppingCart, CreditCard, ChevronLeft, ChevronRight, Tag, Ruler } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+
 export type ProductType = {
   id: string;
   name: string;
@@ -19,9 +20,10 @@ export type ProductType = {
 };
 
 interface ContainProps {
-  items: any[]
+  items?: ProductType[]; 
   onAddToCart?: (product: ProductType, size: number) => void;
 }
+
 
 const CAROUSEL_VARIANTS: Variants = {
   enter: (direction: number) => ({ x: direction > 0 ? 300 : -300, opacity: 0, scale: 0.8 }),
@@ -33,6 +35,7 @@ const TRANSITION_SPRING: Transition = {
   x: { type: "spring", stiffness: 300, damping: 30 },
   opacity: { duration: 0.2 }
 };
+
 
 const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCart?: (p: ProductType, s: number) => void }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -97,7 +100,6 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
         image: images[0],
         size: selectedSize!.toString()
       }).toString();
-
       router.push(`/PaymentPage?${queryParams}`);
     });
   };
@@ -120,7 +122,6 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
 
       const existingCart = localStorage.getItem('cartItems');
       let cart = existingCart ? JSON.parse(existingCart) : [];
-
       const existingItemIndex = cart.findIndex((item: any) => item.id === newItem.id);
 
       if (existingItemIndex >= 0) {
@@ -130,7 +131,6 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
       }
 
       localStorage.setItem('cartItems', JSON.stringify(cart));
-
       router.push('/CarPage');
     });
   };
@@ -149,10 +149,8 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
       className={`relative w-full bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl overflow-hidden flex flex-col md:flex-row transition-all duration-300 outline-none focus:ring-2 focus:ring-white/50 ${isExpanded ? 'md:col-span-2 xl:col-span-2 shadow-[0_20px_60px_rgba(0,0,0,0.8)] ring-1 ring-white/30' : 'col-span-1 shadow-2xl cursor-pointer hover:bg-white/5'}`}
     >
       <div className={`flex flex-col md:flex-row w-full ${!isExpanded ? 'pointer-events-none' : ''}`}>
-
         <figure className="w-full md:w-1/2 relative flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 m-0 h-80 md:h-112">
           <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-2xl group">
-            
             <AnimatePresence initial={false} custom={direction}>
               <motion.img
                 key={currentImage}
@@ -176,7 +174,6 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
                 >
                   <ChevronLeft size={20} />
                 </button>
-
                 <button
                   onClick={(e) => { e.stopPropagation(); paginate(1); }}
                   className={`absolute right-2 z-10 p-2 rounded-full bg-black/40 border border-white/10 text-white backdrop-blur-md transition-all duration-300 hover:bg-white/20 hover:scale-110 ${!isExpanded ? 'opacity-0' : 'opacity-100'}`}
@@ -231,7 +228,6 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
                     {sortedSizes.map((s) => {
                       const isOutOfStock = s.stock === 0;
                       const isSelected = selectedSize === s.size;
-                      
                       return (
                         <motion.button
                           key={s.size}
@@ -293,39 +289,54 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
   );
 };
 
-export default function ContainPage({ onAddToCart }: ContainProps) {
+
+export default function ContainPage({ onAddToCart, items }: ContainProps) {
   const [products, setProducts] = useState<ProductType[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (items && items.length > 0) {
+      setProducts(items);
+      setLoading(false);
+      return;
+    }
+
     async function loadProducts() {
       try {
         const res = await fetch("/api/products");
+        if (!res.ok) throw new Error("Erro ao carregar");
         const data = await res.json();
         setProducts(data);
       } catch (error) {
-        console.error(error);
+        console.error("Erro ao buscar produtos:", error);
+      } finally {
+        setLoading(false);
       }
     }
 
     loadProducts();
-  }, []);
+  }, [items]);
 
   return (
     <section className="w-full max-w-7xl mx-auto p-4">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {products.length === 0 && (
-          <p className="text-white text-center col-span-full">
+        {loading ? (
+          <p className="text-white text-center col-span-full animate-pulse">
             Carregando produtos...
           </p>
+        ) : products.length > 0 ? (
+          products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAddToCart={onAddToCart}
+            />
+          ))
+        ) : (
+          <p className="text-white text-center col-span-full">
+            Nenhum produto encontrado.
+          </p>
         )}
-
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            onAddToCart={onAddToCart}
-          />
-        ))}
       </div>
     </section>
   );
