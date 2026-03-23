@@ -1,12 +1,10 @@
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
 }
-
 enum Role {
   USER
   ADMIN
@@ -32,34 +30,66 @@ enum OrderStatus {
   CANCELED
 }
 
+
 model User {
-  id      String   @id @default(cuid())
-  name    String?
-  email   String   @unique
-  password  String
-  phone   String?
-  role    String?
-  bio     String?
-  avatar  String?
-  address Address?
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?   // Opcional para logins sociais
+  phone         String?
+  role          String?   @default("USER")
+  bio           String?
+  image         String?   // NextAuth usa 'image', substituindo seu 'avatar'
+  
+  address       Address?
+  orders        Order[]
+  accounts      Account[] // Necessário para Google/Facebook
+  sessions      Session[] // Necessário para persistência de sessão
 
-  orders Order[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Address {
-  id         String  @id @default(cuid())
-  street     String?
-  number     String?
-  complement String?
-  city       String?
-  state      String?
-  zip        String?
-  userId     String  @unique
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  street      String?
+  number      String?
+  complement  String?
+  city        String?
+  state       String?
+  zip         String?
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
 
 model Brand {
   id        String    @id @default(uuid())

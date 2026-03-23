@@ -1,272 +1,187 @@
-"use client";
+'use client';
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, User, LogIn, UserPlus, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { 
+  Mail, Lock, User, LogIn, UserPlus, ArrowRight, 
+  Eye, EyeOff, Facebook, Chrome, Loader2, AlertCircle 
+} from "lucide-react";
+
 import outeltFundo from "@/public/outeltFundo.jpg";
 import LogoFreitasOutlet from "@/public/LogoFreitasOutlet.png";
 import { loginAction, registerAction } from "@/app/actions/auth";
+import { signIn } from "next-auth/react";
 
-type UserType = {
-  name: string;
-  email: string;
-  password: string;
-};
+const authSchema = z.object({
+  name: z.string().min(3, "Nome muito curto").optional(),
+  email: z.string().email("E-mail inválido"),
+  password: z.string().min(6, "Mínimo de 6 caracteres"),
+});
 
-const INPUT_STYLES =
-  "w-full p-3 pl-10 pr-10 rounded-xl bg-white/5 text-white placeholder:text-gray-400 border border-white/10 focus:outline-none focus:bg-white/10 focus:ring-2 focus:ring-white/30 transition-all duration-300";
-const ICON_STYLES = "absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors duration-300 peer-focus:text-white";
+type AuthFormData = z.infer<typeof authSchema>;
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
-  },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0 },
 };
 
 export default function LoginPage() {
   const router = useRouter();
   const [isRegister, setIsRegister] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<UserType>({
-    name: "",
-    email: "",
-    password: "",
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<AuthFormData>({
+    resolver: zodResolver(authSchema)
   });
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+  const passwordValue = watch("password", "");
 
-    try {
-      if (!formData.email || !formData.password || (isRegister && !formData.name)) {
-        throw new Error("Preencha todos os campos obrigatórios.");
-      }
+  const handleGoogleLogin = () => {
+  signIn("google", { callbackUrl: "/MenProductPage" });
+};
 
-      const fd = new FormData();
-      fd.append("email", formData.email);
-      fd.append("password", formData.password);
-      if (isRegister) fd.append("name", formData.name);
+const handleFacebookLogin = () => {
+  signIn("facebook", { callbackUrl: "/MenProductPage" });
+};
 
-      const action = isRegister ? registerAction : loginAction;
-      const response = await action(null, fd);
+  const onSubmit = async (data: AuthFormData) => {
+    setServerError(null);
+    const fd = new FormData();
+    fd.append("email", data.email);
+    fd.append("password", data.password);
+    if (isRegister && data.name) fd.append("name", data.name);
 
-      if (response?.error) {
-        setError(response.error);
-      } else {
-        router.push(isRegister ? "/PageAdress" : "/MenProductPage");
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Ocorreu um erro inesperado.");
-      }
-    } finally {
-      setIsLoading(false);
+    const action = isRegister ? registerAction : loginAction;
+    const response = await action(null, fd);
+
+    if (response?.error) {
+      setServerError(response.error);
+    } else {
+      router.push(isRegister ? "/PageAdress" : "/MenProductPage");
     }
-  }
-
-  const toggleMode = () => {
-    setIsRegister(!isRegister);
-    setError(null);
   };
 
   return (
-    <main className="flex h-screen w-full bg-neutral-950 overflow-hidden">
-      
-      <aside className="relative hidden md:block md:w-1/2 lg:w-2/3">
-        <Image
-          src={outeltFundo}
-          alt="Interior da loja"
-          fill
-          priority
-          className="object-cover opacity-50"
-          sizes="(max-width: 768px) 0vw, 50vw"
-        />
-        <div className="absolute inset-0 bg-linear-to-r from-neutral-950/20 via-neutral-950/60 to-neutral-950" />
+    <main className="flex h-screen w-full bg-[#050505] overflow-hidden">
+      <aside className="relative hidden lg:block lg:w-2/3">
+        <Image src={outeltFundo} alt="Background" fill priority className="object-cover opacity-40 scale-105" />
+        <div className="absolute inset-0 bg-linear-to-r from-black via-transparent to-[#050505]" />
         <motion.div 
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="absolute bottom-10 left-10 text-white z-10 max-w-md"
+          initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1 }}
+          className="absolute bottom-20 left-20 z-10 max-w-lg"
         >
-          <h2 className="text-4xl font-bold mb-4 drop-shadow-lg">Estilo e Qualidade</h2>
-          <p className="text-lg text-gray-300 drop-shadow-md">
-            Descubra as melhores tendências com preços exclusivos.
-          </p>
+          <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4 inline-block">
+            New Collection 2026
+          </span>
+          <h2 className="text-6xl font-black text-white mb-6 leading-tight">Elevando seu <br/> lifestyle.</h2>
+          <p className="text-xl text-white/50 leading-relaxed">Acesse sua conta para conferir as novidades da Freitas Outlet.</p>
         </motion.div>
       </aside>
 
-      <section className="w-full md:w-1/2 lg:w-1/3 flex items-center justify-center p-6 relative z-10 overflow-hidden">
-        
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-20 -right-20 w-72 h-72 bg-emerald-500/20 rounded-full blur-[80px] pointer-events-none"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.5, 1],
-            opacity: [0.2, 0.4, 0.2],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute -bottom-20 -left-20 w-72 h-72 bg-blue-500/20 rounded-full blur-[80px] pointer-events-none"
-        />
+      <section className="w-full lg:w-1/3 flex items-center justify-center p-8 relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-emerald-500/5 blur-[120px] pointer-events-none" />
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          className="w-full max-w-sm p-8 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative z-10"
-        >
-          <motion.div variants={itemVariants} className="flex justify-center mb-8">
-            <div className="relative w-48 h-20">
-              <Image
-                src={LogoFreitasOutlet}
-                alt="Logo"
-                fill
-                className="object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-                priority
-              />
-            </div>
-          </motion.div>
+        <motion.div variants={containerVariants} initial="hidden" animate="show" className="w-full max-w-sm z-10">
+          <div className="flex justify-center mb-12">
+             <Image src={LogoFreitasOutlet} alt="Logo" width={180} height={60} className="object-contain" priority />
+          </div>
 
-          <motion.div variants={itemVariants} className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-3">
-              {isRegister ? <UserPlus className="text-emerald-400" /> : <LogIn className="text-emerald-400" />}
-              {isRegister ? "Criar Conta" : "Bem-vindo de volta"}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-white tracking-tight">
+              {isRegister ? "Crie sua conta" : "Acesse sua conta"}
             </h1>
-          </motion.div>
+            <p className="text-white/40 mt-2 text-sm">Preencha seus dados para continuar.</p>
+          </div>
 
           <AnimatePresence mode="wait">
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, y: -10 }}
-                animate={{ opacity: 1, height: "auto", y: 0 }}
-                exit={{ opacity: 0, height: 0, y: -10 }}
-                role="alert"
-                className="mb-4 p-3 rounded-xl bg-red-500/20 backdrop-blur-md border border-red-500/50 text-red-200 text-sm text-center"
+            {serverError && (
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-3"
               >
-                {error}
+                <AlertCircle size={16} /> {serverError}
               </motion.div>
             )}
           </AnimatePresence>
 
-          <form onSubmit={handleSubmit} className="space-y-4 relative">
-            <AnimatePresence>
-              {isRegister && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, height: "auto", scale: 1 }}
-                  exit={{ opacity: 0, height: 0, scale: 0.95 }}
-                  className="relative overflow-hidden"
-                >
-                  <label htmlFor="name" className="sr-only">Nome Completo</label>
-                  <input
-                    id="name"
-                    type="text"
-                    required={isRegister}
-                    placeholder="Nome Completo"
-                    className={`peer ${INPUT_STYLES}`}
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                  <User className={ICON_STYLES} size={20} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <motion.div variants={itemVariants} className="relative">
-              <label htmlFor="email" className="sr-only">E-mail</label>
-              <input
-                id="email"
-                type="email"
-                required
-                placeholder="seu@email.com"
-                className={`peer ${INPUT_STYLES}`}
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-              <Mail className={ICON_STYLES} size={20} />
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="relative">
-              <label htmlFor="password" className="sr-only">Senha</label>
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                required
-                placeholder="••••••••"
-                className={`peer ${INPUT_STYLES}`}
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-              <Lock className={ICON_STYLES} size={20} />
-              
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </motion.div>
-
-            {!isRegister && (
-              <motion.div variants={itemVariants} className="flex justify-end mt-1">
-                <button type="button" className="text-xs text-gray-400 hover:text-white transition-colors">
-                  Esqueceu a senha?
-                </button>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {isRegister && (
+              <motion.div variants={itemVariants}>
+                <div className="relative group">
+                  <User className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.name ? 'text-red-400' : 'text-white/20 group-focus-within:text-emerald-400'}`} size={18} />
+                  <input {...register("name")} placeholder="Nome Completo" 
+                    className={`w-full bg-white/5 border rounded-xl py-3.5 pl-12 pr-4 text-white outline-none transition-all ${errors.name ? 'border-red-500/50' : 'border-white/10 focus:border-emerald-500/50 focus:bg-white/10'}`} />
+                </div>
               </motion.div>
             )}
 
-            <motion.button
-              variants={itemVariants}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 rounded-xl bg-linear-to-r from-emerald-500 to-teal-500 text-white font-bold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 disabled:opacity-70 mt-6 flex items-center justify-center gap-2 transition-all"
+            <motion.div variants={itemVariants}>
+              <div className="relative group">
+                <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.email ? 'text-red-400' : 'text-white/20 group-focus-within:text-emerald-400'}`} size={18} />
+                <input {...register("email")} placeholder="seu@email.com" 
+                  className={`w-full bg-white/5 border rounded-xl py-3.5 pl-12 pr-4 text-white outline-none transition-all ${errors.email ? 'border-red-500/50' : 'border-white/10 focus:border-emerald-500/50 focus:bg-white/10'}`} />
+              </div>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <div className="relative group">
+                <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.password ? 'text-red-400' : 'text-white/20 group-focus-within:text-emerald-400'}`} size={18} />
+                <input {...register("password")} type={showPassword ? "text" : "password"} placeholder="Sua senha" 
+                  className={`w-full bg-white/5 border rounded-xl py-3.5 pl-12 pr-12 text-white outline-none transition-all ${errors.password ? 'border-red-500/50' : 'border-white/10 focus:border-emerald-500/50 focus:bg-white/10'}`} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors">
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </motion.div>
+
+            <motion.button variants={itemVariants} disabled={isSubmitting} type="submit"
+              className="w-full py-4 rounded-xl bg-white text-black font-bold text-sm hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 group"
             >
-              {isLoading ? (
-                <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  {isRegister ? "Registrar" : "Entrar"}
-                  <ArrowRight size={20} />
-                </>
+              {isSubmitting ? <Loader2 className="animate-spin" /> : (
+                <> {isRegister ? "Criar conta agora" : "Entrar na plataforma"} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /> </>
               )}
             </motion.button>
           </form>
 
-          <motion.div variants={itemVariants} className="mt-8 text-center">
-            <button
+          <div className="mt-8 flex items-center gap-4 text-white/10">
+            <div className="h-px flex-1 bg-current" />
+            <span className="text-[10px] uppercase font-bold tracking-widest text-white/30">ou continue com</span>
+            <div className="h-px flex-1 bg-current" />
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            <button 
               type="button"
-              onClick={toggleMode}
-              className="text-gray-300 hover:text-white hover:underline text-sm transition-all"
+              onClick={handleGoogleLogin}
+              className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all text-xs font-medium"
             >
-              {isRegister
-                ? "Já possui uma conta? Fazer Login"
-                : "Ainda não tem conta? Cadastre-se"}
+              <Chrome size={16} /> Google
             </button>
-          </motion.div>
+            <button 
+              type="button"
+              onClick={handleFacebookLogin}
+              className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all text-xs font-medium"
+            >
+              <Facebook size={16} className="text-[#1877F2]" /> Facebook
+            </button>
+          </div>
+
+          <motion.p variants={itemVariants} className="mt-10 text-center text-sm text-white/40">
+            {isRegister ? "Já tem uma conta?" : "Ainda não tem conta?"} {" "}
+            <button onClick={() => setIsRegister(!isRegister)} className="text-white font-bold hover:text-emerald-400 transition-colors underline-offset-4 hover:underline">
+              {isRegister ? "Fazer Login" : "Criar conta gratuita"}
+            </button>
+          </motion.p>
         </motion.div>
       </section>
     </main>

@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { updateProfile } from '../actions/profile';
+import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { 
   Camera, User, Mail, Phone, MapPin, Save, 
   Package, CreditCard, Edit3, Loader2, LucideIcon 
@@ -70,15 +73,16 @@ const TabButton = ({ active, label, onClick, icon: Icon }: { active: boolean; la
 );
 
 export default function ProfilePage() {
+  const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState<'personal' | 'address' | 'orders'>('personal');
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<ProfileFormData>({
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: "Seu Nome",
-      email: "exemplo@email.com",
+      name: "",
+      email: "",
       phone: "",
       zip: "",
       street: "",
@@ -88,6 +92,22 @@ export default function ProfilePage() {
       bio: ""
     }
   });
+
+  useEffect(() => {
+    if (session?.user) {
+      reset({
+        name: session.user.name || "",
+        email: session.user.email || "",
+        phone: "",
+        zip: "",
+        street: "",
+        number: "",
+        city: "",
+        role: "Cliente",
+        bio: ""
+      });
+    }
+  }, [session, reset]);
 
   const zipValue = watch("zip");
 
@@ -106,11 +126,29 @@ export default function ProfilePage() {
     }
   }, [zipValue, setValue]);
 
-  const onSubmit = async (data: ProfileFormData) => {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log("Dados salvos:", data);
-    setIsEditing(false);
-  };
+  const onSubmit = async(data: ProfileFormData) => {
+    try {
+
+      const result = await updateProfile(data);
+
+      if(result?.success) {
+        setIsEditing(false);
+        alert("Perfil Salvo com sucesso!");
+      } else {
+        alert(result?.error);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-[#050505]">
+        <Loader2 className="animate-spin text-white" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-white selection:text-black relative overflow-x-hidden p-4">
@@ -118,16 +156,19 @@ export default function ProfilePage() {
 
       <motion.main initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 max-w-5xl mx-auto py-12 md:py-20">
         <form onSubmit={handleSubmit(onSubmit)}>
-          
           <div className="bg-white/2 border border-white/8 backdrop-blur-2xl rounded-3xl p-8 mb-8">
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="relative group">
-                <div className="w-32 h-32 rounded-full p-1 border border-white/10 bg-black overflow-hidden shadow-2xl">
-                  <div className="w-full h-full bg-white/5 flex items-center justify-center rounded-full text-white/20">
-                    <User size={40} />
-                  </div>
+                <div className="w-32 h-32 rounded-full p-1 border border-white/10 bg-black overflow-hidden shadow-2xl relative">
+                  {session?.user?.image ? (
+                    <Image src={session.user.image} alt="Avatar" fill className="object-cover rounded-full" />
+                  ) : (
+                    <div className="w-full h-full bg-white/5 flex items-center justify-center rounded-full text-white/20">
+                      <User size={40} />
+                    </div>
+                  )}
                 </div>
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 p-2 bg-white text-black rounded-full shadow-lg hover:scale-110 transition-transform">
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 p-2 bg-white text-black rounded-full shadow-lg hover:scale-110 transition-transform z-20">
                   <Camera size={16} />
                 </button>
                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" />
@@ -136,7 +177,7 @@ export default function ProfilePage() {
               <div className="flex-1 text-center md:text-left">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h1 className="text-3xl font-bold tracking-tight">{watch("name") || "Seu Nome"}</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">{watch("name") || "Usuário"}</h1>
                     <p className="text-white/50 flex items-center justify-center md:justify-start gap-2 mt-1"><Mail size={14} /> {watch("email")}</p>
                   </div>
                   <button 
@@ -172,8 +213,8 @@ export default function ProfilePage() {
                   {activeTab === 'personal' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <InputField label="Nome Completo" icon={User} disabled={!isEditing} error={errors.name} {...register("name")} />
-                      <InputField label="Cargo" icon={CreditCard} disabled={!isEditing} error={errors.role} {...register("role")} />
-                      <InputField label="E-mail" icon={Mail} disabled={!isEditing} error={errors.email} {...register("email")} />
+                      <InputField label="Cargo / Tipo" icon={CreditCard} disabled={!isEditing} error={errors.role} {...register("role")} />
+                      <InputField label="E-mail" icon={Mail} disabled={true} error={errors.email} {...register("email")} />
                       <InputField label="Telefone" icon={Phone} disabled={!isEditing} error={errors.phone} {...register("phone", { onChange: (e) => setValue("phone", maskPhone(e.target.value)) })} />
                       <div className="md:col-span-2">
                         <InputField label="Bio" icon={Edit3} disabled={!isEditing} error={errors.bio} {...register("bio")} />
