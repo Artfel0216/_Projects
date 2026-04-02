@@ -58,7 +58,8 @@ export async function registerAction(prevState: ActionState, formData: FormData)
     return { error: "Erro ao criar conta. Tente novamente." };
   }
 
-  redirect("/AddressPage"); 
+  // Redireciona para a página de endereço após o cadastro bem-sucedido
+  redirect("/PageAdress"); 
 }
 
 export async function loginAction(prevState: ActionState, formData: FormData): Promise<ActionState> {
@@ -74,7 +75,12 @@ export async function loginAction(prevState: ActionState, formData: FormData): P
       where: { email },
     });
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user || !user.password) {
+      return { error: "Email ou senha incorretos." };
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
       return { error: "Email ou senha incorretos." };
     }
 
@@ -85,5 +91,6 @@ export async function loginAction(prevState: ActionState, formData: FormData): P
     return { error: "Ocorreu um erro no servidor." };
   }
 
+  // Redireciona para a página de produtos após o login
   redirect("/MenProductPage");
 }

@@ -9,8 +9,7 @@ import { updateProfile } from '../actions/profile';
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { 
-  Camera, User, Mail, Phone, MapPin, Save, 
-  Package, CreditCard, Edit3, Loader2, LucideIcon 
+  Camera, User, Loader2, MapPin, BadgeCheck, Phone, Mail
 } from 'lucide-react';
 
 const profileSchema = z.object({
@@ -18,78 +17,61 @@ const profileSchema = z.object({
   email: z.string().email("E-mail inválido"),
   phone: z.string().min(14, "Telefone incompleto"),
   role: z.string().optional(),
-  bio: z.string().max(160, "Máximo 160 caracteres").optional(),
+  bio: z.string().max(160, "Máximo de 160 caracteres").optional(),
   zip: z.string().min(9, "CEP incompleto"),
   street: z.string().min(1, "Rua obrigatória"),
-  number: z.string().min(1, "Nº obrigatório"),
+  number: z.string().min(1, "Número obrigatório"),
   city: z.string().min(1, "Cidade obrigatória"),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
-const maskCEP = (value: string) => {
-  return value.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2").substring(0, 9);
-};
+const maskCEP = (value: string) =>
+  value.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2").substring(0, 9);
 
-const maskPhone = (value: string) => {
-  return value.replace(/\D/g, "").replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2").substring(0, 15);
-};
+const maskPhone = (value: string) =>
+  value
+    .replace(/\D/g, "")
+    .replace(/^(\d{2})(\d)/g, "($1) $2")
+    .replace(/(\d{5})(\d)/, "$1-$2")
+    .substring(0, 15);
 
-const InputField = React.forwardRef(({ label, icon: Icon, error, disabled, ...props }: any, ref: any) => (
-  <div className="group space-y-2 w-full">
-    <div className="flex justify-between items-center ml-1">
-      <label className="text-xs font-medium text-white/40 uppercase tracking-wider">{label}</label>
-      {error && <span className="text-[10px] text-red-400 font-medium animate-pulse">{error.message}</span>}
-    </div>
+const InputField = ({ label, error, icon: Icon, ...props }: any) => (
+  <div className="flex flex-col gap-1.5 w-full">
+    <label className="text-sm font-medium text-white/70 ml-1">{label}</label>
     <div className="relative">
-      <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300 ${error ? 'text-red-400' : 'text-white/30 group-focus-within:text-white'}`}>
-        <Icon size={18} />
-      </div>
+      {Icon && (
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
+          <Icon size={18} />
+        </div>
+      )}
       <input
+        className={`w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed ${Icon ? 'pl-10' : ''}`}
         {...props}
-        ref={ref}
-        disabled={disabled}
-        className={`w-full bg-white/3 border rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-white/20 transition-all duration-300 focus:outline-none 
-          ${disabled ? "border-transparent opacity-60 cursor-not-allowed" : 
-            error ? "border-red-500/50 bg-red-500/5" : "border-white/8 hover:border-white/20 focus:border-white/30 focus:bg-white/5"}`}
       />
     </div>
+    {error && <span className="text-xs text-red-400 ml-1">{error.message}</span>}
   </div>
-));
-InputField.displayName = "InputField";
-
-const TabButton = ({ active, label, onClick, icon: Icon }: { active: boolean; label: string; onClick: () => void; icon: LucideIcon }) => (
-  <button 
-    type="button"
-    onClick={onClick}
-    className={`relative px-6 py-4 flex items-center gap-2 text-sm font-medium transition-colors duration-300 ${active ? "text-white" : "text-white/40 hover:text-white/70"}`}
-  >
-    <Icon size={16} />
-    <span className="hidden md:inline">{label}</span>
-    {active && (
-      <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
-    )}
-  </button>
 );
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
-  const [activeTab, setActiveTab] = useState<'personal' | 'address' | 'orders'>('personal');
+
+  const [activeTab, setActiveTab] = useState<'personal' | 'address'>('personal');
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } = useForm<ProfileFormData>({
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors, isSubmitting }
+  } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      zip: "",
-      street: "",
-      number: "",
-      city: "",
-      role: "",
-      bio: ""
+      name: "", email: "", phone: "", zip: "", street: "", number: "", city: "", role: "", bio: ""
     }
   });
 
@@ -98,13 +80,7 @@ export default function ProfilePage() {
       reset({
         name: session.user.name || "",
         email: session.user.email || "",
-        phone: "",
-        zip: "",
-        street: "",
-        number: "",
-        city: "",
-        role: "Cliente",
-        bio: ""
+        phone: "", zip: "", street: "", number: "", city: "", role: "Cliente", bio: ""
       });
     }
   }, [session, reset]);
@@ -112,9 +88,10 @@ export default function ProfilePage() {
   const zipValue = watch("zip");
 
   useEffect(() => {
-    const cepNumbers = zipValue?.replace(/\D/g, "");
-    if (cepNumbers?.length === 8) {
-      fetch(`https://viacep.com.br/ws/${cepNumbers}/json/`)
+    const cep = zipValue?.replace(/\D/g, "");
+
+    if (cep?.length === 8) {
+      fetch(`https://viacep.com.br/ws/${cep}/json/`)
         .then(res => res.json())
         .then(data => {
           if (!data.erro) {
@@ -126,125 +103,260 @@ export default function ProfilePage() {
     }
   }, [zipValue, setValue]);
 
-  const onSubmit = async(data: ProfileFormData) => {
+  const onSubmit = async (data: ProfileFormData) => {
     try {
-
       const result = await updateProfile(data);
-
-      if(result?.success) {
+      if (result?.success) {
         setIsEditing(false);
-        alert("Perfil Salvo com sucesso!");
+        alert("Perfil salvo com sucesso!");
       } else {
-        alert(result?.error);
+        alert(result?.error || "Erro ao salvar o perfil.");
       }
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   if (status === "loading") {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-[#050505]">
-        <Loader2 className="animate-spin text-white" size={32} />
+      <div className="h-screen flex items-center justify-center bg-black">
+        <Loader2 className="animate-spin text-purple-500 w-10 h-10" />
       </div>
     );
   }
 
+  if (!session) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-black text-white/70">
+        Você precisa estar logado para acessar esta página.
+      </div>
+    );
+  }
+
+  const tabVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+    exit: { opacity: 0, y: -10, transition: { duration: 0.2 } }
+  };
+
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-white selection:text-black relative overflow-x-hidden p-4">
-      <div className="fixed top-[-20%] left-[-10%] w-[150%] h-[150%] bg-white/2 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-[#0a0a0a] text-white p-4 relative overflow-hidden font-sans">
+      
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-purple-600/20 blur-[120px] rounded-full mix-blend-screen" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-blue-600/20 blur-[120px] rounded-full mix-blend-screen" />
+      </div>
 
-      <motion.main initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 max-w-5xl mx-auto py-12 md:py-20">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="bg-white/2 border border-white/8 backdrop-blur-2xl rounded-3xl p-8 mb-8">
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              <div className="relative group">
-                <div className="w-32 h-32 rounded-full p-1 border border-white/10 bg-black overflow-hidden shadow-2xl relative">
-                  {session?.user?.image ? (
-                    <Image src={session.user.image} alt="Avatar" fill className="object-cover rounded-full" />
-                  ) : (
-                    <div className="w-full h-full bg-white/5 flex items-center justify-center rounded-full text-white/20">
-                      <User size={40} />
-                    </div>
-                  )}
-                </div>
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 p-2 bg-white text-black rounded-full shadow-lg hover:scale-110 transition-transform z-20">
-                  <Camera size={16} />
-                </button>
-                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" />
-              </div>
+      <motion.main
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-3xl mx-auto py-12 relative z-10"
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
 
-              <div className="flex-1 text-center md:text-left">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <h1 className="text-3xl font-bold tracking-tight">{watch("name") || "Usuário"}</h1>
-                    <p className="text-white/50 flex items-center justify-center md:justify-start gap-2 mt-1"><Mail size={14} /> {watch("email")}</p>
+          <div className="bg-white/3 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
+            
+            <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-white/20 to-transparent" />
+
+            <div className="relative group">
+              <div className="relative w-32 h-32 rounded-full overflow-hidden bg-white/5 border-4 border-white/10 shadow-lg">
+                {session.user?.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt="Avatar"
+                    fill
+                    sizes="128px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-white/30">
+                    <User size={48} />
                   </div>
-                  <button 
-                    type={isEditing ? "submit" : "button"}
-                    onClick={() => !isEditing && setIsEditing(true)}
-                    disabled={isSubmitting}
-                    className={`px-6 py-2.5 rounded-full text-sm font-semibold flex items-center gap-2 transition-all ${isEditing ? "bg-white text-black" : "bg-white/10 text-white hover:bg-white/20"}`}
+                )}
+                
+                <AnimatePresence>
+                  {isEditing && (
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer transition-colors hover:bg-black/60"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Camera className="text-white/80 w-8 h-8" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" />
+            </div>
+
+            <div className="text-center md:text-left flex-1">
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+                <h1 className="text-3xl font-bold tracking-tight">
+                  {watch("name") || session.user?.name || "Usuário"}
+                </h1>
+                <BadgeCheck className="text-purple-400 w-6 h-6" />
+              </div>
+              <p className="text-white/50 text-sm mb-4">
+                {watch("role") || "Membro"} • {watch("email") || session.user?.email}
+              </p>
+              
+              <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                {isEditing ? (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditing(false);
+                        reset();
+                      }}
+                      className="px-6 py-2 rounded-full border border-white/10 hover:bg-white/5 transition-colors text-sm font-medium"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full transition-all shadow-lg shadow-purple-500/25 flex items-center gap-2 text-sm font-medium disabled:opacity-70"
+                    >
+                      {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                      Salvar Alterações
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(true)}
+                    className="bg-white text-black hover:bg-gray-200 px-6 py-2 rounded-full transition-colors text-sm font-medium shadow-lg shadow-white/10"
                   >
-                    {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : isEditing ? <Save size={16} /> : <Edit3 size={16} />}
-                    {isEditing ? "Salvar Alterações" : "Editar Perfil"}
+                    Editar Perfil
                   </button>
-                </div>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
-            <nav className="lg:w-64">
-              <div className="bg-white/2 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-xl flex lg:flex-col">
-                <TabButton active={activeTab === 'personal'} label="Dados Pessoais" icon={User} onClick={() => setActiveTab('personal')} />
-                <TabButton active={activeTab === 'address'} label="Endereço" icon={MapPin} onClick={() => setActiveTab('address')} />
-                <TabButton active={activeTab === 'orders'} label="Pedidos" icon={Package} onClick={() => setActiveTab('orders')} />
-              </div>
-            </nav>
+          <div className="bg-white/2 backdrop-blur-md border border-white/10 p-1.5 rounded-2xl flex gap-2 max-w-fit mx-auto md:mx-0">
+            {(['personal', 'address'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`relative px-6 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                  activeTab === tab ? "text-white" : "text-white/50 hover:text-white/80"
+                }`}
+              >
+                {activeTab === tab && (
+                  <motion.div
+                    layoutId="active-tab"
+                    className="absolute inset-0 bg-white/10 border border-white/5 rounded-xl -z-10"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                {tab === 'personal' ? 'Dados Pessoais' : 'Endereço'}
+              </button>
+            ))}
+          </div>
 
-            <div className="flex-1">
-              <AnimatePresence mode="wait">
+          <div className="bg-white/3 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 min-h-80">
+            <AnimatePresence mode="wait">
+              
+              {activeTab === "personal" && (
                 <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
-                  className="bg-white/2 border border-white/5 rounded-3xl p-6 md:p-8 backdrop-blur-sm min-h-100"
+                  key="personal"
+                  variants={tabVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
-                  {activeTab === 'personal' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <InputField label="Nome Completo" icon={User} disabled={!isEditing} error={errors.name} {...register("name")} />
-                      <InputField label="Cargo / Tipo" icon={CreditCard} disabled={!isEditing} error={errors.role} {...register("role")} />
-                      <InputField label="E-mail" icon={Mail} disabled={true} error={errors.email} {...register("email")} />
-                      <InputField label="Telefone" icon={Phone} disabled={!isEditing} error={errors.phone} {...register("phone", { onChange: (e) => setValue("phone", maskPhone(e.target.value)) })} />
-                      <div className="md:col-span-2">
-                        <InputField label="Bio" icon={Edit3} disabled={!isEditing} error={errors.bio} {...register("bio")} />
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === 'address' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="md:col-span-2">
-                        <InputField label="CEP" icon={MapPin} disabled={!isEditing} error={errors.zip} {...register("zip", { onChange: (e) => setValue("zip", maskCEP(e.target.value)) })} />
-                      </div>
-                      <div className="md:col-span-2">
-                        <InputField label="Rua / Avenida" icon={MapPin} disabled={!isEditing} error={errors.street} {...register("street")} />
-                      </div>
-                      <InputField label="Número" icon={MapPin} disabled={!isEditing} error={errors.number} {...register("number")} />
-                      <InputField label="Cidade" icon={MapPin} disabled={true} error={errors.city} {...register("city")} />
-                    </div>
-                  )}
-
-                  {activeTab === 'orders' && (
-                    <div className="flex flex-col items-center justify-center py-20 text-white/20">
-                      <Package size={48} className="mb-4 opacity-20" />
-                      <p>Nenhum pedido encontrado.</p>
-                    </div>
-                  )}
+                  <InputField 
+                    label="Nome Completo"
+                    icon={User}
+                    {...register("name")} 
+                    disabled={!isEditing} 
+                    error={errors.name}
+                  />
+                  <InputField 
+                    label="E-mail"
+                    icon={Mail}
+                    {...register("email")} 
+                    disabled={true}
+                    error={errors.email}
+                  />
+                  <InputField 
+                    label="Telefone"
+                    icon={Phone}
+                    {...register("phone")} 
+                    disabled={!isEditing}
+                    error={errors.phone}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue("phone", maskPhone(e.target.value))}
+                    placeholder="(00) 00000-0000"
+                  />
+                  <div className="col-span-1 md:col-span-2 flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-white/70 ml-1">Biografia</label>
+                    <textarea
+                      {...register("bio")}
+                      disabled={!isEditing}
+                      placeholder="Fale um pouco sobre você..."
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50 resize-none h-24"
+                    />
+                    {errors.bio && <span className="text-xs text-red-400 ml-1">{errors.bio.message}</span>}
+                  </div>
                 </motion.div>
-              </AnimatePresence>
-            </div>
+              )}
+
+              {activeTab === "address" && (
+                <motion.div
+                  key="address"
+                  variants={tabVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="grid grid-cols-1 md:grid-cols-12 gap-6"
+                >
+                  <div className="col-span-1 md:col-span-4">
+                    <InputField 
+                      label="CEP"
+                      icon={MapPin}
+                      {...register("zip")} 
+                      disabled={!isEditing}
+                      error={errors.zip}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue("zip", maskCEP(e.target.value))}
+                      placeholder="00000-000"
+                    />
+                  </div>
+                  <div className="col-span-1 md:col-span-8">
+                    <InputField 
+                      label="Logradouro / Rua"
+                      {...register("street")} 
+                      disabled={!isEditing}
+                      error={errors.street}
+                    />
+                  </div>
+                  <div className="col-span-1 md:col-span-4">
+                    <InputField 
+                      label="Número"
+                      {...register("number")} 
+                      disabled={!isEditing}
+                      error={errors.number}
+                    />
+                  </div>
+                  <div className="col-span-1 md:col-span-8">
+                    <InputField 
+                      label="Cidade"
+                      {...register("city")} 
+                      disabled={!isEditing || true}
+                      error={errors.city}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+
         </form>
       </motion.main>
     </div>

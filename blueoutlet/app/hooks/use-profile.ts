@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 
 interface UserData {
@@ -20,11 +22,23 @@ interface AddressData {
 
 export function useProfile() {
   const [user, setUser] = useState<UserData>({
-    name: "", email: "", phone: "", role: "", bio: "", avatar: null
+    name: "",
+    email: "",
+    phone: "",
+    role: "",
+    bio: "",
+    avatar: null
   });
+
   const [address, setAddress] = useState<AddressData>({
-    street: "", number: "", city: "", state: "", zip: "", complement: ""
+    street: "",
+    number: "",
+    city: "",
+    state: "",
+    zip: "",
+    complement: ""
   });
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -32,52 +46,99 @@ export function useProfile() {
 
   useEffect(() => {
     async function loadData() {
-      const cached = localStorage.getItem(STORAGE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        setUser(parsed.user);
-        setAddress(parsed.address);
-      }
-
       try {
+        if (typeof window !== "undefined") {
+          const cached = localStorage.getItem(STORAGE_KEY);
+
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            setUser(parsed.user || {});
+            setAddress(parsed.address || {});
+          }
+        }
+
         const res = await fetch('/api/user');
+
         if (res.ok) {
           const data = await res.json();
-          setUser(data.user);
-          setAddress(data.address);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+          setUser(data.user || {});
+          setAddress(data.address || {});
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem(
+              STORAGE_KEY,
+              JSON.stringify({
+                user: data.user,
+                address: data.address
+              })
+            );
+          }
         }
       } catch (error) {
-        console.error("Erro ao sincronizar dados", error);
+        console.error("Erro ao carregar perfil:", error);
       } finally {
         setIsLoading(false);
       }
     }
+
     loadData();
   }, []);
 
   const saveProfile = async (newUser: UserData, newAddress: AddressData) => {
     setIsSaving(true);
+
     try {
       const res = await fetch('/api/user', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: newUser, address: newAddress }),
+        body: JSON.stringify({
+          user: newUser,
+          address: newAddress
+        }),
       });
 
-      if (!res.ok) throw new Error("Erro no servidor");
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Erro no servidor");
+      }
 
+      // ✅ Atualiza estado
       setUser(newUser);
       setAddress(newAddress);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ user: newUser, address: newAddress }));
-      
+
+      // ✅ Atualiza cache
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            user: newUser,
+            address: newAddress
+          })
+        );
+      }
+
       return { success: true };
-    } catch (error) {
-      return { success: false, error };
+
+    } catch (error: any) {
+      console.error("Erro ao salvar:", error);
+
+      return {
+        success: false,
+        error: error.message || "Erro desconhecido"
+      };
     } finally {
       setIsSaving(false);
     }
   };
 
-  return { user, setUser, address, setAddress, isLoading, isSaving, saveProfile };
+  return {
+    user,
+    setUser,
+    address,
+    setAddress,
+    isLoading,
+    isSaving,
+    saveProfile
+  };
 }

@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence, Variants, Transition, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { ShoppingCart, CreditCard, ChevronLeft, ChevronRight, Tag, Ruler } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export type ProductType = {
   id: string;
@@ -42,6 +42,7 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
   const [showSizeError, setShowSizeError] = useState(false);
   
   const router = useRouter();
+  const pathname = usePathname(); 
   const cardRef = useRef<HTMLDivElement>(null);
 
   const mouseX = useMotionValue(0);
@@ -51,9 +52,15 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
   const smoothX = useSpring(mouseX, springConfig);
   const smoothY = useSpring(mouseY, springConfig);
 
+  const getGlowColor = () => {
+    if (pathname.includes('/Womanpage')) return 'rgba(236, 72, 153, 0.15)'; // Rosa (Pink-500)
+    if (pathname.includes('/Kidspage')) return 'rgba(59, 130, 246, 0.15)'; // Azul (Blue-500)
+    return 'rgba(255, 255, 255, 0.12)'; 
+  };
+
   const glowBackground = useTransform(
     [smoothX, smoothY],
-    ([x, y]) => `radial-gradient(450px circle at ${x}px ${y}px, rgba(255, 255, 255, 0.12), transparent 80%)`
+    ([x, y]) => `radial-gradient(450px circle at ${x}px ${y}px, ${getGlowColor()}, transparent 80%)`
   );
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -87,38 +94,50 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
   }, []);
 
   const handleAction = (e: React.MouseEvent, type: 'buy' | 'add') => {
-    e.stopPropagation();
-    if (!selectedSize) {
-      setShowSizeError(true);
-      setTimeout(() => setShowSizeError(false), 2000);
-      return;
-    }
+  e.stopPropagation();
 
-    if (type === 'buy') {
-      const query = new URLSearchParams({
-        title: product.name,
-        price: product.price.toString(),
-        image: images[0],
-        size: selectedSize.toString()
-      }).toString();
-      router.push(`/PaymentPage?${query}`);
-    } else {
-      if (onAddToCart) onAddToCart(product, selectedSize);
-      const newItem = {
-        id: `${product.id}-${selectedSize}`,
-        name: product.name,
-        variant: `Tamanho: ${selectedSize} | Marca: ${product.brand}`,
-        price: Number(product.price),
-        quantity: 1,
-        image: images[0]
-      };
-      const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
-      const index = cart.findIndex((item: any) => item.id === newItem.id);
-      if (index >= 0) cart[index].quantity += 1;
-      else cart.push(newItem);
-      localStorage.setItem('cartItems', JSON.stringify(cart));
-      router.push('/CarPage');
-    }
+  if (!selectedSize) {
+    setShowSizeError(true);
+    setTimeout(() => setShowSizeError(false), 2000);
+    return;
+  }
+
+  const item = {
+    id: `${product.id}-${selectedSize}`,
+    name: product.name,
+    variant: `Tamanho: ${selectedSize} | Marca: ${product.brand}`,
+    price: Number(product.price),
+    quantity: 1,
+    image: images[currentImage] 
+  };
+
+  if (type === 'buy') {
+    const items = [item];
+
+    const query = new URLSearchParams({
+      items: encodeURIComponent(JSON.stringify(items)),
+      total: product.price.toString()
+    }).toString();
+
+    router.push(`/PaymentPage?${query}`);
+  } else {
+    if (onAddToCart) onAddToCart(product, selectedSize);
+
+    const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+    const index = cart.findIndex((i: any) => i.id === item.id);
+
+    if (index >= 0) cart[index].quantity += 1;
+    else cart.push(item);
+
+    localStorage.setItem('cartItems', JSON.stringify(cart));
+    router.push('/CarPage');
+  }
+};
+
+  const getBorderColor = () => {
+    if (pathname.includes('/Womanpage')) return 'border-pink-500/20 hover:border-pink-500/50';
+    if (pathname.includes('/Kidspage')) return 'border-blue-500/20 hover:border-blue-500/50';
+    return 'border-white/10 hover:border-white/30';
   };
 
   return (
@@ -134,7 +153,7 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
         scale: isExpanded ? 1.02 : 1, 
         zIndex: isExpanded ? 50 : 1 
       }}
-      className={`relative w-full group overflow-hidden rounded-[2.5rem] border border-white/10 flex flex-col md:flex-row transition-all duration-500 bg-neutral-900/40 backdrop-blur-2xl ${isExpanded ? 'md:col-span-2 xl:col-span-2 shadow-2xl' : 'cursor-pointer'}`}
+      className={`relative w-full group overflow-hidden rounded-[2.5rem] border flex flex-col md:flex-row transition-all duration-500 bg-neutral-900/40 backdrop-blur-2xl ${getBorderColor()} ${isExpanded ? 'md:col-span-2 xl:col-span-2 shadow-2xl' : 'cursor-pointer'}`}
     >
       <motion.div 
         className="absolute inset-0 z-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
@@ -205,10 +224,10 @@ const ProductCard = ({ product, onAddToCart }: { product: ProductType; onAddToCa
           </div>
 
           <footer className="flex flex-col gap-4 mt-10">
-            <button onClick={(e) => handleAction(e, 'buy')} className="w-full py-5 rounded-[1.5rem] bg-white text-black font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 hover:bg-neutral-200 transition-colors">
+            <button onClick={(e) => handleAction(e, 'buy')} className="w-full py-5 rounded-3xl bg-white text-black font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 hover:bg-neutral-200 transition-colors">
               <CreditCard size={18} /> Comprar Agora
             </button>
-            <button onClick={(e) => handleAction(e, 'add')} className="w-full py-5 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 hover:bg-white/10 transition-colors">
+            <button onClick={(e) => handleAction(e, 'add')} className="w-full py-5 rounded-3xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 hover:bg-white/10 transition-colors">
               <ShoppingCart size={18} /> Adicionar ao Carrinho
             </button>
           </footer>

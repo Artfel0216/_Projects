@@ -1,9 +1,16 @@
 import { PrismaClient, Gender, Category, Prisma } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 import slugify from "slugify";
 import fs from "fs";
 import path from "path";
+import "dotenv/config";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL!,
+});
+
+const prisma = new PrismaClient({ adapter });
+
 const PUBLIC_DIR = path.join(process.cwd(), "public");
 
 const PRICE_MIN = 199.9;
@@ -27,12 +34,21 @@ const BRAND_ALIASES: Record<string, string> = {
   chinelo: "Genérico",
 };
 
-const formatProductName = (filename: string): string =>
-  filename
-    .replace(/\.(jpg|jpeg|png|webp)$/i, "")
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/\d+/g, "")
+const normalizeProductName = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/\b(preto|branco|white|black|azul|blue|vermelho|red|rosa|pink)\b/g, "")
+    .replace(/\s+/g, " ")
     .trim();
+};
+
+const formatProductName = (filename: string): string => {
+  return filename
+    .replace(/\.(jpg|jpeg|png|webp)$/i, "")
+    .replace(/[-_]\d+$/, "")
+    .replace(/[-_]/g, " ")
+    .trim();
+};
 
 const generateSlug = (text: string): string =>
   slugify(text, { lower: true, strict: true });
@@ -48,8 +64,8 @@ async function generateUniqueSlug(
   while (true) {
     const exists =
       model === "product"
-        ? await prisma.product.findUnique({ where: { slug }, select: { id: true } })
-        : await prisma.brand.findUnique({ where: { slug }, select: { id: true } });
+        ? await prisma.product.findUnique({ where: { slug } })
+        : await prisma.brand.findUnique({ where: { slug } });
 
     if (!exists) break;
 
@@ -61,23 +77,27 @@ async function generateUniqueSlug(
 
 const detectBrand = (filename: string): string => {
   const normalizedName = filename.toLowerCase();
-  const matchedKey = Object.keys(BRAND_ALIASES).find((key) =>
-    normalizedName.startsWith(key)
+  const matched = Object.entries(BRAND_ALIASES).find(([key]) =>
+    normalizedName.includes(key)
   );
-  return matchedKey ? BRAND_ALIASES[matchedKey] : "Outros";
+  return matched ? matched[1] : "Outros";
 };
 
 const detectGender = (filename: string): Gender => {
   const normalizedName = filename.toLowerCase();
-  if (normalizedName.includes("kids") || normalizedName.includes("infantil")) return Gender.KIDS;
-  if (normalizedName.includes("vans") || normalizedName.includes("oskle")) return Gender.FEMININO;
+  
+  if (["kids", "infantil", "menino", "menina", "baby"].some(k => normalizedName.includes(k))) return Gender.KIDS;
+  if (["mulher", "fem", "wmns", "rosa"].some(k => normalizedName.includes(k))) return Gender.FEMININO;
+  
   return Gender.MASCULINO;
 };
 
 const detectCategory = (filename: string): Category => {
   const normalizedName = filename.toLowerCase();
-  if (normalizedName.includes("social") || normalizedName.includes("couro")) return Category.SOCIAL;
-  if (["air", "zoom", "runner", "pro"].some((kw) => normalizedName.includes(kw))) return Category.ESPORTIVO;
+  
+  if (["social", "couro", "oxford", "mocassim"].some(k => normalizedName.includes(k))) return Category.SOCIAL;
+  if (["air", "zoom", "runner", "sport", "corrida"].some(k => normalizedName.includes(k))) return Category.ESPORTIVO;
+  
   return Category.CASUAL;
 };
 
@@ -87,9 +107,7 @@ const generateRandomPrice = (): Prisma.Decimal => {
 };
 
 const getImagesRecursively = (dir: string, fileList: string[] = []): string[] => {
-  const files = fs.readdirSync(dir);
-
-  for (const file of files) {
+  for (const file of fs.readdirSync(dir)) {
     const filePath = path.join(dir, file);
     if (fs.statSync(filePath).isDirectory()) {
       getImagesRecursively(filePath, fileList);
@@ -97,7 +115,6 @@ const getImagesRecursively = (dir: string, fileList: string[] = []): string[] =>
       fileList.push(filePath);
     }
   }
-
   return fileList;
 };
 
@@ -108,23 +125,24 @@ async function main() {
 
   const imageFiles = getImagesRecursively(PUBLIC_DIR);
 
-  if (imageFiles.length === 0) {
+  if (!imageFiles.length) {
+    console.log("Nenhuma imagem encontrada.");
     return;
   }
 
-  // Alterado: O ID agora é do tipo String (UUID)
   const brandsCache = new Map<string, string>();
-  const existingBrands = await prisma.brand.findMany({ select: { id: true, name: true } });
-  
-  for (const brand of existingBrands) {
-    brandsCache.set(brand.name, brand.id);
-  }
+  const productCache = new Map<string, any>();
+
+  const existingBrands = await prisma.brand.findMany();
+  existingBrands.forEach(b => brandsCache.set(b.name, b.id));
 
   for (const absolutePath of imageFiles) {
     const fileName = path.basename(absolutePath);
     const imagePath = absolutePath.replace(PUBLIC_DIR, "").replace(/\\/g, "/");
 
-    const productName = formatProductName(fileName);
+    const rawName = formatProductName(fileName);
+    const baseName = normalizeProductName(rawName);
+
     const brandName = detectBrand(fileName);
     const gender = detectGender(fileName);
     const category = detectCategory(fileName);
@@ -132,63 +150,76 @@ async function main() {
     let brandId = brandsCache.get(brandName);
 
     if (!brandId) {
-      const brandSlug = await generateUniqueSlug("brand", brandName);
-      const newBrand = await prisma.brand.create({
-        data: { name: brandName, slug: brandSlug },
+      const slug = await generateUniqueSlug("brand", brandName);
+      const brand = await prisma.brand.create({
+        data: { name: brandName, slug },
       });
-      brandId = newBrand.id;
+      brandId = brand.id;
       brandsCache.set(brandName, brandId);
     }
 
-    let product = await prisma.product.findFirst({
-      where: { name: productName },
-      include: { images: true },
-    });
+    let product = productCache.get(baseName);
 
     if (!product) {
-      const productSlug = await generateUniqueSlug("product", productName);
-      
-      const sizesData = Array.from({ length: SIZE_COUNT }, (_, i) => ({
-        size: SIZE_START + i,
-        stock: Math.floor(Math.random() * 15) + 5,
-      }));
-
-      product = await prisma.product.create({
-        data: {
-          name: productName,
-          slug: productSlug,
-          description: `${productName} - conforto, estilo e qualidade premium.`,
-          price: generateRandomPrice(),
-          gender,
-          category,
-          brandId,
-          sizes: {
-            createMany: {
-              data: sizesData,
-            },
+      product = await prisma.product.findFirst({
+        where: {
+          name: {
+            contains: baseName,
+            mode: "insensitive",
           },
         },
         include: { images: true },
       });
+
+      if (!product) {
+        const slug = await generateUniqueSlug("product", baseName);
+
+        product = await prisma.product.create({
+          data: {
+            name: baseName,
+            slug,
+            description: `${baseName} - conforto, estilo e qualidade premium.`,
+            price: generateRandomPrice(),
+            gender,
+            category,
+            brandId,
+            sizes: {
+              createMany: {
+                data: Array.from({ length: SIZE_COUNT }, (_, i) => ({
+                  size: SIZE_START + i,
+                  stock: Math.floor(Math.random() * 15) + 5,
+                })),
+              },
+            },
+          },
+          include: { images: true },
+        });
+      }
+
+      productCache.set(baseName, product);
     }
 
-    const imageExists = product.images.some((img) => img.imagePath === imagePath);
+    const exists = product.images.some((img: any) => img.imagePath === imagePath);
 
-    if (!imageExists) {
-      await prisma.productImage.create({
+    if (!exists) {
+      const newImage = await prisma.productImage.create({
         data: {
           imagePath,
           productId: product.id,
           order: product.images.length,
         },
       });
+
+      product.images.push(newImage); 
     }
   }
+
+  console.log("✅ Seed otimizada concluída!");
 }
 
 main()
-  .catch((error) => {
-    console.error(error);
+  .catch((e) => {
+    console.error("❌ Erro:", e);
     process.exit(1);
   })
   .finally(async () => {

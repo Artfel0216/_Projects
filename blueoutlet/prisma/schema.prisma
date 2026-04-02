@@ -1,10 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
 }
 
-generator client {
-  provider = "prisma-client-js"
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  phone         String?
+  role          Role      @default(USER)
+  bio           String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  address       Address?
+  sessions      Session[]
+  orders        Order[]
 }
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  street     String?
+  number     String?
+  complement String?
+  city       String?
+  state      String?
+  zip        String?
+  userId     String  @unique
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Brand {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+
+  @@map("brands")
+}
+
+model Product {
+  id          String         @id @default(uuid())
+  name        String
+  slug        String         @unique
+  description String?
+  price       Decimal        @db.Decimal(10, 2)
+  gender      Gender
+  category    Category
+  isActive    Boolean        @default(true)
+  brandId     String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  orderItems  OrderItem[]
+  images      ProductImage[]
+  sizes       ProductSize[]
+  brand       Brand          @relation(fields: [brandId], references: [id])
+
+  @@index([gender])
+  @@index([category])
+  @@index([brandId])
+  @@index([isActive])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  imagePath String
+  order     Int      @default(0)
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model ProductSize {
+  id        String   @id @default(uuid())
+  size      Int
+  stock     Int      @default(0)
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, size])
+  @@index([productId])
+  @@map("product_sizes")
+}
+
+model Order {
+  id        String      @id @default(uuid())
+  total     Decimal     @db.Decimal(10, 2)
+  status    OrderStatus @default(PENDING)
+  userId    String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  items     OrderItem[]
+  user      User        @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  quantity  Int      @default(1)
+  price     Decimal  @db.Decimal(10, 2)
+  size      Int
+  orderId   String
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
 enum Role {
   USER
   ADMIN
@@ -28,158 +178,4 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELED
-}
-
-
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  password      String?   // Opcional para logins sociais
-  phone         String?
-  role          String?   @default("USER")
-  bio           String?
-  image         String?   // NextAuth usa 'image', substituindo seu 'avatar'
-  
-  address       Address?
-  orders        Order[]
-  accounts      Account[] // Necessário para Google/Facebook
-  sessions      Session[] // Necessário para persistência de sessão
-
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
-
-model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Address {
-  id          String   @id @default(cuid())
-  street      String?
-  number      String?
-  complement  String?
-  city        String?
-  state       String?
-  zip         String?
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-
-model Brand {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  slug      String    @unique
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  @@map("brands")
-}
-
-model Product {
-  id          String         @id @default(uuid())
-  name        String
-  slug        String         @unique
-  description String?        @db.Text
-  price       Decimal        @db.Decimal(10, 2)
-  gender      Gender
-  category    Category
-  isActive    Boolean        @default(true)
-  brandId     String
-  brand       Brand          @relation(fields: [brandId], references: [id])
-  images      ProductImage[]
-  sizes       ProductSize[]
-  orderItems  OrderItem[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  @@index([gender])
-  @@index([category])
-  @@index([brandId])
-  @@index([isActive])
-  @@map("products")
-}
-
-model ProductImage {
-  id        String   @id @default(uuid())
-  imagePath String
-  order     Int      @default(0)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([productId])
-  @@map("product_images")
-}
-
-model ProductSize {
-  id        String   @id @default(uuid())
-  size      Int
-  stock     Int      @default(0)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([productId, size])
-  @@index([productId])
-  @@map("product_sizes")
-}
-
-model Order {
-  id        String      @id @default(uuid())
-  total     Decimal     @db.Decimal(10, 2)
-  status    OrderStatus @default(PENDING)
-  userId    String
-  user      User        @relation(fields: [userId], references: [id])
-  items     OrderItem[]
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-
-  @@index([userId])
-  @@map("orders")
-}
-
-model OrderItem {
-  id        String   @id @default(uuid())
-  quantity  Int      @default(1)
-  price     Decimal  @db.Decimal(10, 2)
-  size      Int
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([orderId])
-  @@index([productId])
-  @@map("order_items")
 }

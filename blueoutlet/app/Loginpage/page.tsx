@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
-  Mail, Lock, User, LogIn, UserPlus, ArrowRight, 
+  Mail, Lock, User, ArrowRight, 
   Eye, EyeOff, Facebook, Chrome, Loader2, AlertCircle 
 } from "lucide-react";
 
@@ -18,9 +18,9 @@ import { loginAction, registerAction } from "@/app/actions/auth";
 import { signIn } from "next-auth/react";
 
 const authSchema = z.object({
-  name: z.string().min(3, "Nome muito curto").optional(),
+  name: z.string().optional(),
   email: z.string().email("E-mail inválido"),
-  password: z.string().min(6, "Mínimo de 6 caracteres"),
+  password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
 });
 
 type AuthFormData = z.infer<typeof authSchema>;
@@ -41,34 +41,44 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<AuthFormData>({
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<AuthFormData>({
     resolver: zodResolver(authSchema)
   });
 
-  const passwordValue = watch("password", "");
-
-  const handleGoogleLogin = () => {
-  signIn("google", { callbackUrl: "/MenProductPage" });
-};
-
-const handleFacebookLogin = () => {
-  signIn("facebook", { callbackUrl: "/MenProductPage" });
-};
+  const toggleMode = () => {
+    setIsRegister(!isRegister);
+    setServerError(null);
+    reset(); 
+  };
 
   const onSubmit = async (data: AuthFormData) => {
     setServerError(null);
+    
+    if (isRegister && (!data.name || data.name.trim().length < 3)) {
+      setServerError("O nome é obrigatório para criar uma conta.");
+      return;
+    }
+
     const fd = new FormData();
     fd.append("email", data.email);
     fd.append("password", data.password);
     if (isRegister && data.name) fd.append("name", data.name);
 
-    const action = isRegister ? registerAction : loginAction;
-    const response = await action(null, fd);
+    try {
+      const action = isRegister ? registerAction : loginAction;
+      const response = await action(null, fd);
 
-    if (response?.error) {
-      setServerError(response.error);
-    } else {
-      router.push(isRegister ? "/PageAdress" : "/MenProductPage");
+      if (response?.error) {
+        setServerError(response.error);
+      } else {
+        if (isRegister) {
+          router.push("/PageAdress");
+        } else {
+          router.push("/MenProductPage");
+        }
+      }
+    } catch (error) {
+      setServerError("Ocorreu um erro ao processar sua solicitação.");
     }
   };
 
@@ -105,52 +115,64 @@ const handleFacebookLogin = () => {
           </div>
 
           <AnimatePresence mode="wait">
-            {serverError && (
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+            {(serverError || errors.email || errors.password || errors.name) && (
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-3"
               >
-                <AlertCircle size={16} /> {serverError}
+                <AlertCircle size={16} /> 
+                <span>{serverError || errors.email?.message || errors.password?.message || errors.name?.message}</span>
               </motion.div>
             )}
           </AnimatePresence>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {isRegister && (
-              <motion.div variants={itemVariants}>
-                <div className="relative group">
-                  <User className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.name ? 'text-red-400' : 'text-white/20 group-focus-within:text-emerald-400'}`} size={18} />
-                  <input {...register("name")} placeholder="Nome Completo" 
-                    className={`w-full bg-white/5 border rounded-xl py-3.5 pl-12 pr-4 text-white outline-none transition-all ${errors.name ? 'border-red-500/50' : 'border-white/10 focus:border-emerald-500/50 focus:bg-white/10'}`} />
-                </div>
-              </motion.div>
-            )}
+            <AnimatePresence>
+              {isRegister && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }} 
+                  animate={{ opacity: 1, height: "auto" }} 
+                  exit={{ opacity: 0, height: 0 }}
+                  className="relative group overflow-hidden"
+                >
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-emerald-400 transition-colors" size={18} />
+                  <input 
+                    {...register("name")} 
+                    placeholder="Nome Completo" 
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white outline-none focus:border-emerald-500/50 transition-all"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            <motion.div variants={itemVariants}>
-              <div className="relative group">
-                <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.email ? 'text-red-400' : 'text-white/20 group-focus-within:text-emerald-400'}`} size={18} />
-                <input {...register("email")} placeholder="seu@email.com" 
-                  className={`w-full bg-white/5 border rounded-xl py-3.5 pl-12 pr-4 text-white outline-none transition-all ${errors.email ? 'border-red-500/50' : 'border-white/10 focus:border-emerald-500/50 focus:bg-white/10'}`} />
-              </div>
-            </motion.div>
+            <div className="relative group">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-emerald-400 transition-colors" size={18} />
+              <input 
+                {...register("email")} 
+                placeholder="seu@email.com" 
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white outline-none focus:border-emerald-500/50 transition-all"
+              />
+            </div>
 
-            <motion.div variants={itemVariants}>
-              <div className="relative group">
-                <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${errors.password ? 'text-red-400' : 'text-white/20 group-focus-within:text-emerald-400'}`} size={18} />
-                <input {...register("password")} type={showPassword ? "text" : "password"} placeholder="Sua senha" 
-                  className={`w-full bg-white/5 border rounded-xl py-3.5 pl-12 pr-12 text-white outline-none transition-all ${errors.password ? 'border-red-500/50' : 'border-white/10 focus:border-emerald-500/50 focus:bg-white/10'}`} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors">
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </motion.div>
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-emerald-400 transition-colors" size={18} />
+              <input 
+                {...register("password")} 
+                type={showPassword ? "text" : "password"} 
+                placeholder="Sua senha" 
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-12 text-white outline-none focus:border-emerald-500/50 transition-all"
+              />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors">
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
 
-            <motion.button variants={itemVariants} disabled={isSubmitting} type="submit"
-              className="w-full py-4 rounded-xl bg-white text-black font-bold text-sm hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 group"
+            <button disabled={isSubmitting} type="submit"
+              className="w-full py-4 rounded-xl bg-white text-black font-bold text-sm hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? <Loader2 className="animate-spin" /> : (
                 <> {isRegister ? "Criar conta agora" : "Entrar na plataforma"} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /> </>
               )}
-            </motion.button>
+            </button>
           </form>
 
           <div className="mt-8 flex items-center gap-4 text-white/10">
@@ -160,28 +182,20 @@ const handleFacebookLogin = () => {
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-4">
-            <button 
-              type="button"
-              onClick={handleGoogleLogin}
-              className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all text-xs font-medium"
-            >
+            <button type="button" onClick={() => signIn("google", { callbackUrl: "/MenProductPage" })} className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all text-xs font-medium">
               <Chrome size={16} /> Google
             </button>
-            <button 
-              type="button"
-              onClick={handleFacebookLogin}
-              className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all text-xs font-medium"
-            >
+            <button type="button" onClick={() => signIn("facebook", { callbackUrl: "/MenProductPage" })} className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all text-xs font-medium">
               <Facebook size={16} className="text-[#1877F2]" /> Facebook
             </button>
           </div>
 
-          <motion.p variants={itemVariants} className="mt-10 text-center text-sm text-white/40">
+          <p className="mt-10 text-center text-sm text-white/40">
             {isRegister ? "Já tem uma conta?" : "Ainda não tem conta?"} {" "}
-            <button onClick={() => setIsRegister(!isRegister)} className="text-white font-bold hover:text-emerald-400 transition-colors underline-offset-4 hover:underline">
+            <button type="button" onClick={toggleMode} className="text-white font-bold hover:text-emerald-400 transition-colors underline-offset-4 hover:underline">
               {isRegister ? "Fazer Login" : "Criar conta gratuita"}
             </button>
-          </motion.p>
+          </p>
         </motion.div>
       </section>
     </main>
