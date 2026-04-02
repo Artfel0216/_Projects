@@ -1,72 +1,75 @@
-'use server';
+"use server";
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma"; 
 import { revalidatePath } from "next/cache";
 import { Role } from "@prisma/client";
+import { z } from "zod";
 
-type ProfileData = {
-  name: string;
-  phone: string;
-  role?: string;
-  bio?: string;
-  zip: string;
-  street: string;
-  number: string;
-  city: string;
-};
+const ProfileSchema = z.object({
+  name: z.string().min(2).max(100),
+  phone: z.string().min(8).max(20),
+  role: z.nativeEnum(Role).optional(),
+  bio: z.string().max(500).optional().nullable(),
+  zip: z.string().min(5).max(15),
+  street: z.string().min(1),
+  number: z.string().min(1),
+  city: z.string().min(1),
+});
+
+type ProfileData = z.infer<typeof ProfileSchema>;
 
 export async function updateProfile(formData: ProfileData) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
-      return { success: false, error: "Usuário não autenticado" };
+      return { success: false, error: "Sessão expirada ou inválida." };
     }
 
-    // 🔒 valida role antes de salvar
-    const validRole = formData.role && Object.values(Role).includes(formData.role as Role)
-      ? (formData.role as Role)
-      : undefined;
+    const validatedData = ProfileSchema.parse(formData);
 
     await prisma.user.update({
       where: { email: session.user.email },
       data: {
-        name: formData.name,
-        phone: formData.phone,
-        role: validRole,
-        bio: formData.bio || null,
-
+        name: validatedData.name,
+        phone: validatedData.phone,
+        role: validatedData.role,
+        bio: validatedData.bio,
         address: {
           upsert: {
             create: {
-              zip: formData.zip,
-              street: formData.street,
-              number: formData.number,
-              city: formData.city,
+              zip: validatedData.zip,
+              street: validatedData.street,
+              number: validatedData.number,
+              city: validatedData.city,
             },
             update: {
-              zip: formData.zip,
-              street: formData.street,
-              number: formData.number,
-              city: formData.city,
+              zip: validatedData.zip,
+              street: validatedData.street,
+              number: validatedData.number,
+              city: validatedData.city,
             },
           },
         },
       },
     });
 
-    revalidatePath("/ProfilePage"); 
-
+    revalidatePath("/ProfilePage");
+    
     return { success: true };
 
   } catch (error) {
-    console.error("Erro ao salvar perfil:", error);
+    if (error instanceof z.ZodError) {
+      return { success: false, error: "Verifique os dados enviados." };
+    }
 
-    return {
-      success: false,
-      error: "Erro ao atualizar os dados no banco.",
+    console.error("Critical Profile Update Error:", error);
+    
+    return { 
+      success: false, 
+      error: "Falha ao comunicar com o banco de dados." 
     };
   }
 }

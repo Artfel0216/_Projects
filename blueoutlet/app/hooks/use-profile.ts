@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
-interface UserData {
+export interface UserData {
   name: string;
   email: string;
   phone: string;
@@ -11,7 +11,7 @@ interface UserData {
   avatar: string | null;
 }
 
-interface AddressData {
+export interface AddressData {
   street: string;
   number: string;
   city: string;
@@ -20,119 +20,118 @@ interface AddressData {
   complement: string;
 }
 
+interface ProfileState {
+  user: UserData;
+  address: AddressData;
+}
+
+const INITIAL_USER: UserData = {
+  name: '',
+  email: '',
+  phone: '',
+  role: '',
+  bio: '',
+  avatar: null,
+};
+
+const INITIAL_ADDRESS: AddressData = {
+  street: '',
+  number: '',
+  city: '',
+  state: '',
+  zip: '',
+  complement: '',
+};
+
+const STORAGE_KEY = '@app:profile-v1';
+
 export function useProfile() {
-  const [user, setUser] = useState<UserData>({
-    name: "",
-    email: "",
-    phone: "",
-    role: "",
-    bio: "",
-    avatar: null
-  });
-
-  const [address, setAddress] = useState<AddressData>({
-    street: "",
-    number: "",
-    city: "",
-    state: "",
-    zip: "",
-    complement: ""
-  });
-
+  const [user, setUser] = useState<UserData>(INITIAL_USER);
+  const [address, setAddress] = useState<AddressData>(INITIAL_ADDRESS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const STORAGE_KEY = '@app:profile-data';
+  const updateStorage = useCallback((data: ProfileState) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (error) {
+      console.error('Storage Error:', error);
+    }
+  }, []);
 
   useEffect(() => {
-    async function loadData() {
+    const controller = new AbortController();
+
+    async function loadProfile() {
       try {
-        if (typeof window !== "undefined") {
-          const cached = localStorage.getItem(STORAGE_KEY);
-
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            setUser(parsed.user || {});
-            setAddress(parsed.address || {});
-          }
+        const cached = localStorage.getItem(STORAGE_KEY);
+        if (cached) {
+          const { user: cUser, address: cAddress } = JSON.parse(cached);
+          setUser(prev => ({ ...prev, ...cUser }));
+          setAddress(prev => ({ ...prev, ...cAddress }));
         }
 
-        const res = await fetch('/api/user');
+        const response = await fetch('/api/user', { signal: controller.signal });
+        
+        if (!response.ok) throw new Error('Failed to fetch profile');
 
-        if (res.ok) {
-          const data = await res.json();
+        const { user: sUser, address: sAddress } = await response.json();
+        
+        const freshData = {
+          user: { ...INITIAL_USER, ...sUser },
+          address: { ...INITIAL_ADDRESS, ...sAddress }
+        };
 
-          setUser(data.user || {});
-          setAddress(data.address || {});
+        setUser(freshData.user);
+        setAddress(freshData.address);
+        updateStorage(freshData);
 
-          if (typeof window !== "undefined") {
-            localStorage.setItem(
-              STORAGE_KEY,
-              JSON.stringify({
-                user: data.user,
-                address: data.address
-              })
-            );
-          }
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          console.error('Profile Load Error:', error);
         }
-      } catch (error) {
-        console.error("Erro ao carregar perfil:", error);
       } finally {
         setIsLoading(false);
       }
     }
 
-    loadData();
-  }, []);
+    loadProfile();
+    return () => controller.abort();
+  }, [updateStorage]);
 
-  const saveProfile = async (newUser: UserData, newAddress: AddressData) => {
+  const saveProfile = useCallback(async (newUser: UserData, newAddress: AddressData) => {
     setIsSaving(true);
+    const payload: ProfileState = { user: newUser, address: newAddress };
 
     try {
-      const res = await fetch('/api/user', {
+      const response = await fetch('/api/user', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user: newUser,
-          address: newAddress
-        }),
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Erro no servidor");
+      if (!response.ok) {
+        const { message } = await response.json().catch(() => ({ message: 'Server error' }));
+        throw new Error(message || 'Failed to save profile');
       }
 
-      // ✅ Atualiza estado
       setUser(newUser);
       setAddress(newAddress);
-
-      // ✅ Atualiza cache
-      if (typeof window !== "undefined") {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({
-            user: newUser,
-            address: newAddress
-          })
-        );
-      }
+      updateStorage(payload);
 
       return { success: true };
-
     } catch (error: any) {
-      console.error("Erro ao salvar:", error);
-
       return {
         success: false,
-        error: error.message || "Erro desconhecido"
+        error: error.message || 'Unknown error occurred'
       };
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [updateStorage]);
 
-  return {
+  return useMemo(() => ({
     user,
     setUser,
     address,
@@ -140,5 +139,5 @@ export function useProfile() {
     isLoading,
     isSaving,
     saveProfile
-  };
+  }), [user, address, isLoading, isSaving, saveProfile]);
 }

@@ -1,14 +1,29 @@
+import { Pool, PoolConfig } from "pg";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL!,
-});
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not defined in environment variables");
+}
+
+const poolConfig: PoolConfig = {
+  connectionString,
+  max: process.env.NODE_ENV === "production" ? 20 : 5,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+};
+
+const pool = new Pool(poolConfig);
+const adapter = new PrismaPg(pool);
 
 const prismaClientSingleton = () => {
   return new PrismaClient({
     adapter,
-    log: ["query", "error", "warn"],
+    log: process.env.NODE_ENV === "development" 
+      ? ["query", "error", "warn"] 
+      : ["error"],
   });
 };
 
@@ -24,4 +39,5 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
+export { pool };
 export default prisma;

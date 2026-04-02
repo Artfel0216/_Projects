@@ -1,17 +1,24 @@
 import { NextResponse } from "next/server";
-import { Category, Gender } from "@prisma/client";
+import { Category, Gender, Prisma } from "@prisma/client";
 import { prisma } from "@/app/lib/prisma";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 100);
-    const category = searchParams.get("category") as Category | null;
-    const gender = searchParams.get("gender") as Gender | null;
+    
+    const limit = Math.max(1, Math.min(parseInt(searchParams.get("limit") || "50", 10), 100));
+    const categoryParam = searchParams.get("category") as Category;
+    const genderParam = searchParams.get("gender") as Gender;
 
-    const whereClause: any = { isActive: true };
-    if (category) whereClause.category = category;
-    if (gender) whereClause.gender = gender;
+    const whereClause: Prisma.ProductWhereInput = { isActive: true };
+
+    if (categoryParam && Object.values(Category).includes(categoryParam)) {
+      whereClause.category = categoryParam;
+    }
+
+    if (genderParam && Object.values(Gender).includes(genderParam)) {
+      whereClause.gender = genderParam;
+    }
 
     const products = await prisma.product.findMany({
       where: whereClause,
@@ -43,23 +50,34 @@ export async function GET(request: Request) {
       id: product.id,
       name: product.name,
       slug: product.slug,
-      brand: product.brand.name,
+      brand: product.brand?.name || "Sem Marca",
       category: product.category,
       gender: product.gender,
       price: Number(product.price),
       description: product.description ?? "",
       images: product.images.length > 0
         ? product.images.map((img) =>
-            img.imagePath.startsWith("/") ? img.imagePath : `/${img.imagePath}`
+            img.imagePath.startsWith("http") || img.imagePath.startsWith("/") 
+              ? img.imagePath 
+              : `/${img.imagePath}`
           )
         : ["/placeholder.png"],
-      sizes: product.sizes,
+      sizes: product.sizes.map(s => ({
+        size: s.size,
+        stock: s.stock
+      })),
     }));
 
-    return NextResponse.json(formattedProducts);
+    return NextResponse.json(formattedProducts, {
+      status: 200,
+      headers: {
+        "Cache-Control": "public, s-maxage=10, stale-while-revalidate=59",
+      },
+    });
   } catch (error) {
+    console.error("API_PRODUCTS_ERROR:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Erro ao buscar produtos" },
       { status: 500 }
     );
   }

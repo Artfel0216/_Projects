@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useForm } from 'react-hook-form';
+import { useForm, UseFormRegisterReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { 
@@ -12,13 +12,13 @@ import {
 import { useRouter } from 'next/navigation';
 
 const addressSchema = z.object({
-  cep: z.string().min(9, "CEP incompleto"),
+  cep: z.string().transform(v => v.replace(/\D/g, "")).pipe(z.string().length(8, "CEP deve ter 8 dígitos")),
   street: z.string().min(3, "Rua é obrigatória"),
   number: z.string().min(1, "Nº obrigatório"),
   complement: z.string().optional(),
   neighborhood: z.string().min(2, "Bairro obrigatório"),
   city: z.string().min(2, "Cidade obrigatória"),
-  state: z.string().length(2, "UF inválida"),
+  state: z.string().length(2, "UF inválida").transform(v => v.toUpperCase()),
 });
 
 type AddressFormData = z.infer<typeof addressSchema>;
@@ -27,117 +27,211 @@ const maskCEP = (value: string) => {
   return value.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2").substring(0, 9);
 };
 
-const InputField = React.forwardRef(({ label, icon: Icon, error, ...props }: any, ref: any) => (
-  <div className="space-y-1.5 w-full group">
-    <div className="flex justify-between items-center px-1">
-      <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">{label}</label>
-      <AnimatePresence>
-        {error && (
-          <motion.span initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="text-[10px] text-emerald-400 font-medium">
-            {error.message}
-          </motion.span>
-        )}
-      </AnimatePresence>
-    </div>
-    <div className="relative">
-      <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300 ${error ? 'text-emerald-500' : 'text-white/20 group-focus-within:text-white'}`}>
-        <Icon size={18} />
+interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  icon: React.ElementType;
+  error?: { message?: string };
+}
+
+const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
+  ({ label, icon: Icon, error, className, ...props }, ref) => (
+    <div className="space-y-2 w-full group">
+      <div className="flex justify-between items-center px-1">
+        <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
+          {label}
+        </label>
+        <AnimatePresence mode="wait">
+          {error?.message && (
+            <motion.span 
+              initial={{ opacity: 0, y: -5 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -5 }} 
+              className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider"
+            >
+              {error.message}
+            </motion.span>
+          )}
+        </AnimatePresence>
       </div>
-      <input
-        {...props}
-        ref={ref}
-        className={`w-full bg-white/3 border rounded-2xl py-4 pl-12 pr-4 text-white placeholder-white/10 outline-none transition-all duration-500
-          ${error ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/10 hover:border-white/20 focus:border-white/30 focus:bg-white/6 focus:ring-4 focus:ring-white/2'}`}
-      />
+      <div className="relative">
+        <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-300 z-10
+          ${error ? 'text-emerald-500' : 'text-white/20 group-focus-within:text-emerald-400'}`}>
+          <Icon size={18} strokeWidth={2.5} />
+        </div>
+        <input
+          {...props}
+          ref={ref}
+          className={`w-full bg-white/3 border rounded-2xl py-4 pl-12 pr-4 text-white placeholder-white/10 outline-none transition-all duration-500
+            ${error ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/10 hover:border-white/20 focus:border-emerald-500/30 focus:bg-white/6 focus:ring-4 focus:ring-emerald-500/5'} 
+            ${className}`}
+        />
+      </div>
     </div>
-  </div>
-));
+  )
+);
 InputField.displayName = "InputField";
 
 export default function PageAddress() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<AddressFormData>({
-    resolver: zodResolver(addressSchema)
+  const { 
+    register, 
+    handleSubmit, 
+    setValue, 
+    watch, 
+    setFocus,
+    formState: { errors, isSubmitting } 
+  } = useForm<AddressFormData>({
+    resolver: zodResolver(addressSchema),
+    mode: "onBlur"
   });
 
   const cepValue = watch("cep");
 
+  const handleCEPChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const masked = maskCEP(e.target.value);
+    setValue("cep", masked, { shouldValidate: true });
+  }, [setValue]);
+
   useEffect(() => {
-    const cep = cepValue?.replace(/\D/g, "");
-    if (cep?.length === 8) {
-      fetch(`https://viacep.com.br/ws/${cep}/json/`)
-        .then(res => res.json())
-        .then(data => {
+    const cleanCEP = cepValue?.replace(/\D/g, "");
+    if (cleanCEP?.length === 8) {
+      const fetchAddress = async () => {
+        try {
+          const res = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
+          const data = await res.json();
           if (!data.erro) {
-            setValue("street", data.logradouro);
-            setValue("neighborhood", data.bairro);
-            setValue("city", data.localidade);
-            setValue("state", data.uf);
+            setValue("street", data.logradouro, { shouldValidate: true });
+            setValue("neighborhood", data.bairro, { shouldValidate: true });
+            setValue("city", data.localidade, { shouldValidate: true });
+            setValue("state", data.uf, { shouldValidate: true });
+            setFocus("number");
           }
-        });
+        } catch (error) {
+          console.error("Erro ao buscar CEP", error);
+        }
+      };
+      fetchAddress();
     }
-  }, [cepValue, setValue]);
+  }, [cepValue, setValue, setFocus]);
 
   const onSubmit = async (data: AddressFormData) => {
-    console.log("Endereço salvo:", data);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setStep(2);
-    setTimeout(() => router.push('/MenProductPage'), 2000);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setStep(2);
+      setTimeout(() => router.push('/MenProductPage'), 2500);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]" />
+    <div className="min-h-screen bg-[#020202] text-white flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-emerald-600/10 rounded-full blur-[150px] pointer-events-none animate-pulse" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-blue-600/10 rounded-full blur-[150px] pointer-events-none" />
 
       <motion.div 
-        initial={{ opacity: 0, y: 30 }} 
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.95 }} 
+        animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-2xl relative z-10"
       >
-        <div className="bg-white/2 border border-white/10 backdrop-blur-3xl rounded-[2.5rem] p-8 md:p-12 shadow-2xl">
-          
+        <div className="bg-white/2 border border-white/10 backdrop-blur-3xl rounded-[3rem] p-8 md:p-14 shadow-2xl overflow-hidden">
           <AnimatePresence mode="wait">
             {step === 1 ? (
-              <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
-                <header className="mb-10 text-center md:text-left">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-6">
-                    <Navigation size={24} />
-                  </div>
-                  <h1 className="text-4xl font-black tracking-tight mb-3">Onde entregamos?</h1>
-                  <p className="text-white/40 leading-relaxed">Quase lá! Precisamos do seu endereço para calcular o frete e prazos de entrega exclusivos.</p>
+              <motion.div 
+                key="form" 
+                initial={{ opacity: 0, x: -20 }} 
+                animate={{ opacity: 1, x: 0 }} 
+                exit={{ opacity: 0, x: 20, transition: { duration: 0.2 } }}
+              >
+                <header className="mb-12">
+                  <motion.div 
+                    initial={{ rotate: -10, scale: 0.9 }}
+                    animate={{ rotate: 0, scale: 1 }}
+                    className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-8"
+                  >
+                    <Navigation size={28} strokeWidth={2.5} />
+                  </motion.div>
+                  <h1 className="text-4xl md:text-5xl font-black tracking-tighter mb-4 italic">LOGÍSTICA PRECISÃO.</h1>
+                  <p className="text-white/40 leading-relaxed max-w-md font-medium">
+                    Insira o destino para ativarmos o envio priorizado e os cálculos de entrega em tempo real.
+                  </p>
                 </header>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputField label="CEP" icon={MapPin} error={errors.cep} {...register("cep", { onChange: (e) => setValue("cep", maskCEP(e.target.value)) })} placeholder="00000-000" />
-                    <InputField label="Estado (UF)" icon={MapIcon} error={errors.state} {...register("state")} placeholder="Ex: SP" maxLength={2} />
-                    
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-7">
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+                    <div className="md:col-span-4">
+                      <InputField 
+                        label="CEP" 
+                        icon={MapPin} 
+                        error={errors.cep} 
+                        {...register("cep")} 
+                        onChange={handleCEPChange}
+                        placeholder="00000-000" 
+                      />
+                    </div>
                     <div className="md:col-span-2">
-                      <InputField label="Logradouro" icon={Home} error={errors.street} {...register("street")} placeholder="Nome da rua ou avenida" />
+                      <InputField 
+                        label="UF" 
+                        icon={MapIcon} 
+                        error={errors.state} 
+                        {...register("state")} 
+                        placeholder="SP" 
+                        maxLength={2} 
+                      />
+                    </div>
+                    
+                    <div className="md:col-span-6">
+                      <InputField 
+                        label="Logradouro" 
+                        icon={Home} 
+                        error={errors.street} 
+                        {...register("street")} 
+                        placeholder="Rua, Avenida ou Alameda" 
+                      />
                     </div>
 
-                    <InputField label="Número" icon={Hash} error={errors.number} {...register("number")} placeholder="123" />
-                    <InputField label="Bairro" icon={Navigation} error={errors.neighborhood} {...register("neighborhood")} placeholder="Seu bairro" />
-                    
                     <div className="md:col-span-2">
-                      <InputField label="Cidade" icon={Building2} error={errors.city} {...register("city")} placeholder="Nome da cidade" />
+                      <InputField 
+                        label="Número" 
+                        icon={Hash} 
+                        error={errors.number} 
+                        {...register("number")} 
+                        placeholder="100" 
+                      />
+                    </div>
+                    <div className="md:col-span-4">
+                      <InputField 
+                        label="Bairro" 
+                        icon={Navigation} 
+                        error={errors.neighborhood} 
+                        {...register("neighborhood")} 
+                        placeholder="Ex: Jardins" 
+                      />
+                    </div>
+                    
+                    <div className="md:col-span-6">
+                      <InputField 
+                        label="Cidade" 
+                        icon={Building2} 
+                        error={errors.city} 
+                        {...register("city")} 
+                        placeholder="Sua cidade" 
+                      />
                     </div>
                   </div>
 
                   <motion.button
-                    whileHover={{ scale: 1.01 }}
+                    whileHover={{ scale: 1.02, backgroundColor: "rgba(52, 211, 153, 1)" }}
                     whileTap={{ scale: 0.98 }}
                     disabled={isSubmitting}
                     type="submit"
-                    className="w-full mt-8 bg-white text-black py-5 rounded-2xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-emerald-400 transition-all group shadow-[0_20px_40px_rgba(0,0,0,0.3)]"
+                    className="w-full mt-10 bg-white text-black py-6 rounded-3xl font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-4 transition-all group shadow-2xl disabled:opacity-50"
                   >
                     {isSubmitting ? (
-                      <Loader2 className="animate-spin" size={20} />
+                      <Loader2 className="animate-spin" size={24} />
                     ) : (
-                      <> Finalizar Cadastro <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" /> </>
+                      <> Confirmar Destino <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" strokeWidth={3} /> </>
                     )}
                   </motion.button>
                 </form>
@@ -145,24 +239,56 @@ export default function PageAddress() {
             ) : (
               <motion.div 
                 key="success" 
-                initial={{ opacity: 0, scale: 0.8 }} 
+                initial={{ opacity: 0, scale: 0.9 }} 
                 animate={{ opacity: 1, scale: 1 }}
-                className="py-20 flex flex-col items-center text-center"
+                className="py-24 flex flex-col items-center text-center"
               >
-                <div className="w-24 h-24 bg-emerald-500/20 border border-emerald-500/30 rounded-full flex items-center justify-center text-emerald-400 mb-8 animate-bounce">
-                  <CheckCircle2 size={48} />
+                <div className="relative mb-10">
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1.5, opacity: 0 }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                    className="absolute inset-0 bg-emerald-500/40 rounded-full"
+                  />
+                  <div className="relative w-28 h-28 bg-emerald-500/20 border border-emerald-500/40 rounded-full flex items-center justify-center text-emerald-400">
+                    <CheckCircle2 size={56} strokeWidth={1.5} />
+                  </div>
                 </div>
-                <h2 className="text-3xl font-bold mb-4">Tudo pronto!</h2>
-                <p className="text-white/40">Seu endereço foi salvo com sucesso. <br/> Redirecionando para a loja...</p>
+                <h2 className="text-4xl font-black italic tracking-tighter mb-4">MAPA DEFINIDO.</h2>
+                <p className="text-white/40 font-medium leading-relaxed">
+                  Conexão segura estabelecida. <br/>
+                  Sincronizando catálogo disponível para sua região...
+                </p>
+                <div className="mt-12 flex gap-2">
+                  {[0, 1, 2].map(i => (
+                    <motion.div 
+                      key={i}
+                      animate={{ opacity: [0.2, 1, 0.2] }}
+                      transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
+                      className="w-2 h-2 bg-emerald-500 rounded-full"
+                    />
+                  ))}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Footer info */}
-        <p className="text-center mt-8 text-white/20 text-xs font-medium tracking-widest uppercase">
-          Freitas Outlet © 2026 • Secure Checkout
-        </p>
+        <motion.footer 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          transition={{ delay: 0.5 }}
+          className="text-center mt-12 space-y-2"
+        >
+          <p className="text-white/20 text-[10px] font-black tracking-[0.4em] uppercase">
+            Freitas Outlet Security Protocol © 2026
+          </p>
+          <div className="flex justify-center gap-6 text-[9px] text-white/10 font-bold uppercase tracking-widest">
+            <span>SSL Encrypted</span>
+            <span>Fast Shipping</span>
+            <span>Premium Support</span>
+          </div>
+        </motion.footer>
       </motion.div>
     </div>
   );

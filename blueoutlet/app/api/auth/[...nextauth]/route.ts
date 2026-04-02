@@ -1,19 +1,23 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@/app/lib/prisma"; // Caminho do seu cliente prisma
-import bcrypt from "bcrypt";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { prisma } from "@/app/lib/prisma"; 
+import bcrypt from "bcryptjs";
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID!,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -22,58 +26,69 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("E-mail e senha são obrigatórios.");
-        }
+        if (!credentials?.email || !credentials?.password) return null;
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
+          where: { email: credentials.email.toLowerCase() }
         });
 
-        if (!user || !user.password) {
-          throw new Error("Usuário não encontrado.");
-        }
+        if (!user || !user.password) return null;
 
         const isPasswordCorrect = await bcrypt.compare(
           credentials.password,
           user.password
         );
 
-        if (!isPasswordCorrect) {
-          throw new Error("Senha incorreta.");
-        }
+        if (!isPasswordCorrect) return null;
 
         return {
           id: user.id,
           name: user.name,
           email: user.email,
+          role: (user as any).role,
         };
       }
     }),
   ],
   pages: {
     signIn: '/login',
+    error: '/login',
+    newUser: '/PageAdress',
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
   },
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.id = user.id;
+    async jwt({ token, user, trigger, session }) {
+      if (user) {
+        token.id = user.id;
+        token.role = (user as any).role;
+      }
+      
+      if (trigger === "update" && session) {
+        return { ...token, ...session.user };
+      }
+      
       return token;
     },
     async session({ session, token }) {
-      if (session?.user) {
-        // @ts-ignore
-        session.user.id = token.id;
+      if (session.user) {
+        (session.user as any).id = token.id;
+        (session.user as any).role = token.role;
       }
       return session;
     },
     async redirect({ url, baseUrl }) {
-      if (url.includes("/PageAdress")) return url;
-      return baseUrl + "/MenProductPage";
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      else if (new URL(url).origin === baseUrl) return url;
+      return `${baseUrl}/MenProductPage`;
     },
   },
-});
+  debug: process.env.NODE_ENV === "development",
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
