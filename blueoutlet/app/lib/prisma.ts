@@ -16,13 +16,14 @@ const poolConfig: PoolConfig = {
 };
 
 const pool = new Pool(poolConfig);
-const adapter = new PrismaPg(pool);
 
 const prismaClientSingleton = () => {
+  const adapter = new PrismaPg(pool);
+  
   return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "development" 
-      ? ["query", "error", "warn"] 
+      ? ["error", "warn"] 
       : ["error"],
   });
 };
