@@ -1,172 +1,198 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { Eye, EyeOff, Loader2, Dumbbell, Mail, Lock, User, IdCard, MapPin, Search, ExternalLink } from 'lucide-react';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState<boolean>(true);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    cpf: '',
+    cep: '',
+    city: '',
+    state: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  useEffect(() => {
+    router.prefetch('/TrainingPage');
+  }, [router]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    let formattedValue = value;
+
+    if (name === 'cpf') {
+      formattedValue = value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4").substring(0, 14);
+    } else if (name === 'cep') {
+      formattedValue = value.replace(/\D/g, '').replace(/(\d{5})(\d{3})/, "$1-$2").substring(0, 9);
+    }
+
+    setFormData(prev => ({ ...prev, [name]: formattedValue }));
+    if (error) setError(null);
+  };
+
+  useEffect(() => {
+    const cepDigits = formData.cep.replace(/\D/g, '');
+    if (cepDigits.length === 8) {
+      fetch(`https://viacep.com.br/ws/${cepDigits}/json/`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.erro) {
+            setFormData(prev => ({ ...prev, city: data.localidade, state: data.uf }));
+          }
+        })
+        .catch(() => null);
+    }
+  }, [formData.cep]);
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!isLogin && formData.password !== formData.confirmPassword) {
+      setError("As senhas não coincidem.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      router.push('/TrainingPage');
+    } catch (err) {
+      setError("Falha na autenticação. Verifique os dados.");
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4 sm:p-8 selection:bg-indigo-500 selection:text-white relative overflow-hidden">
-      
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 sm:p-8 selection:bg-orange-500 selection:text-white relative overflow-hidden">
       <motion.div
-        animate={{ scale: [1, 1.1, 0.9, 1], x: [0, 30, -20, 0], y: [0, -50, 20, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
+        animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.2, 0.1] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+        className="absolute top-[-10%] right-[-5%] w-125 h-125 bg-orange-600 rounded-full filter blur-[120px]"
       />
       <motion.div
-        animate={{ scale: [1, 1.2, 0.8, 1], x: [0, -30, 20, 0], y: [0, 40, -30, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute top-[20%] right-[-5%] w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
-      />
-      <motion.div
-        animate={{ scale: [1, 0.9, 1.1, 1], x: [0, 40, -40, 0], y: [0, -30, 40, 0] }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        className="absolute bottom-[-10%] left-[20%] w-80 h-80 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
+        animate={{ scale: [1, 1.3, 1], x: [0, -50, 0], opacity: [0.05, 0.15, 0.05] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+        className="absolute bottom-[-10%] left-[-5%] w-150 h-150 bg-zinc-700 rounded-full filter blur-[100px]"
       />
 
-      <div className="w-full max-w-5xl bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10 border border-white/50">
-        
-        <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-indigo-600 to-purple-700 p-12 flex-col justify-between text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/10 blur-2xl"></div>
-          <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-80 h-80 rounded-full bg-black/10 blur-2xl"></div>
-
+      <div className="w-full max-w-6xl bg-zinc-900/50 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10 border border-zinc-800">
+        <div className="hidden md:flex md:w-1/3 bg-zinc-900 p-12 flex-col justify-between relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
           <div className="relative z-10">
-            <h2 className="text-4xl font-bold mb-4">Bem-vindo à Plataforma</h2>
-            <p className="text-indigo-100 text-lg leading-relaxed">
-              Conecte-se para acessar seu painel, gerenciar seus projetos e explorar novos horizontes conosco.
-            </p>
-          </div>
-          
-          <div className="relative z-10">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
+            <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center space-x-2 mb-8">
+              <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center rotate-3">
+                <Dumbbell className="text-white w-6 h-6" />
               </div>
-              <div>
-                <p className="font-semibold">Rápido e Seguro</p>
-                <p className="text-sm text-indigo-200">Acesso instantâneo</p>
-              </div>
-            </div>
+              <h1 className="text-2xl font-black text-white tracking-tighter italic">WEGYM</h1>
+            </motion.div>
+            <h2 className="text-5xl font-black text-white mb-6 leading-none uppercase italic">Supere seus <br /><span className="text-orange-500 underline decoration-zinc-700">Limites</span>.</h2>
+            <p className="text-zinc-400 text-lg leading-relaxed">Sua jornada para a melhor versão de si mesmo começa aqui.</p>
           </div>
         </div>
 
-        <div className="w-full md:w-1/2 p-8 sm:p-12 relative flex items-center justify-center min-h-[600px] overflow-hidden">
-          <div className="relative w-full max-w-md">
-            <AnimatePresence mode="wait" initial={false}>
+        <div className="w-full md:w-2/3 p-8 sm:p-12 relative flex items-center justify-center min-h-150">
+          <div className="relative w-full max-w-2xl">
+            {error && (
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 bg-red-500/10 border border-red-500/50 text-red-500 text-sm p-3 rounded-xl text-center font-bold">
+                {error}
+              </motion.div>
+            )}
+
+            <AnimatePresence mode="wait">
               {isLogin ? (
-                <motion.div
-                  key="login"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="text-3xl font-bold text-gray-800 mb-2">Entrar</h3>
-                  <p className="text-gray-500 mb-8">Que bom ver você novamente!</p>
-
-                  <form className="space-y-5" onSubmit={(e: React.FormEvent) => e.preventDefault()}>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>
-                        </div>
-                        <input type="email" placeholder="seu@email.com" className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none" required />
-                      </div>
+                <motion.div key="login" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+                  <h3 className="text-4xl font-black text-white mb-2 italic">LOGIN</h3>
+                  <p className="text-zinc-500 mb-8 font-medium">Pronto para o treino de hoje?</p>
+                  <form className="space-y-4" onSubmit={handleAuth}>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center ml-1"><Mail className="w-3 h-3 mr-1" /> E-mail</label>
+                      <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="seu@atleta.com" className="w-full px-4 py-4 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
                     </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-sm font-medium text-gray-700">Senha</label>
-                        <button type="button" className="text-sm text-indigo-600 hover:text-indigo-500 font-medium transition-colors">Esqueceu a senha?</button>
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center px-1">
+                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center"><Lock className="w-3 h-3 mr-1" /> Senha</label>
+                        <button type="button" className="text-xs font-bold text-orange-500 hover:text-orange-400">Esqueceu?</button>
                       </div>
                       <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                        </div>
-                        <input type="password" placeholder="••••••••" className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none" required />
+                        <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className="w-full px-4 py-4 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
                       </div>
                     </div>
-
-                    <motion.button 
-                      whileHover={{ scale: 1.01 }} 
-                      whileTap={{ scale: 0.98 }} 
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                    >
-                      Entrar
+                    <motion.button disabled={isLoading} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic tracking-tighter flex items-center justify-center">
+                      {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Elabore seu Treino"}
                     </motion.button>
                   </form>
-
-                  <div className="mt-8 flex items-center justify-center space-x-2">
-                    <span className="text-gray-500">Ainda não tem uma conta?</span>
-                    <button onClick={() => setIsLogin(false)} className="text-indigo-600 font-semibold hover:text-indigo-800 transition-colors focus:outline-none">
-                      Cadastre-se
-                    </button>
-                  </div>
                 </motion.div>
               ) : (
-                <motion.div
-                  key="signup"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="text-3xl font-bold text-gray-800 mb-2">Criar Conta</h3>
-                  <p className="text-gray-500 mb-6">Junte-se a nós em poucos segundos.</p>
-
-                  <form className="space-y-4" onSubmit={(e: React.FormEvent) => e.preventDefault()}>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                        </div>
-                        <input type="text" placeholder="João da Silva" className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none" required />
+                <motion.div key="signup" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
+                  <h3 className="text-4xl font-black text-white mb-2 italic uppercase">Cadastro</h3>
+                  <p className="text-zinc-500 mb-8 font-medium">Preencha seus dados de atleta.</p>
+                  <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleAuth}>
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center"><User className="w-3 h-3 mr-1" /> Nome Completo</label>
+                      <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="Nome Completo" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center"><IdCard className="w-3 h-3 mr-1" /> CPF</label>
+                      <input type="text" name="cpf" value={formData.cpf} onChange={handleInputChange} placeholder="000.000.000-00" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center"><Mail className="w-3 h-3 mr-1" /> E-mail</label>
+                      <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="seu@atleta.com" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center px-1">
+                        <label className="text-xs font-bold text-zinc-400 uppercase flex items-center"><MapPin className="w-3 h-3 mr-1" /> CEP</label>
+                        <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-orange-500 flex items-center hover:underline uppercase italic">Não sei meu CEP <ExternalLink className="w-2 h-2 ml-1" /></a>
+                      </div>
+                      <input type="text" name="cep" value={formData.cep} onChange={handleInputChange} placeholder="00000-000" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                    </div>
+                    <div className="space-y-1 grid grid-cols-3 gap-2">
+                      <div className="col-span-2">
+                        <label className="text-xs font-bold text-zinc-400 uppercase ml-1">Cidade</label>
+                        <input type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder="Cidade" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-zinc-400 uppercase ml-1">UF</label>
+                        <input type="text" name="state" value={formData.state} onChange={handleInputChange} placeholder="UF" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all text-center" maxLength={2} required />
                       </div>
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                        </div>
-                        <input type="email" placeholder="seu@email.com" className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none" required />
-                      </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center"><Lock className="w-3 h-3 mr-1" /> Senha</label>
+                      <input type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                        </div>
-                        <input type="password" placeholder="••••••••" className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none" required />
-                      </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center"><Search className="w-3 h-3 mr-1" /> Confirmar</label>
+                      <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
                     </div>
-
-                    <motion.button 
-                      whileHover={{ scale: 1.01 }} 
-                      whileTap={{ scale: 0.98 }} 
-                      className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 mt-2 transition-colors"
-                    >
-                      Criar minha conta
+                    <motion.button disabled={isLoading} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="md:col-span-2 w-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic mt-4 flex items-center justify-center">
+                      {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-black" /> : "Finalizar Cadastro"}
                     </motion.button>
                   </form>
-
-                  <div className="mt-8 flex items-center justify-center space-x-2">
-                    <span className="text-gray-500">Já possui uma conta?</span>
-                    <button onClick={() => setIsLogin(true)} className="text-gray-900 font-semibold hover:text-indigo-600 transition-colors focus:outline-none">
-                      Fazer Login
-                    </button>
-                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
+
+            <div className="mt-8 text-center">
+              <button onClick={() => { setIsLogin(!isLogin); setError(null); }} className="text-zinc-400 text-sm font-medium hover:text-white transition-colors">
+                {isLogin ? "Não tem conta? " : "Já é membro? "}
+                <span className="text-orange-500 font-bold underline decoration-zinc-800 italic">{isLogin ? "CRIAR PERFIL" : "FAZER LOGIN"}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
