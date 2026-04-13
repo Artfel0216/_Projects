@@ -149,6 +149,13 @@ export default function CadastroPage() {
     setIsLoading(true);
 
     try {
+      localStorage.setItem('wegymProfile', JSON.stringify({
+        dietaryRestriction: formData.dietaryRestriction,
+        dietaryAllergy: formData.dietaryAllergy,
+        injury: formData.injury,
+        healthIssues: formData.healthIssues,
+        medications: formData.medications,
+      }));
       router.push('/LoginPage');
     } catch (err) {
       console.error(err);

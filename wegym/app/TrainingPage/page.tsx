@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -187,8 +188,14 @@ export default function TrainingPage() {
         <div className="flex items-center space-x-3">
           <button onClick={() => { setShowAI(true); setAiStep('add_manual'); }} className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl flex items-center space-x-2 cursor-pointer">
             <Plus size={14} className="text-orange-500" />
-            <span className="text-[10px] font-black uppercase italic text-zinc-300">Exercícios</span>
+            <span className="text-[10px] font-black uppercase italic text-zinc-300">Adicionar mais exercícios</span>
           </button>
+          <Link href="/DietPage" className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase italic text-zinc-300 hover:border-orange-500 transition-colors">
+            Dieta
+          </Link>
+          <Link href="/TrainingPage" className="bg-orange-600 border border-orange-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase italic text-white">
+            Treinos
+          </Link>
           <button onClick={() => router.push('/ProfilePage')} title="Ir para perfil" className="w-10 h-10 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-zinc-400 hover:border-orange-500 transition-colors cursor-pointer">
             <User size={20} />
           </button>
