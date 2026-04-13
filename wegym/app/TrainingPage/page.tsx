@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dumbbell, Timer, RotateCcw, Zap, CheckCircle2,
-  Trophy, X, ChevronRight, Apple, Activity, 
-  BrainCircuit, User, Plus, Sparkles, Flame, Target, Utensils, Search, ShoppingCart
+  Trophy, X, ChevronRight, Activity, 
+  BrainCircuit, User, Plus, Flame, Utensils
 } from 'lucide-react';
 
 // --- Componentes Memorizados para Performance ---
@@ -88,12 +88,26 @@ export default function TrainingPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [aiStep, setAiStep] = useState<'initial' | 'diet_goal' | 'workout_goal' | 'add_manual' | 'result'>('initial');
+  
+  const timerActiveRef = useRef(timerActive);
+  const progressBarRef = useRef<HTMLDivElement>(null);
 
   const currentPlan = useMemo(() => userPlans[activeDay], [userPlans, activeDay]);
+  
+  const progressPercentage = useMemo(() => {
+    const totalExercises = currentPlan.exercises.length;
+    if (totalExercises === 0) return 0;
+    const completedExercises = currentPlan.exercises.filter(ex => ex.id && completedIds.includes(ex.id)).length;
+    return Math.round((completedExercises / totalExercises) * 100);
+  }, [currentPlan.exercises, completedIds]);
 
   useEffect(() => {
     router.prefetch('/ProfilePage');
   }, [router]);
+
+  useEffect(() => {
+    timerActiveRef.current = timerActive;
+  }, [timerActive]);
 
   const generateFullDiet = useCallback(async (goal: 'cut' | 'bulk') => {
     setAiLoading(true);
@@ -145,26 +159,23 @@ export default function TrainingPage() {
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (timerActive && timeLeft > 0) {
+    if (timerActiveRef.current && timeLeft > 0) {
       interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
-    } else if (timeLeft === 0) {
-      setTimerActive(false);
+    } else if (timeLeft === 0 && timerActiveRef.current) {
+      setTimeout(() => setTimerActive(false), 0);
     }
     return () => clearInterval(interval);
-  }, [timerActive, timeLeft]);
+  }, [timeLeft]);
+
+  useEffect(() => {
+    if (progressBarRef.current) {
+      progressBarRef.current.style.width = `${progressPercentage}%`;
+    }
+  }, [progressPercentage]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 relative overflow-hidden antialiased font-sans">
       <div className="fixed top-[-5%] right-[-5%] w-80 h-80 bg-orange-600/10 rounded-full blur-[120px] pointer-events-none" />
-      
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => { setShowAI(true); setAiStep('initial'); }}
-        className="fixed bottom-28 right-6 z-50 w-14 h-14 bg-orange-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-orange-600/40 border border-orange-400/50"
-      >
-        <Sparkles className="text-white w-6 h-6 animate-pulse" />
-      </motion.button>
 
       <header className="sticky top-0 z-50 bg-zinc-950/40 backdrop-blur-md border-b border-white/5 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-3">
@@ -174,11 +185,11 @@ export default function TrainingPage() {
           <span className="text-xl font-black italic tracking-tighter text-white">WEGYM</span>
         </div>
         <div className="flex items-center space-x-3">
-          <button onClick={() => { setShowAI(true); setAiStep('add_manual'); }} className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl flex items-center space-x-2">
+          <button onClick={() => { setShowAI(true); setAiStep('add_manual'); }} className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl flex items-center space-x-2 cursor-pointer">
             <Plus size={14} className="text-orange-500" />
             <span className="text-[10px] font-black uppercase italic text-zinc-300">Exercícios</span>
           </button>
-          <button onClick={() => router.push('/ProfilePage')} className="w-10 h-10 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-zinc-400 hover:border-orange-500 transition-colors">
+          <button onClick={() => router.push('/ProfilePage')} title="Ir para perfil" className="w-10 h-10 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-zinc-400 hover:border-orange-500 transition-colors cursor-pointer">
             <User size={20} />
           </button>
         </div>
@@ -190,7 +201,7 @@ export default function TrainingPage() {
             <button 
               key={index} 
               onClick={() => setActiveDay(index)} 
-              className={`shrink-0 px-6 py-3 rounded-2xl font-black text-xs uppercase italic border transition-all ${activeDay === index ? "bg-orange-600 border-orange-400 text-white" : "bg-zinc-900/50 border-white/5 text-zinc-500"}`}
+              className={`shrink-0 px-6 py-3 rounded-2xl font-black text-xs uppercase italic border transition-all cursor-pointer hover:border-orange-500 ${activeDay === index ? "bg-orange-600 border-orange-400 text-white" : "bg-zinc-900/50 border-white/5 text-zinc-500"}`}
             >
               {plan.day}
             </button>
@@ -209,11 +220,33 @@ export default function TrainingPage() {
               </div>
               <button 
                 onClick={() => setTimerActive(!timerActive)} 
-                className={`w-full py-4 rounded-xl font-black uppercase italic transition-all ${timerActive ? 'bg-zinc-800 text-white' : 'bg-white text-black'}`}
+                className={`w-full py-4 rounded-xl font-black uppercase italic transition-all cursor-pointer ${timerActive ? 'bg-zinc-800 text-white' : 'bg-white text-black'}`}
               >
                 {timerActive ? 'Pausar' : 'Iniciar Descanso'}
               </button>
             </div>
+
+            <div className="bg-zinc-900/50 p-6 rounded-3xl border border-white/5 space-y-4">
+              <div className="text-center">
+                <p className="text-xs font-black uppercase italic text-zinc-400 mb-3">Progresso do Treino</p>
+                <div className="mb-3">
+                  <div className="w-full h-3 bg-zinc-800 rounded-full overflow-hidden">
+                    <div ref={progressBarRef} className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-300" />
+                  </div>
+                </div>
+                <p className="text-2xl font-black text-white">{progressPercentage}%</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => { setShowAI(true); setAiStep('workout_goal'); }}
+              className="w-full px-6 py-4 bg-orange-600 rounded-2xl shadow-2xl shadow-orange-600/40 border border-orange-400/50 hover:bg-orange-700 transition-all cursor-pointer"
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-white font-black uppercase italic text-sm">Gerar meu treino com ia</span>
+                <Zap className="text-white w-5 h-5" />
+              </div>
+            </button>
           </aside>
 
           <section className="lg:col-span-2 space-y-4">
@@ -262,11 +295,11 @@ export default function TrainingPage() {
                   <div className="space-y-3">
                     {aiStep === 'initial' && (
                       <>
-                        <button onClick={() => setAiStep('workout_goal')} className="w-full p-6 bg-zinc-950 border border-white/5 rounded-3xl text-left flex items-center justify-between hover:border-orange-500 transition-all group">
+                        <button onClick={() => setAiStep('workout_goal')} className="w-full p-6 bg-zinc-950 border border-white/5 rounded-3xl text-left flex items-center justify-between hover:border-orange-500 transition-all group cursor-pointer">
                           <div className="flex items-center gap-4"><Zap className="text-orange-500" size={24} /><p className="font-black uppercase italic text-white text-sm">Gerar Novo Treino IA</p></div>
                           <ChevronRight size={18} className="text-zinc-800 group-hover:text-white" />
                         </button>
-                        <button onClick={() => setAiStep('diet_goal')} className="w-full p-6 bg-zinc-950 border border-white/5 rounded-3xl text-left flex items-center justify-between hover:border-orange-500 transition-all group">
+                        <button onClick={() => setAiStep('diet_goal')} className="w-full p-6 bg-zinc-950 border border-white/5 rounded-3xl text-left flex items-center justify-between hover:border-orange-500 transition-all group cursor-pointer">
                           <div className="flex items-center gap-4"><Utensils className="text-orange-500" size={24} /><p className="font-black uppercase italic text-white text-sm">Consultar Dieta IA</p></div>
                           <ChevronRight size={18} className="text-zinc-800 group-hover:text-white" />
                         </button>
@@ -274,20 +307,20 @@ export default function TrainingPage() {
                     )}
                     {aiStep === 'workout_goal' && (
                       <div className="grid grid-cols-1 gap-3">
-                        <button onClick={() => generateAIWorkout('bulk')} className="p-5 bg-zinc-950 border border-white/5 rounded-3xl flex items-center gap-4 hover:border-orange-500 transition-all">
+                        <button onClick={() => generateAIWorkout('bulk')} className="p-5 bg-zinc-950 border border-white/5 rounded-3xl flex items-center gap-4 hover:border-orange-500 transition-all cursor-pointer">
                           <Trophy className="text-orange-500" size={20} /><span className="font-black uppercase italic text-xs">Foco: Ganho de Massa</span>
                         </button>
-                        <button onClick={() => generateAIWorkout('cut')} className="p-5 bg-zinc-950 border border-white/5 rounded-3xl flex items-center gap-4 hover:border-orange-500 transition-all">
+                        <button onClick={() => generateAIWorkout('cut')} className="p-5 bg-zinc-950 border border-white/5 rounded-3xl flex items-center gap-4 hover:border-orange-500 transition-all cursor-pointer">
                           <Flame className="text-orange-500" size={20} /><span className="font-black uppercase italic text-xs">Foco: Emagrecimento</span>
                         </button>
                       </div>
                     )}
                     {aiStep === 'diet_goal' && (
                       <div className="grid grid-cols-1 gap-3">
-                        <button onClick={() => generateFullDiet('cut')} className="p-5 bg-zinc-950 border border-white/5 rounded-3xl flex items-center gap-4 hover:border-orange-500 transition-all">
+                        <button onClick={() => generateFullDiet('cut')} className="p-5 bg-zinc-950 border border-white/5 rounded-3xl flex items-center gap-4 hover:border-orange-500 transition-all cursor-pointer">
                           <Flame className="text-orange-500" size={20} /><span className="font-black uppercase italic text-xs">Dieta Emagrecimento</span>
                         </button>
-                        <button onClick={() => generateFullDiet('bulk')} className="p-5 bg-zinc-950 border border-white/5 rounded-3xl flex items-center gap-4 hover:border-orange-500 transition-all">
+                        <button onClick={() => generateFullDiet('bulk')} className="p-5 bg-zinc-950 border border-white/5 rounded-3xl flex items-center gap-4 hover:border-orange-500 transition-all cursor-pointer">
                           <Trophy className="text-orange-500" size={20} /><span className="font-black uppercase italic text-xs">Dieta Ganho de Massa</span>
                         </button>
                       </div>
@@ -307,7 +340,7 @@ export default function TrainingPage() {
                         <div className="bg-zinc-950 p-6 rounded-3xl border border-white/10 max-h-72 overflow-y-auto custom-scrollbar">
                           <p className="text-zinc-300 text-xs leading-relaxed whitespace-pre-line font-mono">{aiResponse}</p>
                         </div>
-                        <button onClick={() => setShowAI(false)} className="w-full py-4 bg-white text-black font-black uppercase italic rounded-2xl hover:bg-orange-500 hover:text-white transition-all">Confirmar e Ver Plano</button>
+                        <button onClick={() => setShowAI(false)} className="w-full py-4 bg-white text-black font-black uppercase italic rounded-2xl hover:bg-orange-500 hover:text-white transition-all cursor-pointer">Confirmar e Ver Plano</button>
                       </div>
                     )}
                   </div>
