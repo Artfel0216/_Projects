@@ -1,9 +1,56 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Loader2, Dumbbell, Mail, Lock, User, IdCard, MapPin, ExternalLink, ChevronDown, Heart, Salad, Activity } from 'lucide-react';
+
+const EXPERIENCE_OPTIONS = [
+  { value: 'iniciante', label: '🥉 Iniciante', sub: 'Menos de 1 ano' },
+  { value: 'intermediario', label: '🥈 Intermediário', sub: '1 a 3 anos' },
+  { value: 'avancado', label: '🥇 Avançado', sub: 'Mais de 3 anos' },
+];
+
+const DIETARY_OPTIONS = [
+  { value: 'nenhuma', label: '🍽️ Nenhuma' },
+  { value: 'vegetariano', label: '🥗 Vegetariano' },
+  { value: 'vegano', label: '🌱 Vegano' },
+  { value: 'lactose', label: '🥛 Intolerância à lactose' },
+  { value: 'alergia', label: '⚠️ Alergias' },
+];
+
+const AnimatedBackground = React.memo(() => (
+  <>
+    <motion.div
+      animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.2, 0.1] }}
+      transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+      className="absolute top-[-10%] right-[-5%] w-125 h-125 bg-orange-600 rounded-full filter blur-[120px]"
+    />
+    <motion.div
+      animate={{ scale: [1, 1.3, 1], x: [0, -50, 0], opacity: [0.05, 0.15, 0.05] }}
+      transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+      className="absolute bottom-[-10%] left-[-5%] w-150 h-150 bg-zinc-700 rounded-full filter blur-[100px]"
+    />
+  </>
+));
+AnimatedBackground.displayName = 'AnimatedBackground';
+
+const LeftPanel = React.memo(() => (
+  <div className="hidden md:flex md:w-1/3 bg-zinc-900 p-12 flex-col justify-between relative overflow-hidden">
+    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle,#fff_1px,transparent_1px)] bg-size-[30px_30px]"></div>
+    <div className="relative z-10">
+      <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center space-x-2 mb-8">
+        <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center rotate-3">
+          <Dumbbell className="text-white w-6 h-6" />
+        </div>
+        <h1 className="text-2xl font-black text-white tracking-tighter italic">WEGYM</h1>
+      </motion.div>
+      <h2 className="text-5xl font-black text-white mb-6 leading-none uppercase italic">Supere seus <br /><span className="text-orange-500 underline decoration-zinc-700">Limites</span>.</h2>
+      <p className="text-zinc-400 text-lg leading-relaxed">Sua jornada para a melhor versão de si mesmo começa aqui.</p>
+    </div>
+  </div>
+));
+LeftPanel.displayName = 'LeftPanel';
 
 export default function CadastroPage() {
   const router = useRouter();
@@ -18,6 +65,8 @@ export default function CadastroPage() {
     cep: '',
     city: '',
     state: '',
+    cref: '',
+    acceptCrefTerm: false,
     password: '',
     confirmPassword: '',
     age: '',
@@ -36,23 +85,36 @@ export default function CadastroPage() {
     router.prefetch('/LoginPage');
   }, [router]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    let formattedValue = value;
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const target = e.target as HTMLInputElement;
+    const name = target.name;
+    const type = target.type;
+
+    if (type === 'checkbox') {
+      setFormData(prev => ({ ...prev, [name]: target.checked }));
+      if (error) setError(null);
+      return;
+    }
+
+    let formattedValue = target.value;
 
     if (name === 'cpf') {
-      formattedValue = value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4").substring(0, 14);
+      formattedValue = target.value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4").substring(0, 14);
     } else if (name === 'cep') {
-      formattedValue = value.replace(/\D/g, '').replace(/(\d{5})(\d{3})/, "$1-$2").substring(0, 9);
+      formattedValue = target.value.replace(/\D/g, '').replace(/(\d{5})(\d{3})/, "$1-$2").substring(0, 9);
+    } else if (name === 'cref') {
+      formattedValue = target.value.toUpperCase();
     }
 
     setFormData(prev => ({ ...prev, [name]: formattedValue }));
     if (error) setError(null);
-  };
+  }, [error]);
 
   useEffect(() => {
     const cepDigits = formData.cep.replace(/\D/g, '');
     if (cepDigits.length === 8) {
+      if (formData.city && formData.state) return;
+
       fetch(`https://viacep.com.br/ws/${cepDigits}/json/`)
         .then(res => res.json())
         .then(data => {
@@ -62,11 +124,22 @@ export default function CadastroPage() {
         })
         .catch(err => console.error(err));
     }
-  }, [formData.cep]);
+  }, [formData.cep, formData.city, formData.state]);
 
-  const handleCadastro = async (e: React.FormEvent) => {
+  const handleCadastro = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const crefRegex = /^\d{6}-[GgPp]\/[A-Z]{2}$/;
+    if (!crefRegex.test(formData.cref)) {
+      setError("Formato de CREF inválido. Use o padrão 000000-G/UF (Ex: 123456-G/SP).");
+      return;
+    }
+
+    if (!formData.acceptCrefTerm) {
+      setError("Você deve aceitar o Termo de Responsabilidade do CREF para prosseguir.");
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError("As senhas não coincidem.");
@@ -82,47 +155,26 @@ export default function CadastroPage() {
       setError("Falha no cadastro. Verifique os dados.");
       setIsLoading(false);
     }
-  };
+  }, [formData.cref, formData.acceptCrefTerm, formData.password, formData.confirmPassword, router]);
 
   const inputClass = "w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all";
   const labelClass = "text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center gap-1";
   const selectClass = "w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all appearance-none cursor-pointer";
   const textareaClass = "w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all resize-none";
-  const sectionTitleClass = "md:col-span-2 text-xs font-black text-orange-500 uppercase tracking-widest pt-2 pb-1 border-b border-zinc-800 flex items-center gap-2";
+  const sectionTitleClass = "md:col-span-2 text-xs font-black text-orange-500 uppercase tracking-widest pt-2 pb-1 border-b border-zinc-800 flex items-center gap-2 mt-4";
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 sm:p-8 selection:bg-orange-500 selection:text-white relative overflow-hidden">
-      <motion.div
-        animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.2, 0.1] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-        className="absolute top-[-10%] right-[-5%] w-125 h-125 bg-orange-600 rounded-full filter blur-[120px]"
-      />
-      <motion.div
-        animate={{ scale: [1, 1.3, 1], x: [0, -50, 0], opacity: [0.05, 0.15, 0.05] }}
-        transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-        className="absolute bottom-[-10%] left-[-5%] w-150 h-150 bg-zinc-700 rounded-full filter blur-[100px]"
-      />
+      <AnimatedBackground />
 
       <div className="w-full max-w-6xl bg-zinc-900/50 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10 border border-zinc-800 my-auto max-h-fit">
-        <div className="hidden md:flex md:w-1/3 bg-zinc-900 p-12 flex-col justify-between relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle,_#fff_1px,_transparent_1px)] bg-[length:30px_30px]"></div>
-          <div className="relative z-10">
-            <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center space-x-2 mb-8">
-              <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center rotate-3">
-                <Dumbbell className="text-white w-6 h-6" />
-              </div>
-              <h1 className="text-2xl font-black text-white tracking-tighter italic">WEGYM</h1>
-            </motion.div>
-            <h2 className="text-5xl font-black text-white mb-6 leading-none uppercase italic">Supere seus <br /><span className="text-orange-500 underline decoration-zinc-700">Limites</span>.</h2>
-            <p className="text-zinc-400 text-lg leading-relaxed">Sua jornada para a melhor versão de si mesmo começa aqui.</p>
-          </div>
-        </div>
+        <LeftPanel />
 
         <div className="w-full md:w-2/3 p-8 sm:p-12 relative flex items-start justify-center max-h-[85vh] overflow-y-auto">
           <div className="relative w-full max-w-2xl">
             <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}>
               <h3 className="text-4xl font-black text-white mb-2 italic uppercase">Cadastro</h3>
-              <p className="text-zinc-500 mb-8 font-medium">Preencha seus dados de atleta.</p>
+              <p className="text-zinc-500 mb-8 font-medium">Preencha seus dados para se juntar à plataforma.</p>
               <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleCadastro}>
 
                 <p className={sectionTitleClass}><User className="w-3.5 h-3.5" /> Dados Pessoais</p>
@@ -139,7 +191,7 @@ export default function CadastroPage() {
 
                 <div className="space-y-1">
                   <label className={labelClass}><Mail className="w-3 h-3" /> E-mail <span className="text-red-500">*</span></label>
-                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="seu@atleta.com" className={inputClass} required />
+                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="seu@email.com" className={inputClass} required />
                 </div>
 
                 <div className="space-y-1">
@@ -159,6 +211,28 @@ export default function CadastroPage() {
                     <label className={labelClass}>UF <span className="text-red-500">*</span></label>
                     <input type="text" name="state" value={formData.state} onChange={handleInputChange} placeholder="UF" className={inputClass + " text-center"} maxLength={2} required />
                   </div>
+                </div>
+
+                <p className={sectionTitleClass}><IdCard className="w-3.5 h-3.5" /> Dados Profissionais (Para Treinadores)</p>
+
+                <div className="space-y-1 md:col-span-2">
+                  <label className={labelClass}>Registro no CREF <span className="text-red-500">*</span></label>
+                  <input type="text" name="cref" value={formData.cref} onChange={handleInputChange} placeholder="Ex: 123456-G/SP" maxLength={11} className={inputClass} required />
+                  <p className="text-[10px] text-zinc-500 px-1">Formato obrigatório: 6 números, hífen, letra G ou P, barra, sigla do Estado.</p>
+                </div>
+
+                <div className="space-y-1 md:col-span-2 flex items-start gap-3 mt-2 bg-orange-500/5 p-4 rounded-xl border border-orange-500/20">
+                  <input
+                    type="checkbox"
+                    name="acceptCrefTerm"
+                    id="acceptCrefTerm"
+                    checked={formData.acceptCrefTerm}
+                    onChange={handleInputChange}
+                    className="mt-1 w-4 h-4 accent-orange-500 cursor-pointer shrink-0"
+                  />
+                  <label htmlFor="acceptCrefTerm" className="text-sm text-zinc-400 cursor-pointer leading-relaxed">
+                    <strong className="text-orange-500">Termo de Responsabilidade:</strong> Declaro sob as penas da lei que o número de CREF informado é válido, encontra-se ativo no Conselho Federal de Educação Física e me pertence. Estou ciente de que o uso de documentação falsa constitui crime de falsidade ideológica e que minha conta passará por <strong className="text-zinc-300">auditoria manual</strong> pela equipe WEGYM antes de ser ativada na plataforma.
+                  </label>
                 </div>
 
                 <p className={sectionTitleClass}><Activity className="w-3.5 h-3.5" /> Informações Físicas</p>
@@ -194,11 +268,7 @@ export default function CadastroPage() {
                 <div className="space-y-1 md:col-span-2">
                   <label className={labelClass}><Dumbbell className="w-3 h-3" /> Nível de Experiência <span className="text-red-500">*</span></label>
                   <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { value: 'iniciante', label: '🥉 Iniciante', sub: 'Menos de 1 ano' },
-                      { value: 'intermediario', label: '🥈 Intermediário', sub: '1 a 3 anos' },
-                      { value: 'avancado', label: '🥇 Avançado', sub: 'Mais de 3 anos' },
-                    ].map(opt => (
+                    {EXPERIENCE_OPTIONS.map(opt => (
                       <button
                         key={opt.value}
                         type="button"
@@ -221,13 +291,7 @@ export default function CadastroPage() {
                 <div className="space-y-1 md:col-span-2">
                   <label className={labelClass}>Tipo de Restrição <span className="text-red-500">*</span></label>
                   <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { value: 'nenhuma', label: '🍽️ Nenhuma' },
-                      { value: 'vegetariano', label: '🥗 Vegetariano' },
-                      { value: 'vegano', label: '🌱 Vegano' },
-                      { value: 'lactose', label: '🥛 Intolerância à lactose' },
-                      { value: 'alergia', label: '⚠️ Alergias' },
-                    ].map(opt => (
+                    {DIETARY_OPTIONS.map(opt => (
                       <button
                         key={opt.value}
                         type="button"
@@ -307,12 +371,22 @@ export default function CadastroPage() {
 
                 <div className="space-y-1">
                   <label className={labelClass}><Lock className="w-3 h-3" /> Senha <span className="text-red-500">*</span></label>
-                  <input type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
+                  <div className="relative">
+                    <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-1">
                   <label className={labelClass}><Lock className="w-3 h-3" /> Confirmar Senha <span className="text-red-500">*</span></label>
-                  <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
+                  <div className="relative">
+                    <input type={showPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
 
                 {error && (
