@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Loader2, Dumbbell, Mail, Lock, User, IdCard, MapPin, Search, ExternalLink } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Dumbbell, Mail, Lock, User, IdCard, MapPin, ExternalLink, ChevronDown, Heart, Salad, Activity } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,14 +20,24 @@ export default function LoginPage() {
     city: '',
     state: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    age: '',
+    height: '',
+    weight: '',
+    sex: '',
+    experienceLevel: '',
+    dietaryRestriction: '',
+    dietaryAllergy: '',
+    injury: '',
+    healthIssues: '',
+    medications: '',
   });
 
   useEffect(() => {
     router.prefetch('/TrainingPage');
   }, [router]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     let formattedValue = value;
 
@@ -67,12 +77,23 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      router.push('/TrainingPage');
-    } catch (err) {
+      if (isLogin) {
+        router.push('/TrainingPage');
+      } else {
+        setIsLogin(true);
+        setIsLoading(false);
+      }
+    } catch (_err) {
       setError("Falha na autenticação. Verifique os dados.");
       setIsLoading(false);
     }
   };
+
+  const inputClass = "w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all";
+  const labelClass = "text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center gap-1";
+  const selectClass = "w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all appearance-none cursor-pointer";
+  const textareaClass = "w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all resize-none";
+  const sectionTitleClass = "md:col-span-2 text-xs font-black text-orange-500 uppercase tracking-widest pt-2 pb-1 border-b border-zinc-800 flex items-center gap-2";
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 sm:p-8 selection:bg-orange-500 selection:text-white relative overflow-hidden">
@@ -87,8 +108,9 @@ export default function LoginPage() {
         className="absolute bottom-[-10%] left-[-5%] w-150 h-150 bg-zinc-700 rounded-full filter blur-[100px]"
       />
 
-      <div className="w-full max-w-6xl bg-zinc-900/50 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10 border border-zinc-800">
+      <div className="w-full max-w-6xl bg-zinc-900/50 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10 border border-zinc-800 my-auto max-h-fit">
         <div className="hidden md:flex md:w-1/3 bg-zinc-900 p-12 flex-col justify-between relative overflow-hidden">
+          {/* eslint-disable-next-line */}
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
           <div className="relative z-10">
             <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center space-x-2 mb-8">
@@ -102,14 +124,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="w-full md:w-2/3 p-8 sm:p-12 relative flex items-center justify-center min-h-150">
+        <div className="w-full md:w-2/3 p-8 sm:p-12 relative flex items-start justify-center max-h-[85vh] overflow-y-auto">
           <div className="relative w-full max-w-2xl">
-            {error && (
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 bg-red-500/10 border border-red-500/50 text-red-500 text-sm p-3 rounded-xl text-center font-bold">
-                {error}
-              </motion.div>
-            )}
-
             <AnimatePresence mode="wait">
               {isLogin ? (
                 <motion.div key="login" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
@@ -117,22 +133,22 @@ export default function LoginPage() {
                   <p className="text-zinc-500 mb-8 font-medium">Pronto para o treino de hoje?</p>
                   <form className="space-y-4" onSubmit={handleAuth}>
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center ml-1"><Mail className="w-3 h-3 mr-1" /> E-mail</label>
-                      <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="seu@atleta.com" className="w-full px-4 py-4 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                      <label className={labelClass}><Mail className="w-3 h-3" /> E-mail <span className="text-red-500">*</span></label>
+                      <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="seu@atleta.com" className={inputClass} required />
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between items-center px-1">
-                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center"><Lock className="w-3 h-3 mr-1" /> Senha</label>
-                        <button type="button" className="text-xs font-bold text-orange-500 hover:text-orange-400">Esqueceu?</button>
+                        <label className={labelClass}><Lock className="w-3 h-3" /> Senha <span className="text-red-500">*</span></label>
+                        <button type="button" className="text-xs font-bold text-orange-500 hover:text-orange-400 cursor-pointer">Esqueci minha senha</button>
                       </div>
                       <div className="relative">
-                        <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className="w-full px-4 py-4 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                        <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
                           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
                       </div>
                     </div>
-                    <motion.button disabled={isLoading} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic tracking-tighter flex items-center justify-center">
+                    <motion.button disabled={isLoading} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic tracking-tighter flex items-center justify-center cursor-pointer">
                       {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Elabore seu Treino"}
                     </motion.button>
                   </form>
@@ -142,44 +158,209 @@ export default function LoginPage() {
                   <h3 className="text-4xl font-black text-white mb-2 italic uppercase">Cadastro</h3>
                   <p className="text-zinc-500 mb-8 font-medium">Preencha seus dados de atleta.</p>
                   <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleAuth}>
+
+                    <p className={sectionTitleClass}><User className="w-3.5 h-3.5" /> Dados Pessoais</p>
+
                     <div className="space-y-1 md:col-span-2">
-                      <label className="text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center"><User className="w-3 h-3 mr-1" /> Nome Completo</label>
-                      <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="Nome Completo" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                      <label className={labelClass}><User className="w-3 h-3" /> Nome Completo <span className="text-red-500">*</span></label>
+                      <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="Nome Completo" className={inputClass} required />
                     </div>
+
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center"><IdCard className="w-3 h-3 mr-1" /> CPF</label>
-                      <input type="text" name="cpf" value={formData.cpf} onChange={handleInputChange} placeholder="000.000.000-00" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                      <label className={labelClass}><IdCard className="w-3 h-3" /> CPF <span className="text-red-500">*</span></label>
+                      <input type="text" name="cpf" value={formData.cpf} onChange={handleInputChange} placeholder="000.000.000-00" className={inputClass} required />
                     </div>
+
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center"><Mail className="w-3 h-3 mr-1" /> E-mail</label>
-                      <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="seu@atleta.com" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                      <label className={labelClass}><Mail className="w-3 h-3" /> E-mail <span className="text-red-500">*</span></label>
+                      <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="seu@atleta.com" className={inputClass} required />
                     </div>
+
                     <div className="space-y-1">
                       <div className="flex justify-between items-center px-1">
-                        <label className="text-xs font-bold text-zinc-400 uppercase flex items-center"><MapPin className="w-3 h-3 mr-1" /> CEP</label>
+                        <label className={labelClass}><MapPin className="w-3 h-3" /> CEP <span className="text-red-500">*</span></label>
                         <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-orange-500 flex items-center hover:underline uppercase italic">Não sei meu CEP <ExternalLink className="w-2 h-2 ml-1" /></a>
                       </div>
-                      <input type="text" name="cep" value={formData.cep} onChange={handleInputChange} placeholder="00000-000" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                      <input type="text" name="cep" value={formData.cep} onChange={handleInputChange} placeholder="00000-000" className={inputClass} required />
                     </div>
+
                     <div className="space-y-1 grid grid-cols-3 gap-2">
                       <div className="col-span-2">
-                        <label className="text-xs font-bold text-zinc-400 uppercase ml-1">Cidade</label>
-                        <input type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder="Cidade" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                        <label className={labelClass}>Cidade <span className="text-red-500">*</span></label>
+                        <input type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder="Cidade" className={inputClass} required />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-zinc-400 uppercase ml-1">UF</label>
-                        <input type="text" name="state" value={formData.state} onChange={handleInputChange} placeholder="UF" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all text-center" maxLength={2} required />
+                        <label className={labelClass}>UF <span className="text-red-500">*</span></label>
+                        <input type="text" name="state" value={formData.state} onChange={handleInputChange} placeholder="UF" className={inputClass + " text-center"} maxLength={2} required />
                       </div>
                     </div>
+
+                    <p className={sectionTitleClass}><Activity className="w-3.5 h-3.5" /> Informações Físicas</p>
+
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center"><Lock className="w-3 h-3 mr-1" /> Senha</label>
-                      <input type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                      <label className={labelClass}>Idade <span className="text-red-500">*</span></label>
+                      <input type="number" name="age" value={formData.age} onChange={handleInputChange} placeholder="Ex: 25" min={10} max={100} className={inputClass} required />
                     </div>
+
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center"><Search className="w-3 h-3 mr-1" /> Confirmar</label>
-                      <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all" required />
+                      <label className={labelClass}>Sexo <span className="text-red-500">*</span></label>
+                      <div className="relative">
+                        <select name="sex" value={formData.sex} onChange={handleInputChange} className={selectClass} aria-label="Sexo" required>
+                          <option value="" disabled>Selecione...</option>
+                          <option value="masculino">Masculino</option>
+                          <option value="feminino">Feminino</option>
+                          <option value="outro">Outro / Prefiro não informar</option>
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-zinc-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </div>
                     </div>
-                    <motion.button disabled={isLoading} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="md:col-span-2 w-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic mt-4 flex items-center justify-center">
+
+                    <div className="space-y-1">
+                      <label className={labelClass}>Altura (cm) <span className="text-red-500">*</span></label>
+                      <input type="number" name="height" value={formData.height} onChange={handleInputChange} placeholder="Ex: 175" min={100} max={250} className={inputClass} required />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className={labelClass}>Peso (kg) <span className="text-red-500">*</span></label>
+                      <input type="number" name="weight" value={formData.weight} onChange={handleInputChange} placeholder="Ex: 70" min={30} max={300} className={inputClass} required />
+                    </div>
+
+                    <div className="space-y-1 md:col-span-2">
+                      <label className={labelClass}><Dumbbell className="w-3 h-3" /> Nível de Experiência <span className="text-red-500">*</span></label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { value: 'iniciante', label: '🥉 Iniciante', sub: 'Menos de 1 ano' },
+                          { value: 'intermediario', label: '🥈 Intermediário', sub: '1 a 3 anos' },
+                          { value: 'avancado', label: '🥇 Avançado', sub: 'Mais de 3 anos' },
+                        ].map(opt => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, experienceLevel: opt.value }))}
+                            className={`flex flex-col items-center justify-center py-3 px-2 rounded-xl border text-center transition-all cursor-pointer ${
+                              formData.experienceLevel === opt.value
+                                ? 'border-orange-500 bg-orange-500/10 text-orange-400'
+                                : 'border-zinc-800 bg-zinc-800/50 text-zinc-400 hover:border-zinc-600'
+                            }`}
+                          >
+                            <span className="text-sm font-black">{opt.label}</span>
+                            <span className="text-[10px] mt-0.5 opacity-70">{opt.sub}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <p className={sectionTitleClass}><Salad className="w-3.5 h-3.5" /> Restrições Alimentares</p>
+
+                    <div className="space-y-1 md:col-span-2">
+                      <label className={labelClass}>Tipo de Restrição <span className="text-red-500">*</span></label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { value: 'nenhuma', label: '🍽️ Nenhuma' },
+                          { value: 'vegetariano', label: '🥗 Vegetariano' },
+                          { value: 'vegano', label: '🌱 Vegano' },
+                          { value: 'lactose', label: '🥛 Intolerância à lactose' },
+                          { value: 'alergia', label: '⚠️ Alergias' },
+                        ].map(opt => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, dietaryRestriction: opt.value, dietaryAllergy: opt.value !== 'alergia' ? '' : prev.dietaryAllergy }))}
+                            className={`py-2.5 px-3 rounded-xl border text-sm font-bold text-left transition-all cursor-pointer ${
+                              formData.dietaryRestriction === opt.value
+                                ? 'border-orange-500 bg-orange-500/10 text-orange-400'
+                                : 'border-zinc-800 bg-zinc-800/50 text-zinc-400 hover:border-zinc-600'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <AnimatePresence>
+                      {formData.dietaryRestriction === 'alergia' && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="space-y-1 md:col-span-2 overflow-hidden"
+                        >
+                          <label className={labelClass}>Descreva suas alergias</label>
+                          <input
+                            type="text"
+                            name="dietaryAllergy"
+                            value={formData.dietaryAllergy}
+                            onChange={handleInputChange}
+                            placeholder="Ex: amendoim, frutos do mar, glúten..."
+                            className={inputClass}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <p className={sectionTitleClass}><Heart className="w-3.5 h-3.5" /> Saúde</p>
+
+                    <div className="space-y-1 md:col-span-2">
+                      <label className={labelClass}>Possui alguma lesão?</label>
+                      <textarea
+                        name="injury"
+                        value={formData.injury}
+                        onChange={handleInputChange}
+                        placeholder="Descreva suas lesões, se houver. Ex: lesão no ombro direito, tendinite..."
+                        rows={2}
+                        className={textareaClass}
+                      />
+                    </div>
+
+                    <div className="space-y-1 md:col-span-2">
+                      <label className={labelClass}>Problemas de saúde?</label>
+                      <textarea
+                        name="healthIssues"
+                        value={formData.healthIssues}
+                        onChange={handleInputChange}
+                        placeholder="Ex: problema no joelho, hérnia de disco, hipertensão..."
+                        rows={2}
+                        className={textareaClass}
+                      />
+                    </div>
+
+                    <div className="space-y-1 md:col-span-2">
+                      <label className={labelClass}>Faz uso de medicamentos?</label>
+                      <input
+                        type="text"
+                        name="medications"
+                        value={formData.medications}
+                        onChange={handleInputChange}
+                        placeholder="Ex: losartana, metformina, antiinflamatório..."
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <p className={sectionTitleClass}><Lock className="w-3.5 h-3.5" /> Segurança</p>
+
+                    <div className="space-y-1">
+                      <label className={labelClass}><Lock className="w-3 h-3" /> Senha <span className="text-red-500">*</span></label>
+                      <input type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className={labelClass}><Lock className="w-3 h-3" /> Confirmar Senha <span className="text-red-500">*</span></label>
+                      <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
+                    </div>
+
+                    {!isLogin && error && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="md:col-span-2 bg-red-500/10 border border-red-500/50 text-red-500 text-sm p-3 rounded-xl text-center font-bold">
+                        {error}
+                      </motion.div>
+                    )}
+
+                    <motion.button
+                      disabled={isLoading}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      className="md:col-span-2 w-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic mt-4 flex items-center justify-center cursor-pointer"
+                    >
                       {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-black" /> : "Finalizar Cadastro"}
                     </motion.button>
                   </form>
@@ -188,9 +369,9 @@ export default function LoginPage() {
             </AnimatePresence>
 
             <div className="mt-8 text-center">
-              <button onClick={() => { setIsLogin(!isLogin); setError(null); }} className="text-zinc-400 text-sm font-medium hover:text-white transition-colors">
+              <button onClick={() => { setIsLogin(!isLogin); setError(null); }} className="text-zinc-400 text-sm font-medium hover:text-white transition-colors cursor-pointer">
                 {isLogin ? "Não tem conta? " : "Já é membro? "}
-                <span className="text-orange-500 font-bold underline decoration-zinc-800 italic">{isLogin ? "CRIAR PERFIL" : "FAZER LOGIN"}</span>
+                <span className="text-orange-500 font-bold underline decoration-zinc-800 italic cursor-pointer">{isLogin ? "CRIAR PERFIL" : "FAZER LOGIN"}</span>
               </button>
             </div>
           </div>
