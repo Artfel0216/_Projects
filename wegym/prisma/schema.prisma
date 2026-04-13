@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  atleta
+  personal
+}
+
+enum UserSex {
+  masculino
+  feminino
+  outro
+}
+
+enum ExperienceLevel {
+  iniciante
+  intermediario
+  avancado
+}
+
+enum DietaryRestriction {
+  nenhuma
+  vegetariano
+  vegano
+  lactose
+  alergia
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  passwordHash String
+  role         UserRole
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  athlete      Athlete?
+  personal     PersonalTrainer?
+
+  @@map("users")
+}
+
+model Athlete {
+  id                 String             @id @default(uuid()) @db.Uuid
+  userId             String             @unique @db.Uuid
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name               String             @db.VarChar(255)
+  cpf                String             @unique @db.VarChar(14)
+  cep                String             @db.VarChar(9)
+  city               String             @db.VarChar(100)
+  state              String             @db.Char(2)
+  age                Int                @db.SmallInt
+  sex                UserSex
+  heightCm           Int                @db.SmallInt
+  weightKg           Decimal            @db.Decimal(5, 2)
+  experienceLevel    ExperienceLevel
+  dietaryRestriction DietaryRestriction
+  dietaryAllergy     String?            @db.Text
+  injury             String?            @db.Text
+  healthIssues       String?            @db.Text
+  medications        String?            @db.Text
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@map("athletes")
+}
+
+model PersonalTrainer {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String   @db.VarChar(255)
+  cref      String   @unique @db.VarChar(20)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("personal_trainers")
+}
