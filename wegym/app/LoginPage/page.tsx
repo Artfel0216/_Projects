@@ -83,7 +83,8 @@ export default function LoginPage() {
         setIsLogin(true);
         setIsLoading(false);
       }
-    } catch (_err) {
+    } catch (err) {
+      console.error(err);
       setError("Falha na autenticação. Verifique os dados.");
       setIsLoading(false);
     }
@@ -110,8 +111,7 @@ export default function LoginPage() {
 
       <div className="w-full max-w-6xl bg-zinc-900/50 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10 border border-zinc-800 my-auto max-h-fit">
         <div className="hidden md:flex md:w-1/3 bg-zinc-900 p-12 flex-col justify-between relative overflow-hidden">
-          {/* eslint-disable-next-line */}
-          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle,_#fff_1px,_transparent_1px)] bg-[length:30px_30px]"></div>
           <div className="relative z-10">
             <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center space-x-2 mb-8">
               <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center rotate-3">
