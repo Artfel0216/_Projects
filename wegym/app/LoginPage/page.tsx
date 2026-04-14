@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { Eye, EyeOff, Loader2, Dumbbell, Mail, Lock, User, IdCard, MapPin, ExternalLink, ChevronDown, Heart, Salad, Activity, CheckCircle2 } from 'lucide-react';
 
 const EXPERIENCE_OPTIONS = [
@@ -119,7 +120,7 @@ export default function LoginPage() {
         setError("CREF inválido ou inativo. Formato esperado: 000000-G/UF");
         setCrefVerified(false);
       }
-    }, 1500);
+    }, 1000);
   }, [formData.cref]);
 
   const handleAuth = useCallback(async (e: React.FormEvent) => {
@@ -127,31 +128,53 @@ export default function LoginPage() {
     setError(null);
 
     if (!isLogin && formData.password !== formData.confirmPassword) {
-      setError("As senhas não coincidem.");
-      return;
+      return setError("As senhas não coincidem.");
     }
 
     if (!isLogin && userType === 'personal' && !crefVerified) {
-      setError("É obrigatório verificar o CREF antes de se cadastrar.");
-      return;
+      return setError("Valide o CREF antes de continuar.");
     }
 
     setIsLoading(true);
 
     try {
       if (isLogin) {
-        router.push('/TrainingPage');
+        const res = await signIn("credentials", {
+          redirect: false,
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (res?.error) {
+          setError(res.error);
+          setIsLoading(false);
+        } else {
+          router.push('/TrainingPage');
+        }
       } else {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...formData, userType })
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          setError(data.error || "Erro no cadastro.");
+          setIsLoading(false);
+          return;
+        }
+
         setIsLogin(true);
         setIsLoading(false);
         setCrefVerified(false);
+        setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
       }
-    } catch (err) {
-      console.error(err);
-      setError("Falha na autenticação. Verifique os dados.");
+    } catch {
+      setError("Falha de conexão.");
       setIsLoading(false);
     }
-  }, [isLogin, formData.password, formData.confirmPassword, userType, crefVerified, router]);
+  }, [isLogin, formData, userType, crefVerified, router]);
 
   const inputClass = "w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all";
   const labelClass = "text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center gap-1";
