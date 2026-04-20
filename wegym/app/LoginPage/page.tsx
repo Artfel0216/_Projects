@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { getSession, signIn } from 'next-auth/react';
 import { Eye, EyeOff, Loader2, Dumbbell, Mail, Lock, User, IdCard, MapPin, ExternalLink, ChevronDown, Heart, Salad, Activity, CheckCircle2 } from 'lucide-react';
 
 const EXPERIENCE_OPTIONS = [
@@ -72,6 +72,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     router.prefetch('/TrainingPage');
+    router.prefetch('/PersonalPage');
   }, [router]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -149,7 +150,14 @@ export default function LoginPage() {
           setError(res.error);
           setIsLoading(false);
         } else {
-          router.push('/TrainingPage');
+          const session = await getSession();
+          const role = (session?.user as { role?: string } | undefined)?.role;
+
+          if (role === 'personal') {
+            router.push('/PersonalPage');
+          } else {
+            router.push('/TrainingPage');
+          }
         }
       } else {
         const res = await fetch('/api/auth/register', {
