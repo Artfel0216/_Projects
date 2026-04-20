@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs"; 
+import bcrypt from "bcryptjs";
 import { prisma } from "../../../../lib/prisma";
 import { ratelimit } from "../../../../lib/rate-limit";
 
-type UserType = "atleta" | "personal";
-
 export async function POST(req: Request) {
   try {
-    const ip = req.headers.get("x-forwarded-for") ?? "anonymous";
+    const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
+    
     const [ratelimitResult, body] = await Promise.all([
       ratelimit.limit(ip),
       req.json()
@@ -18,70 +17,65 @@ export async function POST(req: Request) {
     }
 
     const {
-      userType, email, password, name, cpf, cep, city, state, 
+      userType, email, password, name, cpf, cep, city, state,
       age, sex, height, weight, experienceLevel, dietaryRestriction,
       dietaryAllergy, injury, healthIssues, medications, cref
     } = body;
 
-    if (!email || !password || !userType) {
+    if (!email || !password || !userType || !name) {
       return NextResponse.json({ error: "Dados obrigatórios ausentes." }, { status: 400 });
     }
 
-    const [existingUser, passwordHash] = await Promise.all([
-      prisma.user.findUnique({
-        where: { email },
-        select: { id: true },
-      }),
-      bcrypt.hash(password, 10)
-    ]);
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
 
     if (existingUser) {
       return NextResponse.json({ error: "E-mail já cadastrado." }, { status: 400 });
     }
 
-    const userData: any = {
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const userData = {
       email,
       passwordHash,
       role: userType,
+      ...(userType === "atleta" ? {
+        athlete: {
+          create: {
+            name, cpf, cep, city, state, sex, experienceLevel, dietaryRestriction,
+            age: Number(age),
+            heightCm: Number(height),
+            weightKg: Number(weight),
+            dietaryAllergy: dietaryAllergy || null,
+            injury: injury || null,
+            healthIssues: healthIssues || null,
+            medications: medications || null,
+          },
+        },
+      } : userType === "personal" ? {
+        personal: {
+          create: { name, cref },
+        },
+      } : null),
     };
 
-    if (userType === "atleta") {
-      userData.athlete = {
-        create: {
-          name, cpf, cep, city, state,
-          age: Number(age),
-          sex,
-          heightCm: Number(height),
-          weightKg: Number(weight),
-          experienceLevel,
-          dietaryRestriction,
-          dietaryAllergy: dietaryAllergy ?? null,
-          injury: injury ?? null,
-          healthIssues: healthIssues ?? null,
-          medications: medications ?? null,
-        },
-      };
-    } else if (userType === "personal") {
-      userData.personal = {
-        create: { name, cref },
-      };
-    } else {
+    if (!userData) {
       return NextResponse.json({ error: "Tipo de usuário inválido." }, { status: 400 });
     }
 
-    await prisma.user.create({ data: userData });
+    await prisma.user.create({ 
+      data: userData,
+      select: { id: true } 
+    });
 
-    return NextResponse.json({ message: "Cadastro realizado com sucesso!" }, { status: 201 });
+    return NextResponse.json({ message: "Sucesso!" }, { status: 201 });
 
   } catch (error: any) {
     if (error?.code === "P2002") {
-      return NextResponse.json(
-        { error: "E-mail, CPF ou CREF já cadastrados." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "E-mail, CPF ou CREF já cadastrados." }, { status: 400 });
     }
-
-    console.error("Erro no cadastro:", error);
-    return NextResponse.json({ error: "Erro interno no servidor." }, { status: 500 });
+    return NextResponse.json({ error: "Erro interno." }, { status: 500 });
   }
 }
