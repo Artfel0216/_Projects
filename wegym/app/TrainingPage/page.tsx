@@ -10,7 +10,7 @@ import {
   BrainCircuit, User, Plus, Flame, Utensils
 } from 'lucide-react';
 
-// --- Componentes Memorizados para Performance ---
+
 
 const ExerciseItem = memo(({ ex, isCompleted, onToggle }: { ex: Exercise, isCompleted: boolean, onToggle: (id: string) => void }) => (
   <div className="p-5 flex items-center justify-between">
@@ -31,7 +31,7 @@ const ExerciseItem = memo(({ ex, isCompleted, onToggle }: { ex: Exercise, isComp
 ));
 ExerciseItem.displayName = 'ExerciseItem';
 
-// --- Tipagens ---
+
 
 interface Exercise {
   id?: string;
@@ -238,7 +238,7 @@ export default function TrainingPage() {
                 <p className="text-xs font-black uppercase italic text-zinc-400 mb-3">Progresso do Treino</p>
                 <div className="mb-3">
                   <div className="w-full h-3 bg-zinc-800 rounded-full overflow-hidden">
-                    <div ref={progressBarRef} className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-300" />
+                    <div ref={progressBarRef} className="h-full bg-linear-to-r from-orange-500 to-orange-600 transition-all duration-300" />
                   </div>
                 </div>
                 <p className="text-2xl font-black text-white">{progressPercentage}%</p>

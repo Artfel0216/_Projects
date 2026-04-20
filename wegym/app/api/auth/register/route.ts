@@ -1,103 +1,78 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs"; 
 import { prisma } from "../../../../lib/prisma";
-import { hashQueue } from "../../../../lib/queue";
 import { ratelimit } from "../../../../lib/rate-limit";
+
+type UserType = "atleta" | "personal";
 
 export async function POST(req: Request) {
   try {
     const ip = req.headers.get("x-forwarded-for") ?? "anonymous";
-    const { success } = await ratelimit.limit(ip);
+    const [ratelimitResult, body] = await Promise.all([
+      ratelimit.limit(ip),
+      req.json()
+    ]);
 
-    if (!success) {
+    if (!ratelimitResult.success) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
-    const body = await req.json();
-
     const {
-      userType,
-      email,
-      password,
-      name,
-      cpf,
-      cep,
-      city,
-      state,
-      age,
-      sex,
-      height,
-      weight,
-      experienceLevel,
-      dietaryRestriction,
-      dietaryAllergy,
-      injury,
-      healthIssues,
-      medications,
-      cref,
+      userType, email, password, name, cpf, cep, city, state, 
+      age, sex, height, weight, experienceLevel, dietaryRestriction,
+      dietaryAllergy, injury, healthIssues, medications, cref
     } = body;
 
     if (!email || !password || !userType) {
       return NextResponse.json({ error: "Dados obrigatórios ausentes." }, { status: 400 });
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true },
-    });
+    const [existingUser, passwordHash] = await Promise.all([
+      prisma.user.findUnique({
+        where: { email },
+        select: { id: true },
+      }),
+      bcrypt.hash(password, 10)
+    ]);
 
     if (existingUser) {
       return NextResponse.json({ error: "E-mail já cadastrado." }, { status: 400 });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const userData: any = {
+      email,
+      passwordHash,
+      role: userType,
+    };
 
     if (userType === "atleta") {
-      await prisma.user.create({
-        data: {
-          email,
-          passwordHash,
-          role: "atleta",
-          athlete: {
-            create: {
-              name,
-              cpf,
-              cep,
-              city,
-              state,
-              age: Number(age),
-              sex,
-              heightCm: Number(height),
-              weightKg: Number(weight),
-              experienceLevel,
-              dietaryRestriction,
-              dietaryAllergy: dietaryAllergy ?? null,
-              injury: injury ?? null,
-              healthIssues: healthIssues ?? null,
-              medications: medications ?? null,
-            },
-          },
+      userData.athlete = {
+        create: {
+          name, cpf, cep, city, state,
+          age: Number(age),
+          sex,
+          heightCm: Number(height),
+          weightKg: Number(weight),
+          experienceLevel,
+          dietaryRestriction,
+          dietaryAllergy: dietaryAllergy ?? null,
+          injury: injury ?? null,
+          healthIssues: healthIssues ?? null,
+          medications: medications ?? null,
         },
-      });
+      };
     } else if (userType === "personal") {
-      await prisma.user.create({
-        data: {
-          email,
-          passwordHash,
-          role: "personal",
-          personal: {
-            create: {
-              name,
-              cref,
-            },
-          },
-        },
-      });
+      userData.personal = {
+        create: { name, cref },
+      };
     } else {
       return NextResponse.json({ error: "Tipo de usuário inválido." }, { status: 400 });
     }
 
-    return NextResponse.json({ message: "OK" }, { status: 201 });
+    await prisma.user.create({ data: userData });
+
+    return NextResponse.json({ message: "Cadastro realizado com sucesso!" }, { status: 201 });
+
   } catch (error: any) {
     if (error?.code === "P2002") {
       return NextResponse.json(
@@ -106,6 +81,7 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({ error: "Erro interno." }, { status: 500 });
+    console.error("Erro no cadastro:", error);
+    return NextResponse.json({ error: "Erro interno no servidor." }, { status: 500 });
   }
 }
