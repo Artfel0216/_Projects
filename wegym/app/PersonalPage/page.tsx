@@ -411,14 +411,14 @@ export default function PersonalDashboard() {
 
       <main className="max-w-6xl mx-auto px-4 pt-8">
         {showNewStudentForm && (
-          <div className="mb-8 bg-zinc-900/50 rounded-[32px] border border-orange-500/20 p-6">
+          <div className="mb-8 bg-zinc-900/50 rounded-4xl border border-orange-500/20 p-6">
             <h2 className="text-lg font-black italic uppercase text-white mb-4">Cadastro completo de aluno</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <Field label="Nome completo" required><input required value={safeNewStudent.name} onChange={(e) => setNewStudent({ ...safeNewStudent, name: e.target.value })} placeholder="Nome completo" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
               <Field label="CPF" required><input required value={safeNewStudent.cpf} onChange={(e) => setNewStudent({ ...safeNewStudent, cpf: e.target.value })} placeholder="000.000.000-00" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
               <Field label="Email"><input value={safeNewStudent.email} onChange={(e) => setNewStudent({ ...safeNewStudent, email: e.target.value })} placeholder="Email" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
               <Field label="Telefone / WhatsApp" required><input required value={safeNewStudent.phone} onChange={(e) => setNewStudent({ ...safeNewStudent, phone: e.target.value })} placeholder="Telefone / WhatsApp" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Data de nascimento" required><input required type="date" value={safeNewStudent.birthDate} onChange={(e) => setNewStudent({ ...safeNewStudent, birthDate: e.target.value })} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white [color-scheme:light]" /></Field>
+              <Field label="Data de nascimento" required><input required type="date" value={safeNewStudent.birthDate} onChange={(e) => setNewStudent({ ...safeNewStudent, birthDate: e.target.value })} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white scheme-light" /></Field>
               <Field label="Gênero" required>
                 <select required value={safeNewStudent.gender} onChange={(e) => setNewStudent({ ...safeNewStudent, gender: e.target.value })} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white">
                   <option value="">Selecione</option>
@@ -517,7 +517,7 @@ export default function PersonalDashboard() {
                     <Field label="CPF" required><input required value={selectedStudent.cpf ?? ''} onChange={(e) => updateSelectedStudentField('cpf', e.target.value)} placeholder="000.000.000-00" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
                     <Field label="Email"><input value={selectedStudent.email ?? ''} onChange={(e) => updateSelectedStudentField('email', e.target.value)} placeholder="Email" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
                     <Field label="Telefone" required><input required value={selectedStudent.phone ?? ''} onChange={(e) => updateSelectedStudentField('phone', e.target.value)} placeholder="Telefone" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Data de nascimento" required><input required type="date" value={selectedStudent.birthDate ?? ''} onChange={(e) => updateSelectedStudentField('birthDate', e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none [color-scheme:light]" /></Field>
+                    <Field label="Data de nascimento" required><input required type="date" value={selectedStudent.birthDate ?? ''} onChange={(e) => updateSelectedStudentField('birthDate', e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none scheme-light" /></Field>
                     <Field label="Gênero" required>
                       <select required value={selectedStudent.gender ?? ''} onChange={(e) => updateSelectedStudentField('gender', e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none">
                         <option value="">Selecione</option>
