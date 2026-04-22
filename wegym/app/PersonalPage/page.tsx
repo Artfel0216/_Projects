@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Calendar, TrendingUp, MoreVertical, CalendarDays, User, Plus, Award,
@@ -242,108 +242,320 @@ function AgendaItem({ item, studentName, onOpenStudent }: { item: WeeklyClass; s
 
 export default function PersonalDashboard() {
   const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
-  const [weeklyClasses, setWeeklyClasses] = useState<WeeklyClass[]>(INITIAL_WEEKLY_CLASSES);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-  const [showNewStudentForm, setShowNewStudentForm] = useState(false);
-  const [newStudent, setNewStudent] = useState(emptyStudentForm());
-  const [showExerciseForm, setShowExerciseForm] = useState(false);
-  const [exerciseToAdd, setExerciseToAdd] = useState({ day: 'Seg', name: '', sets: '', reps: '', load: '' });
-  const [historyInput, setHistoryInput] = useState({ date: '', weight: '', muscleMass: '', bodyFat: '', note: '' });
+const [cursor, setCursor] = useState<string | null>(null);
+const [loadingMore, setLoadingMore] = useState(false);
+const [hasMore, setHasMore] = useState(true);
+const [weeklyClasses, setWeeklyClasses] = useState<WeeklyClass[]>(INITIAL_WEEKLY_CLASSES);
+const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+const [showNewStudentForm, setShowNewStudentForm] = useState(false);
+const [newStudent, setNewStudent] = useState(emptyStudentForm());
+const [showExerciseForm, setShowExerciseForm] = useState(false);
+const [exerciseToAdd, setExerciseToAdd] = useState({ day: 'Seg', name: '', sets: '', reps: '', load: '' });
+const [historyInput, setHistoryInput] = useState({ date: '', weight: '', muscleMass: '', bodyFat: '', note: '' });
 
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<{ role: string, content: string }[]>([]);
-  const [loading, setLoading] = useState(false);
+const [isChatOpen, setIsChatOpen] = useState(false);
+const [input, setInput] = useState('');
+const [messages, setMessages] = useState<{ role: string, content: string }[]>([]);
+const [loading, setLoading] = useState(false);
 
-  const selectedStudent = useMemo(
-    () => students.find((student) => student.id === selectedStudentId) ?? null,
-    [students, selectedStudentId]
-  );
-  const safeNewStudent = useMemo(() => ({ ...emptyStudentForm(), ...newStudent }), [newStudent]);
+const selectedStudent = useMemo(
+  () => students.find((student) => student.id === selectedStudentId) ?? null,
+  [students, selectedStudentId]
+);
 
-  const openStudentProfile = (studentId: string) => {
-    setSelectedStudentId(studentId);
-    setShowExerciseForm(false);
-    setShowNewStudentForm(false);
-  };
+const safeNewStudent = useMemo(
+  () => ({ ...emptyStudentForm(), ...newStudent }),
+  [newStudent]
+);
 
-  const updateSelectedStudentField = (field: keyof Student, value: string | number | WeeklyPlan | ProgressEntry[]) => {
-    if (!selectedStudentId) return;
-    setStudents((prev) => prev.map((student) => (
+const openStudentProfile = (studentId: string) => {
+  setSelectedStudentId(studentId);
+  setShowExerciseForm(false);
+  setShowNewStudentForm(false);
+};
+
+const updateSelectedStudentField = (field: keyof Student, value: any) => {
+  if (!selectedStudentId) return;
+  setStudents((prev) =>
+    prev.map((student) =>
       student.id === selectedStudentId ? { ...student, [field]: value } : student
-    )));
+    )
+  );
+};
+
+const addExerciseToSelectedStudent = () => {
+  if (!selectedStudentId || !exerciseToAdd.name || !exerciseToAdd.sets || !exerciseToAdd.reps) return;
+
+  setStudents((prev) =>
+    prev.map((student) => {
+      if (student.id !== selectedStudentId) return student;
+
+      const updatedPlan = { ...student.weeklyPlan };
+      const dayExercises = [...(updatedPlan[exerciseToAdd.day] ?? [])];
+
+      dayExercises.push({
+        name: exerciseToAdd.name,
+        sets: exerciseToAdd.sets || '-',
+        reps: exerciseToAdd.reps || '-',
+        load: exerciseToAdd.load || '-'
+      });
+
+      updatedPlan[exerciseToAdd.day] = dayExercises;
+
+      return { ...student, weeklyPlan: updatedPlan };
+    })
+  );
+
+  setExerciseToAdd({ day: 'Seg', name: '', sets: '', reps: '', load: '' });
+};
+
+const removeExercise = (day: string, idx: number) => {
+  if (!selectedStudentId) return;
+
+  setStudents((prev) =>
+    prev.map((student) => {
+      if (student.id !== selectedStudentId) return student;
+
+      const updatedPlan = { ...student.weeklyPlan };
+      const dayExercises = [...(updatedPlan[day] ?? [])];
+
+      dayExercises.splice(idx, 1);
+      updatedPlan[day] = dayExercises;
+
+      return { ...student, weeklyPlan: updatedPlan };
+    })
+  );
+};
+
+useEffect(() => {
+  const controller = new AbortController();
+
+  const fetchClasses = async () => {
+    try {
+      const res = await fetch('/api/classes', {
+        signal: controller.signal,
+        cache: 'no-store'
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      const formatted = (Array.isArray(data) ? data : data.data ?? []).map((c: any) => ({
+        id: c.id,
+        studentId: c.studentId,
+        day: c.day,
+        date: c.date,
+        time: c.time,
+        type: c.type,
+        status: c.status
+      }));
+
+      setWeeklyClasses(formatted);
+    } catch {}
   };
 
-  const addExerciseToSelectedStudent = () => {
-    if (!selectedStudentId || !exerciseToAdd.name || !exerciseToAdd.sets || !exerciseToAdd.reps) return;
-    setStudents((prev) =>
-      prev.map((student) => {
-        if (student.id !== selectedStudentId) return student;
-        const updatedPlan = { ...student.weeklyPlan };
-        const dayExercises = [...(updatedPlan[exerciseToAdd.day] ?? [])];
-        dayExercises.push({
-          name: exerciseToAdd.name,
-          sets: exerciseToAdd.sets || '-',
-          reps: exerciseToAdd.reps || '-',
-          load: exerciseToAdd.load || '-'
+  fetchClasses();
+
+  return () => controller.abort();
+}, []);
+
+useEffect(() => {
+  const controller = new AbortController();
+
+  const fetchStudents = async () => {
+    try {
+      const res = await fetch('/api/athletes', {
+        cache: 'no-store',
+        signal: controller.signal
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      const formatted = (data.data ?? []).map((a: any) => ({
+        id: a.id,
+        name: a.name,
+        cpf: a.cpf,
+        email: '',
+        phone: '',
+        birthDate: '',
+        gender: '',
+        emergencyContact: '',
+        objective: '',
+        restrictions: '',
+        injuries: '',
+        medications: '',
+        experience: a.experienceLevel ?? '',
+        availableDays: '',
+        height: '',
+        weight: '',
+        bodyFat: '',
+        observations: '',
+        lastTraining: 'Recente',
+        plan: 'Basic',
+        progress: 0,
+        weeklyPlan: (a.trainingPlans ?? []).reduce((acc: any, plan: any) => {
+          acc[plan.day] = plan.exercises ?? [];
+          return acc;
+        }, { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sab: [], Dom: [] }),
+        progressHistory: (a.progressEntries ?? []).map((p: any) => ({
+          date: p.date ?? '',
+          weight: p.weight ?? '',
+          muscleMass: p.muscleMass ?? '',
+          bodyFat: p.bodyFat ?? '',
+          note: p.note ?? ''
+        }))
+      }));
+
+      setStudents(formatted);
+      setCursor(data.nextCursor ?? null);
+      setHasMore(!!data.nextCursor);
+    } catch {}
+  };
+
+  fetchStudents();
+
+  return () => controller.abort();
+}, []);
+
+useEffect(() => {
+  const handleScroll = async () => {
+    if (loadingMore || !hasMore || !cursor) return;
+
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+      setLoadingMore(true);
+
+      try {
+        const res = await fetch(`/api/athletes?cursor=${cursor}`, {
+          cache: 'no-store'
         });
-        updatedPlan[exerciseToAdd.day] = dayExercises;
-        return { ...student, weeklyPlan: updatedPlan };
-      })
-    );
-    setExerciseToAdd({ day: 'Seg', name: '', sets: '', reps: '', load: '' });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        const formatted = (data.data ?? []).map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          cpf: a.cpf,
+          email: '',
+          phone: '',
+          birthDate: '',
+          gender: '',
+          emergencyContact: '',
+          objective: '',
+          restrictions: '',
+          injuries: '',
+          medications: '',
+          experience: a.experienceLevel ?? '',
+          availableDays: '',
+          height: '',
+          weight: '',
+          bodyFat: '',
+          observations: '',
+          lastTraining: 'Recente',
+          plan: 'Basic',
+          progress: 0,
+          weeklyPlan: (a.trainingPlans ?? []).reduce((acc: any, plan: any) => {
+            acc[plan.day] = plan.exercises ?? [];
+            return acc;
+          }, { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sab: [], Dom: [] }),
+          progressHistory: (a.progressEntries ?? []).map((p: any) => ({
+            date: p.date ?? '',
+            weight: p.weight ?? '',
+            muscleMass: p.muscleMass ?? '',
+            bodyFat: p.bodyFat ?? '',
+            note: p.note ?? ''
+          }))
+        }));
+
+        setStudents((prev) => [...prev, ...formatted]);
+        setCursor(data.nextCursor ?? null);
+        setHasMore(!!data.nextCursor);
+      } catch {}
+
+      setLoadingMore(false);
+    }
   };
 
-  const removeExercise = (day: string, idx: number) => {
-    if (!selectedStudentId) return;
-    setStudents((prev) =>
-      prev.map((student) => {
-        if (student.id !== selectedStudentId) return student;
-        const updatedPlan = { ...student.weeklyPlan };
-        const dayExercises = [...(updatedPlan[day] ?? [])];
-        dayExercises.splice(idx, 1);
-        updatedPlan[day] = dayExercises;
-        return { ...student, weeklyPlan: updatedPlan };
-      })
-    );
-  };
+  window.addEventListener('scroll', handleScroll);
+  return () => window.removeEventListener('scroll', handleScroll);
+}, [cursor, loadingMore, hasMore]);
 
-  const addHistoryEntry = () => {
-    if (!selectedStudentId || !historyInput.date || !historyInput.weight) return;
-    setStudents((prev) =>
-      prev.map((student) =>
-        student.id === selectedStudentId
-          ? { ...student, progressHistory: [historyInput, ...student.progressHistory] }
-          : student
-      )
-    );
-    setHistoryInput({ date: '', weight: '', muscleMass: '', bodyFat: '', note: '' });
-  };
+const addHistoryEntry = () => {
+  if (!selectedStudentId || !historyInput.date || !historyInput.weight) return;
 
-  const deleteSelectedStudent = () => {
-    if (!selectedStudentId) return;
-    setStudents((prev) => prev.filter((student) => student.id !== selectedStudentId));
-    setWeeklyClasses((prev) => prev.filter((item) => item.studentId !== selectedStudentId));
-    setSelectedStudentId(null);
-  };
+  setStudents((prev) =>
+    prev.map((student) =>
+      student.id === selectedStudentId
+        ? { ...student, progressHistory: [historyInput, ...student.progressHistory] }
+        : student
+    )
+  );
 
-  const createStudent = () => {
-    const availableDaysValue = newStudent.availableDays ?? '';
-    const hasValidAvailableDays = availableDaysValue.startsWith(OTHER_DAYS_PREFIX)
-      ? availableDaysValue.replace(OTHER_DAYS_PREFIX, '').trim().length > 0
-      : availableDaysValue.length > 0;
+  setHistoryInput({ date: '', weight: '', muscleMass: '', bodyFat: '', note: '' });
+};
 
-    if (
-      !newStudent.name ||
-      !newStudent.cpf ||
-      !newStudent.phone ||
-      !newStudent.birthDate ||
-      !newStudent.gender ||
-      !newStudent.objective ||
-      !newStudent.experience ||
-      !hasValidAvailableDays
-    ) return;
+const deleteSelectedStudent = () => {
+  if (!selectedStudentId) return;
+
+  setStudents((prev) => prev.filter((student) => student.id !== selectedStudentId));
+  setWeeklyClasses((prev) => prev.filter((item) => item.studentId !== selectedStudentId));
+  setSelectedStudentId(null);
+};
+
+const createStudent = async () => {
+  const availableDaysValue = newStudent.availableDays ?? '';
+
+  const hasValidAvailableDays = availableDaysValue.startsWith(OTHER_DAYS_PREFIX)
+    ? availableDaysValue.replace(OTHER_DAYS_PREFIX, '').trim().length > 0
+    : availableDaysValue.length > 0;
+
+  if (
+    !newStudent.name ||
+    !newStudent.cpf ||
+    !newStudent.phone ||
+    !newStudent.birthDate ||
+    !newStudent.gender ||
+    !newStudent.objective ||
+    !newStudent.experience ||
+    !hasValidAvailableDays
+  ) return;
+
+  try {
+    const age =
+      new Date().getFullYear() -
+      new Date(newStudent.birthDate).getFullYear();
+
+    const res = await fetch('/api/athletes/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: newStudent.email || `${Date.now()}@temp.com`,
+        name: newStudent.name,
+        cpf: newStudent.cpf,
+        age,
+        sex: newStudent.gender.toLowerCase(),
+        heightCm: Number(newStudent.height) * 100,
+        weightKg: Number(newStudent.weight),
+        experienceLevel: newStudent.experience.toLowerCase(),
+        dietaryRestriction: 'nenhuma',
+        city: 'Não informado',
+        state: 'Não informado',
+        cep: '00000-000',
+        phone: newStudent.phone,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error);
+    }
+
     const id = `s${Date.now()}`;
+
     const student: Student = {
       ...newStudent,
       id,
@@ -352,33 +564,44 @@ export default function PersonalDashboard() {
       weeklyPlan: { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sab: [], Dom: [] },
       progressHistory: []
     };
+
     setStudents((prev) => [student, ...prev]);
     setNewStudent(emptyStudentForm());
     setShowNewStudentForm(false);
     setSelectedStudentId(id);
-  };
+  } catch (err: any) {
+    alert(err.message || 'Erro ao cadastrar atleta');
+  }
+};
 
-  const handleChat = async () => {
-    if (!input.trim()) return;
-    const userMsg = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMsg]);
-    setInput('');
-    setLoading(true);
+const handleChat = async () => {
+  if (!input.trim()) return;
 
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input }),
-      });
-      const data = await res.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.text }]);
-    } catch (e) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "Houve um erro na conexão, mas gerei um treino padrão para você continuar." }]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const userMsg = { role: 'user', content: input };
+
+  setMessages((prev) => [...prev, userMsg]);
+  setInput('');
+  setLoading(true);
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: input }),
+    });
+
+    const data = await res.json();
+
+    setMessages((prev) => [...prev, { role: 'assistant', content: data.text }]);
+  } catch {
+    setMessages((prev) => [
+      ...prev,
+      { role: 'assistant', content: "Houve um erro na conexão, mas gerei um treino padrão para você continuar." }
+    ]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 relative overflow-hidden antialiased font-sans">

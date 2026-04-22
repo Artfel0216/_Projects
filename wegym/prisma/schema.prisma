@@ -9,12 +9,14 @@ datasource db {
 }
 
 model User {
-  id           String           @id @default(uuid()) @db.Uuid
-  email        String           @unique @db.VarChar(255)
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
   passwordHash String
   role         UserRole
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   athlete      Athlete?
   personal     PersonalTrainer?
 
@@ -23,41 +25,134 @@ model User {
 }
 
 model Athlete {
-  id                 String             @id @default(uuid()) @db.Uuid
-  userId             String             @unique @db.Uuid
-  name               String             @db.VarChar(255)
-  cpf                String             @unique @db.VarChar(14)
-  cep                String             @db.VarChar(9)
-  city               String             @db.VarChar(100)
-  state              String             @db.Char(2)
-  age                Int                @db.SmallInt
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @unique @db.Uuid
+  personalId         String?  @db.Uuid
+
+  name               String   @db.VarChar(255)
+  cpf                String   @unique @db.VarChar(14)
+  cep                String   @db.VarChar(9)
+  city               String   @db.VarChar(100)
+  state              String   @db.Char(2)
+
+  age                Int      @db.SmallInt
   sex                UserSex
-  heightCm           Int                @db.SmallInt
-  weightKg           Decimal            @db.Decimal(5, 2)
+
+  heightCm           Int      @db.SmallInt
+  weightKg           Float    // 🔥 melhor que Decimal pro seu caso (mais rápido no JS)
+
   experienceLevel    ExperienceLevel
   dietaryRestriction DietaryRestriction
+
   dietaryAllergy     String?
   injury             String?
   healthIssues       String?
   medications        String?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  personal     PersonalTrainer?  @relation(fields: [personalId], references: [id], onDelete: SetNull)
+
+  trainingPlans   TrainingPlan[]
+  progressEntries ProgressEntry[]
+  weeklyClasses   WeeklyClass[]
+
+  @@index([personalId])
   @@index([state, city])
+  @@index([createdAt]) // 🔥 paginação mais rápida
   @@map("athletes")
 }
 
 model PersonalTrainer {
   id        String   @id @default(uuid()) @db.Uuid
   userId    String   @unique @db.Uuid
+
   name      String   @db.VarChar(255)
   cref      String   @unique @db.VarChar(20)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  athletes  Athlete[]
 
   @@map("personal_trainers")
+}
+
+model TrainingPlan {
+  id        String   @id @default(uuid()) @db.Uuid
+  athleteId String   @db.Uuid
+  day       WeekDay
+
+  athlete   Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  exercises Exercise[]
+
+  @@index([athleteId, day]) // 🔥 queries por dia muito mais rápidas
+  @@map("training_plans")
+}
+
+model Exercise {
+  id     String @id @default(uuid()) @db.Uuid
+  name   String @db.VarChar(255)
+  sets   String @db.VarChar(10)
+  reps   String @db.VarChar(10)
+  load   String @db.VarChar(20)
+
+  planId String @db.Uuid
+  plan   TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+  @@map("exercises")
+}
+
+model ProgressEntry {
+  id          String   @id @default(uuid()) @db.Uuid
+  athleteId   String   @db.Uuid
+
+  date        DateTime
+  weight      Float
+  muscleMass  Float?
+  bodyFat     Float?
+  note        String?
+
+  athlete     Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([athleteId, date]) // 🔥 histórico ordenado rápido
+  @@map("progress_entries")
+}
+
+model WeeklyClass {
+  id        String   @id @default(uuid()) @db.Uuid
+  athleteId String   @db.Uuid
+
+  day       WeekDay
+  date      DateTime
+  time      String   @db.VarChar(5)
+  type      String   @db.VarChar(50)
+  status    ClassStatus
+
+  athlete   Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([athleteId, date])
+  @@map("weekly_classes")
+}
+
+enum WeekDay {
+  Seg
+  Ter
+  Qua
+  Qui
+  Sex
+  Sab
+  Dom
+}
+
+enum ClassStatus {
+  confirmed
+  pending
+  canceled
 }
 
 enum UserRole {
