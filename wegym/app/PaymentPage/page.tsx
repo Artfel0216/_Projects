@@ -59,7 +59,7 @@ export default function PaymentPage() {
       <header className="flex items-center justify-between mb-10">
         <button 
           onClick={() => router.back()} 
-          className="p-2 bg-white/5 rounded-full active:scale-95 transition-all"
+          className="p-2 bg-white/5 rounded-full active:scale-95 transition-all cursor-pointer"
         >
           <ChevronLeft size={20} />
         </button>

@@ -149,20 +149,51 @@ export default function CadastroPage() {
     setIsLoading(true);
 
     try {
-      localStorage.setItem('wegymProfile', JSON.stringify({
-        dietaryRestriction: formData.dietaryRestriction,
-        dietaryAllergy: formData.dietaryAllergy,
-        injury: formData.injury,
-        healthIssues: formData.healthIssues,
-        medications: formData.medications,
-      }));
-      router.push('/LoginPage');
+      const crefNormalized = formData.cref.trim().toUpperCase();
+
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userType: "personal",
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          password: formData.password,
+          cref: crefNormalized,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setError((data as { error?: string }).error || "Erro no cadastro.");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        localStorage.setItem(
+          "wegymProfile",
+          JSON.stringify({
+            dietaryRestriction: formData.dietaryRestriction,
+            dietaryAllergy: formData.dietaryAllergy,
+            injury: formData.injury,
+            healthIssues: formData.healthIssues,
+            medications: formData.medications,
+          }),
+        );
+      } catch {
+        // ignore
+      }
+
+      setIsLoading(false);
+      router.push("/LoginPage");
     } catch (err) {
       console.error(err);
-      setError("Falha no cadastro. Verifique os dados.");
+      setError("Falha de conexão. Tente novamente.");
       setIsLoading(false);
     }
-  }, [formData.cref, formData.acceptCrefTerm, formData.password, formData.confirmPassword, router]);
+  }, [formData, router]);
 
   const inputClass = "w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all";
   const labelClass = "text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center gap-1";
@@ -380,7 +411,7 @@ export default function CadastroPage() {
                   <label className={labelClass}><Lock className="w-3 h-3" /> Senha <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white cursor-pointer">
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
@@ -390,7 +421,7 @@ export default function CadastroPage() {
                   <label className={labelClass}><Lock className="w-3 h-3" /> Confirmar Senha <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input type={showPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white cursor-pointer">
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
@@ -406,7 +437,7 @@ export default function CadastroPage() {
                   disabled={isLoading}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
-                  className="md:col-span-2 w-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic mt-4 flex items-center justify-center cursor-pointer"
+                  className="md:col-span-2 w-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic mt-4 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
                 >
                   {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-black" /> : "Finalizar Cadastro"}
                 </motion.button>

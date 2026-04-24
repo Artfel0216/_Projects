@@ -924,7 +924,7 @@ const handleChat = async () => {
             </div>
             <div className="p-4 border-t border-white/5 flex gap-2">
               <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleChat()} placeholder="Gere o treino do Carlos..." className="flex-1 bg-zinc-900 rounded-xl px-4 text-xs text-white outline-none" />
-              <button onClick={handleChat} disabled={loading} className="bg-orange-600 p-2.5 rounded-xl text-white cursor-pointer"><Send size={18} /></button>
+              <button onClick={handleChat} disabled={loading} className="bg-orange-600 p-2.5 rounded-xl text-white cursor-pointer disabled:cursor-not-allowed"><Send size={18} /></button>
             </div>
           </motion.div>
         )}

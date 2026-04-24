@@ -142,10 +142,10 @@ export default function DietPage() {
             <Plus size={14} className="text-orange-500" />
             <span className="text-[10px] font-black uppercase italic text-zinc-300">Dieta IA</span>
           </button>
-          <Link href="/DietPage" className="bg-orange-600 border border-orange-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase italic text-white">
+          <Link href="/DietPage" className="bg-orange-600 border border-orange-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase italic text-white cursor-pointer">
             Dieta
           </Link>
-          <Link href="/TrainingPage" className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase italic text-zinc-300 hover:border-orange-500 transition-colors">
+          <Link href="/TrainingPage" className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase italic text-zinc-300 hover:border-orange-500 transition-colors cursor-pointer">
             Treinos
           </Link>
           <button onClick={() => router.push('/ProfilePage')} title="Ir para perfil" className="w-10 h-10 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-zinc-400 hover:border-orange-500 transition-colors cursor-pointer">
@@ -348,7 +348,7 @@ export default function DietPage() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full py-3 rounded-xl bg-white text-black font-black uppercase italic text-xs hover:bg-orange-500 hover:text-white transition-colors disabled:bg-zinc-700 disabled:text-zinc-400 cursor-pointer"
+                      className="w-full py-3 rounded-xl bg-white text-black font-black uppercase italic text-xs hover:bg-orange-500 hover:text-white transition-colors disabled:bg-zinc-700 disabled:text-zinc-400 cursor-pointer disabled:cursor-not-allowed"
                     >
                       {isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Gerar plano de dieta"}
                     </button>

@@ -17,17 +17,21 @@ export async function POST(req: Request) {
     }
 
     const {
-      userType, email, password, name, cpf, cep, city, state,
+      userType, password, name, cpf, cep, city, state,
       age, sex, height, weight, experienceLevel, dietaryRestriction,
       dietaryAllergy, injury, healthIssues, medications, cref
     } = body;
+
+    const email = String(body.email ?? "")
+      .trim()
+      .toLowerCase();
 
     if (!email || !password || !userType || !name) {
       return NextResponse.json({ error: "Dados obrigatórios ausentes." }, { status: 400 });
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    const existingUser = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
       select: { id: true },
     });
 
@@ -56,7 +60,10 @@ export async function POST(req: Request) {
         },
       } : userType === "personal" ? {
         personal: {
-          create: { name, cref },
+          create: {
+            name,
+            cref: typeof cref === "string" ? cref.trim().toUpperCase() : String(cref ?? "").trim(),
+          },
         },
       } : null),
     };

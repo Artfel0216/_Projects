@@ -142,7 +142,7 @@ export default function LoginPage() {
       if (isLogin) {
         const res = await signIn("credentials", {
           redirect: false,
-          email: formData.email,
+          email: formData.email.trim(),
           password: formData.password,
         });
 
@@ -216,12 +216,12 @@ export default function LoginPage() {
                       </div>
                       <div className="relative">
                         <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white cursor-pointer">
                           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
                       </div>
                     </div>
-                    <motion.button disabled={isLoading} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic tracking-tighter flex items-center justify-center cursor-pointer">
+                    <motion.button disabled={isLoading} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic tracking-tighter flex items-center justify-center cursor-pointer disabled:cursor-not-allowed">
                       {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Entrar no Wegym"}
                     </motion.button>
                   </form>
@@ -280,7 +280,7 @@ export default function LoginPage() {
                         <div className="space-y-1">
                           <div className="flex justify-between items-center px-1">
                             <label className={labelClass}><MapPin className="w-3 h-3" /> CEP <span className="text-red-500">*</span></label>
-                            <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-orange-500 flex items-center hover:underline uppercase italic">Não sei meu CEP <ExternalLink className="w-2 h-2 ml-1" /></a>
+                            <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-orange-500 flex items-center hover:underline uppercase italic cursor-pointer">Não sei meu CEP <ExternalLink className="w-2 h-2 ml-1" /></a>
                           </div>
                           <input type="text" name="cep" value={formData.cep} onChange={handleInputChange} placeholder="00000-000" className={inputClass} required />
                         </div>
@@ -453,7 +453,7 @@ export default function LoginPage() {
                               type="button"
                               onClick={verifyCref}
                               disabled={isVerifyingCref || formData.cref.length < 5}
-                              className="w-full bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 border border-zinc-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center cursor-pointer"
+                              className="w-full bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 border border-zinc-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
                             >
                               {isVerifyingCref ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verificar e Validar CREF"}
                             </motion.button>
@@ -508,7 +508,7 @@ export default function LoginPage() {
                         disabled={isLoading}
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
-                        className="md:col-span-2 w-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic mt-4 flex items-center justify-center cursor-pointer"
+                        className="md:col-span-2 w-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic mt-4 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
                       >
                         {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-black" /> : "Finalizar Cadastro"}
                       </motion.button>

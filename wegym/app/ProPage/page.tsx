@@ -69,7 +69,7 @@ export default function ProPage() {
       </div>
 
       <header className="sticky top-0 z-50 bg-zinc-950/60 backdrop-blur-xl border-b border-white/5 px-6 py-5 flex items-center justify-between">
-        <Link href="/ProfilePage" className="p-2 bg-white/5 rounded-full transition-colors hover:bg-white/10">
+        <Link href="/ProfilePage" className="p-2 bg-white/5 rounded-full transition-colors hover:bg-white/10 cursor-pointer">
           <ChevronLeft size={20} />
         </Link>
         <div className="flex items-center gap-2">
@@ -133,13 +133,13 @@ export default function ProPage() {
           <div className="flex bg-zinc-950 p-1 rounded-2xl border border-white/5 mb-8 relative z-10">
             <button 
               onClick={() => setSelectedPlan('mensal')}
-              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${selectedPlan === 'mensal' ? 'bg-zinc-800 text-white' : 'text-zinc-600'}`}
+              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer ${selectedPlan === 'mensal' ? 'bg-zinc-800 text-white' : 'text-zinc-600'}`}
             >
               Mensal
             </button>
             <button 
               onClick={() => setSelectedPlan('anual')}
-              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${selectedPlan === 'anual' ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-600'}`}
+              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer ${selectedPlan === 'anual' ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-600'}`}
             >
               Anual <span className="ml-1 opacity-70 text-[8px]">-40%</span>
             </button>
@@ -158,7 +158,7 @@ export default function ProPage() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleNavigation('/PaymentPage')}
-            className="w-full bg-white text-black py-6 rounded-3xl font-black italic uppercase text-sm shadow-[0_20px_40px_rgba(255,255,255,0.1)] flex items-center justify-center gap-3 transition-colors hover:bg-zinc-100"
+            className="w-full bg-white text-black py-6 rounded-3xl font-black italic uppercase text-sm shadow-[0_20px_40px_rgba(255,255,255,0.1)] flex items-center justify-center gap-3 transition-colors hover:bg-zinc-100 cursor-pointer"
           >
             Assinar Agora
             <CreditCard size={18} className="fill-black/10" />
