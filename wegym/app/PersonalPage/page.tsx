@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import {
   Users, Calendar, TrendingUp, MoreVertical, CalendarDays, User, Plus, Award,
   ChevronRight, Target, Dumbbell, Send, X, Bot, Trash2
@@ -241,6 +242,8 @@ function AgendaItem({ item, studentName, onOpenStudent }: { item: WeeklyClass; s
 }
 
 export default function PersonalDashboard() {
+  const router = useRouter();
+  const [activeMobileTab, setActiveMobileTab] = useState<'home' | 'students' | 'create' | 'stats' | 'profile'>('home');
   const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
 const [cursor, setCursor] = useState<string | null>(null);
 const [loadingMore, setLoadingMore] = useState(false);
@@ -272,6 +275,7 @@ const openStudentProfile = (studentId: string) => {
   setSelectedStudentId(studentId);
   setShowExerciseForm(false);
   setShowNewStudentForm(false);
+  setActiveMobileTab('students');
 };
 
 const updateSelectedStudentField = (field: keyof Student, value: any) => {
@@ -608,7 +612,18 @@ const handleChat = async () => {
       <div className="fixed top-[-10%] left-[-5%] w-96 h-96 bg-orange-600/5 rounded-full blur-[120px] pointer-events-none" />
 
       <header className="sticky top-0 z-50 bg-zinc-950/60 backdrop-blur-md border-b border-white/5 px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center space-x-3">
+        <button
+          type="button"
+          onClick={() => {
+            setShowNewStudentForm(false);
+            setSelectedStudentId(null);
+            setShowExerciseForm(false);
+            setIsChatOpen(false);
+            setActiveMobileTab('home');
+          }}
+          className="flex items-center space-x-3 cursor-pointer"
+          aria-label="Voltar para a tela inicial do personal"
+        >
           <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20">
             <Award className="text-white w-5 h-5" />
           </div>
@@ -616,7 +631,7 @@ const handleChat = async () => {
             <span className="text-xl font-black italic tracking-tighter text-white block leading-none">PRO COACH</span>
             <span className="text-[9px] font-bold text-orange-500 uppercase tracking-[0.2em]">Personal Panel</span>
           </div>
-        </div>
+        </button>
         <div className="flex items-center space-x-4">
           <button
             onClick={() => {
@@ -685,7 +700,7 @@ const handleChat = async () => {
               <Field label="Lesões / histórico ortopédico"><input value={safeNewStudent.injuries} onChange={(e) => setNewStudent({ ...safeNewStudent, injuries: e.target.value })} placeholder="Lesões / histórico ortopédico" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
               <Field label="Medicamentos em uso"><input value={safeNewStudent.medications} onChange={(e) => setNewStudent({ ...safeNewStudent, medications: e.target.value })} placeholder="Medicamentos em uso" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
               <Field label="Plano"><input value={safeNewStudent.plan} onChange={(e) => setNewStudent({ ...safeNewStudent, plan: e.target.value })} placeholder="Basic, Premium..." className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Observações gerais" className="md:col-span-3"><textarea value={safeNewStudent.observations} onChange={(e) => setNewStudent({ ...safeNewStudent, observations: e.target.value })} placeholder="Rotina, preferências e observações" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white min-h-24" /></Field>
+              <Field label="Observações gerais" className="md:col-span-3"><textarea value={safeNewStudent.observations} onChange={(e) => setNewStudent({ ...safeNewStudent, observations: e.target.value })} placeholder="Rotina, preferências e observações" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white min-h-24 resize-none" /></Field>
             </div>
             <div className="mt-4 flex gap-2">
               <button onClick={createStudent} className="bg-orange-600 hover:bg-orange-700 rounded-xl px-4 py-2 text-[11px] font-black uppercase italic cursor-pointer">Salvar aluno</button>
@@ -875,14 +890,15 @@ const handleChat = async () => {
           </div>
 
           <aside className="space-y-6">
-            <div className="bg-orange-600 rounded-[40px] p-8 relative overflow-hidden shadow-2xl shadow-orange-600/20">
+            <div className="bg-orange-600 rounded-[28px] sm:rounded-[40px] p-5 sm:p-8 relative overflow-hidden shadow-2xl shadow-orange-600/20">
               <div className="relative z-10">
-                <h3 className="text-white font-black italic uppercase text-2xl leading-tight mb-4">Otimização<br />por IA</h3>
-                <button onClick={() => setIsChatOpen(true)} className="bg-white text-orange-600 px-8 py-4 rounded-2xl font-black uppercase italic text-xs flex items-center gap-3 hover:scale-105 transition-transform shadow-xl cursor-pointer">
+                <h3 className="text-white font-black italic uppercase text-xl sm:text-2xl leading-tight mb-3 sm:mb-4">Otimização<br />por IA</h3>
+                <button onClick={() => setIsChatOpen(true)} className="bg-white text-orange-600 px-5 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-black uppercase italic text-[10px] sm:text-xs flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform shadow-xl cursor-pointer">
                   Falar com Copilot <Bot size={16} />
                 </button>
               </div>
-              <Bot size={160} className="absolute -right-10 -bottom-10 text-white/10 -rotate-12" />
+              <Bot size={120} className="sm:hidden absolute -right-8 -bottom-8 text-white/10 -rotate-12" />
+              <Bot size={160} className="hidden sm:block absolute -right-10 -bottom-10 text-white/10 -rotate-12" />
             </div>
 
             <div className="bg-zinc-900/50 rounded-3xl border border-white/5 p-6">
@@ -931,13 +947,70 @@ const handleChat = async () => {
       </AnimatePresence>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-8 py-4 flex justify-between items-center lg:hidden z-50">
-        <Calendar size={24} className="text-orange-500" />
-        <Users size={24} className="text-zinc-600" />
-        <button className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center -mt-10 border-4 border-zinc-950 shadow-xl cursor-pointer" onClick={() => setShowNewStudentForm(true)}>
+        <button
+          type="button"
+          onClick={() => {
+            setShowNewStudentForm(false);
+            setSelectedStudentId(null);
+            setShowExerciseForm(false);
+            setIsChatOpen(false);
+            setActiveMobileTab('home');
+          }}
+          className="cursor-pointer"
+          aria-label="Ir para início do painel"
+        >
+          <Calendar size={24} className={activeMobileTab === 'home' ? 'text-orange-500' : 'text-zinc-600'} />
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setShowNewStudentForm(false);
+            setShowExerciseForm(false);
+            setIsChatOpen(false);
+            setActiveMobileTab('students');
+          }}
+          className="cursor-pointer"
+          aria-label="Abrir alunos"
+        >
+          <Users size={24} className={activeMobileTab === 'students' ? 'text-orange-500' : 'text-zinc-600'} />
+        </button>
+        <button
+          type="button"
+          className={`w-12 h-12 rounded-2xl flex items-center justify-center -mt-10 shadow-xl cursor-pointer transition-colors ${
+            activeMobileTab === 'create' ? 'bg-orange-600' : 'bg-zinc-800'
+          }`}
+          onClick={() => {
+            setShowNewStudentForm(true);
+            setSelectedStudentId(null);
+            setShowExerciseForm(false);
+            setActiveMobileTab('create');
+          }}
+          aria-label="Cadastrar novo aluno"
+        >
           <Plus size={24} className="text-white" />
         </button>
-        <TrendingUp size={24} className="text-zinc-600" />
-        <User size={24} className="text-zinc-600" />
+        <button
+          type="button"
+          onClick={() => {
+            setActiveMobileTab('stats');
+            router.push('/StatsPage');
+          }}
+          className="cursor-pointer"
+          aria-label="Abrir estatísticas"
+        >
+          <TrendingUp size={24} className={activeMobileTab === 'stats' ? 'text-orange-500' : 'text-zinc-600'} />
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setActiveMobileTab('profile');
+            router.push('/ProfilePage');
+          }}
+          className="cursor-pointer"
+          aria-label="Abrir perfil"
+        >
+          <User size={24} className={activeMobileTab === 'profile' ? 'text-orange-500' : 'text-zinc-600'} />
+        </button>
       </nav>
     </div>
   );

@@ -8,7 +8,7 @@ import {
   Dumbbell, Timer, RotateCcw, Zap, CheckCircle2,
   Trophy, X, ChevronRight, ChevronDown, Activity,
   BrainCircuit, User, Plus, Flame, Utensils,
-  Bike, Footprints, HeartPulse, Sword, LayoutGrid, History,
+  Bike, Footprints, HeartPulse, Sword, LayoutGrid, History, Menu,
 } from 'lucide-react';
 
 type TrainingModalityId = 'gym' | 'cycling' | 'running' | 'aerobic' | 'combat';
@@ -159,6 +159,7 @@ export default function TrainingPage() {
 
   const [trainingModality, setTrainingModality] = useState<TrainingModalityId>('gym');
   const [modalityMenuOpen, setModalityMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sessionSec, setSessionSec] = useState(0);
   const [sessionRun, setSessionRun] = useState(false);
   const [distanceKm, setDistanceKm] = useState('');
@@ -174,6 +175,7 @@ export default function TrainingPage() {
     combat: [],
   });
   const modalityMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const timerActiveRef = useRef(timerActive);
   const progressBarRef = useRef<HTMLDivElement>(null);
@@ -336,6 +338,17 @@ export default function TrainingPage() {
   }, [modalityMenuOpen]);
 
   useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const close = (e: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
     if (trainingModality === 'gym') return;
     setSessionRun(false);
     setSessionSec(0);
@@ -405,7 +418,7 @@ export default function TrainingPage() {
             <Dumbbell className="text-white w-5 h-5" />
           </div>
           <span className="text-xl font-black italic tracking-tighter text-white shrink-0">WEGYM</span>
-          <div ref={modalityMenuRef} className="relative min-w-0">
+          <div ref={modalityMenuRef} className="relative min-w-0 ml-2 sm:ml-4 hidden sm:block">
             <button
               type="button"
               onClick={() => setModalityMenuOpen((o) => !o)}
@@ -445,7 +458,7 @@ export default function TrainingPage() {
             )}
           </div>
         </div>
-        <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+        <div className="hidden sm:flex items-center space-x-2 sm:space-x-3 shrink-0">
           {trainingModality === 'gym' && (
             <button
               onClick={() => { setShowAI(true); setAiStep('add_manual'); }}
@@ -464,6 +477,82 @@ export default function TrainingPage() {
           <button onClick={() => router.push('/ProfilePage')} title="Ir para perfil" className="w-10 h-10 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-zinc-400 hover:border-orange-500 transition-colors cursor-pointer">
             <User size={20} />
           </button>
+        </div>
+        <div ref={mobileMenuRef} className="relative sm:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((o) => !o)}
+            className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-200"
+            aria-label="Abrir menu"
+          >
+            <Menu size={18} />
+          </button>
+          {mobileMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-56 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl z-[70] p-2 space-y-1">
+              {trainingModality === 'gym' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAI(true);
+                    setAiStep('add_manual');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-[11px] font-black uppercase italic text-zinc-200 hover:bg-white/5"
+                >
+                  <Plus size={14} className="text-orange-500" />
+                  Adicionar exercícios
+                </button>
+              )}
+              <div className="my-1 border-t border-white/10" />
+              {MODALITY_OPTIONS.map((m) => {
+                const MIcon = m.Icon;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => {
+                      setTrainingModality(m.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-[11px] font-black uppercase italic ${
+                      trainingModality === m.id ? 'bg-orange-600/20 text-white' : 'text-zinc-300 hover:bg-white/5'
+                    }`}
+                  >
+                    <MIcon size={14} className="text-orange-500" />
+                    {m.label}
+                  </button>
+                );
+              })}
+              <div className="my-1 border-t border-white/10" />
+              <Link
+                href="/DietPage"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-black uppercase italic text-zinc-300 hover:bg-white/5"
+              >
+                <Utensils size={14} className="text-orange-500" />
+                Dieta
+              </Link>
+              <Link
+                href="/TrainingPage"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-black uppercase italic bg-orange-600/20 text-white"
+              >
+                <Flame size={14} className="text-orange-500" />
+                Treinos
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  router.push('/ProfilePage');
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-[11px] font-black uppercase italic text-zinc-300 hover:bg-white/5"
+              >
+                <User size={14} className="text-orange-500" />
+                Perfil
+              </button>
+            </div>
+          )}
         </div>
       </header>
 

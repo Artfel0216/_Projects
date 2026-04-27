@@ -484,14 +484,14 @@ export default function AdvancedProfilePage() {
         </section>
       </main>
 
-      <nav className="fixed bottom-0 inset-x-0 h-24 bg-zinc-950/80 backdrop-blur-2xl border-t border-white/5 flex items-center justify-around px-12 z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-8 py-4 flex justify-between items-center z-50">
         <button type="button" onClick={() => navigateTo("/StatsPage")} className="cursor-pointer">
           <Activity size={24} className="text-zinc-600 hover:text-white transition-colors" />
         </button>
 
-        <button type="button" onClick={() => navigateTo("/TrainingPage")} className="relative -mt-10 cursor-pointer">
-          <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center border-4 border-zinc-950 shadow-2xl hover:scale-110 transition-transform">
-            <Zap size={30} className="text-white fill-white" />
+        <button type="button" onClick={() => navigateTo("/TrainingPage")} className="cursor-pointer">
+          <div className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center -mt-10 shadow-xl hover:scale-105 transition-transform">
+            <Zap size={24} className="text-white fill-white" />
           </div>
         </button>
 

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, Utensils, X, Zap, Clock3, Dumbbell, User, Plus, Activity } from "lucide-react";
+import { Loader2, Utensils, X, Zap, Clock3, Dumbbell, User, Plus, Activity, Menu, Flame } from "lucide-react";
 
 type DietFormData = {
   favoriteFoods: string;
@@ -40,6 +40,7 @@ const WEEK_DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export default function DietPage() {
   const router = useRouter();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showAIDietModal, setShowAIDietModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeDay, setActiveDay] = useState(new Date().getDay());
@@ -57,6 +58,7 @@ export default function DietPage() {
     freeMealDay: "",
     freeMealSlot: "",
   });
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const inputClass = useMemo(
     () => "w-full px-4 py-3 rounded-xl border border-zinc-700 bg-zinc-950/70 text-white focus:border-orange-500 outline-none transition-all text-sm",
@@ -69,6 +71,17 @@ export default function DietPage() {
   };
 
   const currentDayPlan = useMemo(() => weeklyPlans[activeDay]?.plan ?? null, [weeklyPlans, activeDay]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const close = (e: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [mobileMenuOpen]);
 
   const handleGenerateDiet = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,14 +143,14 @@ export default function DietPage() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 relative overflow-hidden antialiased font-sans">
       <div className="fixed top-[-5%] right-[-5%] w-80 h-80 bg-orange-600/10 rounded-full blur-[120px] pointer-events-none" />
 
-      <header className="sticky top-0 z-50 bg-zinc-950/40 backdrop-blur-md border-b border-white/5 px-6 py-4 flex justify-between items-center">
+      <header className="sticky top-0 z-50 bg-zinc-950/40 backdrop-blur-md border-b border-white/5 px-4 sm:px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center">
             <Dumbbell className="text-white w-5 h-5" />
           </div>
           <span className="text-xl font-black italic tracking-tighter text-white">WEGYM</span>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="hidden sm:flex items-center space-x-3">
           <button onClick={() => setShowAIDietModal(true)} className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl flex items-center space-x-2 cursor-pointer">
             <Plus size={14} className="text-orange-500" />
             <span className="text-[10px] font-black uppercase italic text-zinc-300">Dieta IA</span>
@@ -151,6 +164,59 @@ export default function DietPage() {
           <button onClick={() => router.push('/ProfilePage')} title="Ir para perfil" className="w-10 h-10 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-zinc-400 hover:border-orange-500 transition-colors cursor-pointer">
             <User size={20} />
           </button>
+        </div>
+        <div ref={mobileMenuRef} className="relative sm:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((o) => !o)}
+            className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-200"
+            aria-label="Abrir menu"
+          >
+            <Menu size={18} />
+          </button>
+          {mobileMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-52 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl z-[70] p-2 space-y-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAIDietModal(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-[11px] font-black uppercase italic text-zinc-200 hover:bg-white/5"
+              >
+                <Plus size={14} className="text-orange-500" />
+                Dieta IA
+              </button>
+              <div className="my-1 border-t border-white/10" />
+              <Link
+                href="/DietPage"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-black uppercase italic bg-orange-600/20 text-white"
+              >
+                <Utensils size={14} className="text-orange-500" />
+                Dieta
+              </Link>
+              <Link
+                href="/TrainingPage"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-black uppercase italic text-zinc-300 hover:bg-white/5"
+              >
+                <Flame size={14} className="text-orange-500" />
+                Treinos
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  router.push("/ProfilePage");
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-[11px] font-black uppercase italic text-zinc-300 hover:bg-white/5"
+              >
+                <User size={14} className="text-orange-500" />
+                Perfil
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
