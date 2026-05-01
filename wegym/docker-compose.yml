@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:14-alpine
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    volumes:
+      - wegyn_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: wegyn
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: wegyn
+volumes:
+  wegyn_data:
