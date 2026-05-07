@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ChevronLeft, Crown, Zap, MapPin, 
-  Utensils, BarChart3, Users, Check, 
+  Activity, BarChart3, Users, Check, 
   Star, ShieldCheck, Flame, Sparkles,
   CreditCard, CalendarCheck, Wallet
 } from 'lucide-react';
@@ -37,14 +37,14 @@ export default function ProPage() {
       ]
     },
     {
-      id: 'lifestyle',
-      title: 'Nutrição & Saúde',
-      icon: <Utensils className="text-emerald-500" />,
+      id: 'recovery',
+      title: 'Performance & Recuperação',
+      icon: <Activity className="text-emerald-500" />,
       features: [
-        'Planos alimentares por nutricionistas',
-        'Lista de compras inteligente',
-        'Acesso a receitas exclusivas',
-        'Suporte a jejum intermitente'
+        'Foco em sono, descanso e gestão de carga',
+        'Mobilidade e prevenção de lesões',
+        'Acompanhe consistência e evolução no app',
+        'Conteúdo de preparação física e bem-estar'
       ]
     },
     {

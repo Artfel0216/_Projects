@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dumbbell, Timer, RotateCcw, Zap, CheckCircle2,
-  Trophy, X, ChevronRight, ChevronDown, Activity,
-  BrainCircuit, User, Plus, Flame, Utensils,
+  Trophy, X, ChevronDown, Activity,
+  BrainCircuit, User, Plus, Flame,
   Bike, Footprints, HeartPulse, Sword, LayoutGrid, History, Menu,
 } from 'lucide-react';
 
@@ -155,7 +155,7 @@ export default function TrainingPage() {
   const [showAI, setShowAI] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
-  const [aiStep, setAiStep] = useState<'initial' | 'diet_goal' | 'workout_goal' | 'add_manual' | 'result'>('initial');
+  const [aiStep, setAiStep] = useState<'workout_goal' | 'add_manual' | 'result'>('workout_goal');
 
   const [trainingModality, setTrainingModality] = useState<TrainingModalityId>('gym');
   const [modalityMenuOpen, setModalityMenuOpen] = useState(false);
@@ -177,7 +177,6 @@ export default function TrainingPage() {
   const modalityMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  const timerActiveRef = useRef(timerActive);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const currentModalityMeta = useMemo(
     () => MODALITY_OPTIONS.find((m) => m.id === trainingModality) ?? MODALITY_OPTIONS[0],
@@ -221,23 +220,6 @@ export default function TrainingPage() {
     }
   }, []);
 
-  useEffect(() => {
-    timerActiveRef.current = timerActive;
-  }, [timerActive]);
-
-  const generateFullDiet = useCallback(async (goal: 'cut' | 'bulk') => {
-    setAiLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 800)); // Reduzi o delay artificial
-
-    const content = goal === 'cut' 
-      ? "🍎 DIETA EMAGRECIMENTO (DÉFICIT)\n\nREFEIÇÕES DIÁRIAS (SEG-DOM):\n• Café: 2 Ovos mexidos + 1 fatia de pão integral ou fruta.\n• Lanche: 1 Iogurte desnatado ou 10 amêndoas.\n• Almoço: 150g Frango/Tilápia + 3 col. Arroz integral + Mix de folhas e Brócolis.\n• Tarde: 1 Maçã ou 1 ovo cozido.\n• Jantar: 150g Peixe branco ou Omelete + Abobrinha e Salada verde.\n\n🛒 LISTA DE COMPRAS:\nOvos, Peito de Frango, Filé de Tilápia, Mix de Folhas, Brócolis, Arroz Integral, Maçã e Iogurte Desnatado."
-      : "💪 DIETA HIPERTROFIA (SUPERÁVIT)\n\nREFEIÇÕES DIÁRIAS (SEG-DOM):\n• Café: 3 Ovos + 2 fatias de Pão Integral + 1 Banana com Aveia.\n• Lanche: Shake de Proteína ou Sanduíche de Frango com Queijo.\n• Almoço: 200g Carne moída (Patinho) + 200g Arroz + Feijão + Salada.\n• Tarde: Batata doce (150g) + 150g de Frango grelhado.\n• Jantar: 200g de Massa Integral ou Arroz + 150g de Proteína + Vegetais.\n\n🛒 LISTA DE COMPRAS:\nPatinho moído, Peito de Frango, Ovos, Arroz, Feijão, Macarrão Integral, Batata Doce, Aveia, Bananas e Pasta de Amendoim.";
-
-    setAiResponse(content);
-    setAiStep('result');
-    setAiLoading(false);
-  }, []);
-
   const generateAIWorkout = useCallback(async (goal: 'cut' | 'bulk') => {
     setAiLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -274,14 +256,18 @@ export default function TrainingPage() {
   }, []);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (timerActiveRef.current && timeLeft > 0) {
-      interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
-    } else if (timeLeft === 0 && timerActiveRef.current) {
-      setTimeout(() => setTimerActive(false), 0);
-    }
-    return () => clearInterval(interval);
-  }, [timeLeft]);
+    if (!timerActive) return;
+    const id = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          setTimerActive(false);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [timerActive]);
 
   useEffect(() => {
     if (progressBarRef.current) {
@@ -468,9 +454,6 @@ export default function TrainingPage() {
               <span className="text-[10px] font-black uppercase italic text-zinc-300 hidden sm:inline">Adicionar mais exercícios</span>
             </button>
           )}
-          <Link href="/DietPage" className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase italic text-zinc-300 hover:border-orange-500 transition-colors cursor-pointer">
-            Dieta
-          </Link>
           <Link href="/TrainingPage" className="bg-orange-600 border border-orange-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase italic text-white cursor-pointer">
             Treinos
           </Link>
@@ -524,14 +507,6 @@ export default function TrainingPage() {
                 );
               })}
               <div className="my-1 border-t border-white/10" />
-              <Link
-                href="/DietPage"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-black uppercase italic text-zinc-300 hover:bg-white/5"
-              >
-                <Utensils size={14} className="text-orange-500" />
-                Dieta
-              </Link>
               <Link
                 href="/TrainingPage"
                 onClick={() => setMobileMenuOpen(false)}
@@ -759,7 +734,7 @@ export default function TrainingPage() {
                       }
                       className="px-6 py-3 rounded-xl font-black uppercase italic text-sm bg-orange-600 text-white border border-orange-400/50 hover:bg-orange-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
                     >
-                      Salvar sessão
+                      Finalizar sessão
                     </button>
                   </div>
                 </div>
@@ -797,7 +772,7 @@ export default function TrainingPage() {
                       disabled={sessionSec === 0}
                       className="px-6 py-3 rounded-xl font-black uppercase italic text-sm bg-orange-600 text-white border border-orange-400/50 hover:bg-orange-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
                     >
-                      Salvar sessão
+                      Finalizar sessão
                     </button>
                   </div>
                 </div>
@@ -858,18 +833,6 @@ export default function TrainingPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {aiStep === 'initial' && (
-                      <>
-                        <button onClick={() => setAiStep('workout_goal')} className="w-full p-6 bg-zinc-950 border border-white/5 rounded-3xl text-left flex items-center justify-between hover:border-orange-500 transition-all group cursor-pointer">
-                          <div className="flex items-center gap-4"><Zap className="text-orange-500" size={24} /><p className="font-black uppercase italic text-white text-sm">Gerar Novo Treino IA</p></div>
-                          <ChevronRight size={18} className="text-zinc-800 group-hover:text-white" />
-                        </button>
-                        <button onClick={() => setAiStep('diet_goal')} className="w-full p-6 bg-zinc-950 border border-white/5 rounded-3xl text-left flex items-center justify-between hover:border-orange-500 transition-all group cursor-pointer">
-                          <div className="flex items-center gap-4"><Utensils className="text-orange-500" size={24} /><p className="font-black uppercase italic text-white text-sm">Consultar Dieta IA</p></div>
-                          <ChevronRight size={18} className="text-zinc-800 group-hover:text-white" />
-                        </button>
-                      </>
-                    )}
                     {aiStep === 'workout_goal' && (
                       <div className="grid grid-cols-1 gap-3">
                         <button onClick={() => generateAIWorkout('bulk')} className="p-5 bg-zinc-950 border border-white/5 rounded-3xl flex items-center gap-4 hover:border-orange-500 transition-all cursor-pointer">
@@ -877,16 +840,6 @@ export default function TrainingPage() {
                         </button>
                         <button onClick={() => generateAIWorkout('cut')} className="p-5 bg-zinc-950 border border-white/5 rounded-3xl flex items-center gap-4 hover:border-orange-500 transition-all cursor-pointer">
                           <Flame className="text-orange-500" size={20} /><span className="font-black uppercase italic text-xs">Foco: Emagrecimento</span>
-                        </button>
-                      </div>
-                    )}
-                    {aiStep === 'diet_goal' && (
-                      <div className="grid grid-cols-1 gap-3">
-                        <button onClick={() => generateFullDiet('cut')} className="p-5 bg-zinc-950 border border-white/5 rounded-3xl flex items-center gap-4 hover:border-orange-500 transition-all cursor-pointer">
-                          <Flame className="text-orange-500" size={20} /><span className="font-black uppercase italic text-xs">Dieta Emagrecimento</span>
-                        </button>
-                        <button onClick={() => generateFullDiet('bulk')} className="p-5 bg-zinc-950 border border-white/5 rounded-3xl flex items-center gap-4 hover:border-orange-500 transition-all cursor-pointer">
-                          <Trophy className="text-orange-500" size={20} /><span className="font-black uppercase italic text-xs">Dieta Ganho de Massa</span>
                         </button>
                       </div>
                     )}

@@ -39,7 +39,6 @@ export async function GET() {
             weightKg: user.athlete.weightKg,
             sex: user.athlete.sex,
             experienceLevel: user.athlete.experienceLevel,
-            dietaryRestriction: user.athlete.dietaryRestriction,
           }
         : null,
       personal: user.personal

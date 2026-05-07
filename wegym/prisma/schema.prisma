@@ -42,9 +42,7 @@ model Athlete {
   weightKg           Float    // 🔥 melhor que Decimal pro seu caso (mais rápido no JS)
 
   experienceLevel    ExperienceLevel
-  dietaryRestriction DietaryRestriction
 
-  dietaryAllergy     String?
   injury             String?
   healthIssues       String?
   medications        String?
@@ -170,12 +168,4 @@ enum ExperienceLevel {
   iniciante
   intermediario
   avancado
-}
-
-enum DietaryRestriction {
-  nenhuma
-  vegetariano
-  vegano
-  lactose
-  alergia
 }

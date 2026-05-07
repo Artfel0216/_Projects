@@ -4,20 +4,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { getSession, signIn } from 'next-auth/react';
-import { Eye, EyeOff, Loader2, Dumbbell, Mail, Lock, User, IdCard, MapPin, ExternalLink, ChevronDown, Heart, Salad, Activity, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Dumbbell, Mail, Lock, User, IdCard, MapPin, ExternalLink, ChevronDown, Heart, Activity, CheckCircle2 } from 'lucide-react';
 
 const EXPERIENCE_OPTIONS = [
   { value: 'iniciante', label: '🥉 Iniciante', sub: 'Menos de 1 ano' },
   { value: 'intermediario', label: '🥈 Intermediário', sub: '1 a 3 anos' },
   { value: 'avancado', label: '🥇 Avançado', sub: 'Mais de 3 anos' },
-];
-
-const DIETARY_OPTIONS = [
-  { value: 'nenhuma', label: '🍽️ Nenhuma' },
-  { value: 'vegetariano', label: '🥗 Vegetariano' },
-  { value: 'vegano', label: '🌱 Vegano' },
-  { value: 'lactose', label: '🥛 Intolerância à lactose' },
-  { value: 'alergia', label: '⚠️ Alergias' },
 ];
 
 const AnimatedBackground = React.memo(() => (
@@ -66,8 +58,8 @@ export default function LoginPage() {
 
   const [formData, setFormData] = useState({
     name: '', email: '', cpf: '', cep: '', city: '', state: '', password: '', confirmPassword: '',
-    age: '', height: '', weight: '', sex: '', experienceLevel: '', dietaryRestriction: '',
-    dietaryAllergy: '', injury: '', healthIssues: '', medications: '', cref: '',
+    age: '', height: '', weight: '', sex: '', experienceLevel: '',
+    injury: '', healthIssues: '', medications: '', cref: '',
   });
 
   useEffect(() => {
@@ -346,49 +338,6 @@ export default function LoginPage() {
                             ))}
                           </div>
                         </div>
-
-                        <p className={sectionTitleClass}><Salad className="w-3.5 h-3.5" /> Restrições Alimentares</p>
-
-                        <div className="space-y-1 md:col-span-2">
-                          <label className={labelClass}>Tipo de Restrição <span className="text-red-500">*</span></label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {DIETARY_OPTIONS.map(opt => (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => setFormData(prev => ({ ...prev, dietaryRestriction: opt.value, dietaryAllergy: opt.value !== 'alergia' ? '' : prev.dietaryAllergy }))}
-                                className={`py-2.5 px-3 rounded-xl border text-sm font-bold text-left transition-all cursor-pointer ${
-                                  formData.dietaryRestriction === opt.value
-                                    ? 'border-orange-500 bg-orange-500/10 text-orange-400'
-                                    : 'border-zinc-800 bg-zinc-800/50 text-zinc-400 hover:border-zinc-600'
-                                }`}
-                              >
-                                {opt.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <AnimatePresence>
-                          {formData.dietaryRestriction === 'alergia' && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="space-y-1 md:col-span-2 overflow-hidden"
-                            >
-                              <label className={labelClass}>Descreva suas alergias</label>
-                              <input
-                                type="text"
-                                name="dietaryAllergy"
-                                value={formData.dietaryAllergy}
-                                onChange={handleInputChange}
-                                placeholder="Ex: amendoim, frutos do mar, glúten..."
-                                className={inputClass}
-                              />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
 
                         <p className={sectionTitleClass}><Heart className="w-3.5 h-3.5" /> Saúde</p>
 

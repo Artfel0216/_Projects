@@ -18,8 +18,8 @@ export async function POST(req: Request) {
 
     const {
       userType, password, name, cpf, cep, city, state,
-      age, sex, height, weight, experienceLevel, dietaryRestriction,
-      dietaryAllergy, injury, healthIssues, medications, cref
+      age, sex, height, weight, experienceLevel,
+      injury, healthIssues, medications, cref
     } = body;
 
     const email = String(body.email ?? "")
@@ -48,11 +48,10 @@ export async function POST(req: Request) {
       ...(userType === "atleta" ? {
         athlete: {
           create: {
-            name, cpf, cep, city, state, sex, experienceLevel, dietaryRestriction,
+            name, cpf, cep, city, state, sex, experienceLevel,
             age: Number(age),
             heightCm: Number(height),
             weightKg: Number(weight),
-            dietaryAllergy: dietaryAllergy || null,
             injury: injury || null,
             healthIssues: healthIssues || null,
             medications: medications || null,

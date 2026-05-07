@@ -13,7 +13,6 @@ interface AthleteRegisterRequest {
   heightCm: string | number;
   weightKg: string | number;
   experienceLevel: 'iniciante' | 'intermediario' | 'avancado';
-  dietaryRestriction: 'nenhuma' | 'vegetariano' | 'vegano' | 'lactose' | 'alergia';
   city: string;
   state: string;
   cep: string;
@@ -54,7 +53,6 @@ export async function POST(req: Request) {
           heightCm: Number(body.heightCm),
           weightKg: Number(body.weightKg),
           experienceLevel: body.experienceLevel,
-          dietaryRestriction: body.dietaryRestriction,
           city: body.city,
           state: body.state,
           cep: body.cep,

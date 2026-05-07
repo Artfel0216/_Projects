@@ -545,7 +545,6 @@ const createStudent = async () => {
         heightCm: Number(newStudent.height) * 100,
         weightKg: Number(newStudent.weight),
         experienceLevel: newStudent.experience.toLowerCase(),
-        dietaryRestriction: 'nenhuma',
         city: 'Não informado',
         state: 'Não informado',
         cep: '00000-000',
