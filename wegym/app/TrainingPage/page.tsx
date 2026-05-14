@@ -10,6 +10,7 @@ import {
   BrainCircuit, User, Plus, Flame,
   Bike, Footprints, HeartPulse, Sword, LayoutGrid, History, Menu,
 } from 'lucide-react';
+import { Send, MessageCircle } from 'lucide-react';
 
 type TrainingModalityId = 'gym' | 'cycling' | 'running' | 'aerobic' | 'combat';
 
@@ -32,6 +33,11 @@ interface ModalitySessionEntry {
   at: string;
   durationSec: number;
   distanceKm?: number;
+}
+
+interface AIChatMessage {
+  role: "user" | "ai";
+  text: string;
 }
 
 const MODALITY_STORAGE_KEY = 'wegym-modality-sessions-v1';
@@ -81,17 +87,120 @@ const ALL_AVAILABLE_EXERCISES: Exercise[] = [
   { name: "Supino Reto c/ Barra", sets: 4, reps: "8-10", muscle: "Peito", obs: "Foco em carga" },
   { name: "Supino Inclinado Halter", sets: 3, reps: "12", muscle: "Peito", obs: "Peito superior" },
   { name: "Crucifixo Máquina (Peck Deck)", sets: 3, reps: "15", muscle: "Peito", obs: "Foco em isolamento" },
+  { name: "Crossover Polia Alta", sets: 3, reps: "12-15", muscle: "Peito", obs: "Foco em peito inferior" },
+  { name: "Flexão de Braços", sets: 3, reps: "Falha", muscle: "Peito", obs: "Peso corporal" },
+  { name: "Supino Declinado", sets: 3, reps: "10-12", muscle: "Peito", obs: "Foco em peitoral inferior" },
+  { name: "Dips (Paralelas)", sets: 3, reps: "Falha", muscle: "Peito", obs: "Tronco inclinado para frente" },
   { name: "Puxada Frontal Aberta", sets: 4, reps: "10-12", muscle: "Costas", obs: "Foco latíssimo" },
   { name: "Remada Curvada Pronada", sets: 3, reps: "10", muscle: "Costas", obs: "Tronco inclinado" },
+  { name: "Remada Baixa Suportada", sets: 3, reps: "12", muscle: "Costas", obs: "Foco em espessura e romboides" },
+  { name: "Pull-Down na Polia", sets: 3, reps: "15", muscle: "Costas", obs: "Braços esticados" },
+  { name: "Levantamento Terra", sets: 3, reps: "5-8", muscle: "Costas", obs: "Cadeia posterior e força" },
   { name: "Desenvolvimento Militar", sets: 3, reps: "10", muscle: "Ombros", obs: "Ombros estáveis" },
   { name: "Elevação Lateral", sets: 4, reps: "15", muscle: "Ombros", obs: "Braços esticados" },
+  { name: "Face Pull", sets: 3, reps: "15", muscle: "Ombros", obs: "Deltoide posterior e postura" },
+  { name: "Elevação Frontal Halter", sets: 3, reps: "12", muscle: "Ombros", obs: "Deltoide anterior" },
+  { name: "Encolhimento de Ombros", sets: 4, reps: "15", muscle: "Ombros", obs: "Foco em trapézio" },
   { name: "Rosca Direta Barra W", sets: 4, reps: "10", muscle: "Bíceps", obs: "Sem balançar" },
+  { name: "Rosca Martelo com Halteres", sets: 3, reps: "12", muscle: "Bíceps", obs: "Trabalha braquial e antebraço" },
+  { name: "Rosca Concentrada", sets: 3, reps: "12", muscle: "Bíceps", obs: "Pico de bíceps" },
+  { name: "Rosca Inversa Polia", sets: 3, reps: "15", muscle: "Antebraço", obs: "Braquiorradial" },
   { name: "Tríceps Corda", sets: 3, reps: "12-15", muscle: "Tríceps", obs: "Pico de contração" },
+  { name: "Tríceps Testa com Barra", sets: 3, reps: "10-12", muscle: "Tríceps", obs: "Cotovelos fechados" },
+  { name: "Tríceps Pulley Barra Reta", sets: 3, reps: "12", muscle: "Tríceps", obs: "Foco em carga" },
+  { name: "Mergulho no Banco (Dips)", sets: 3, reps: "Falha", muscle: "Tríceps", obs: "Manter tronco vertical" },
   { name: "Agachamento Livre", sets: 4, reps: "8-10", muscle: "Pernas", obs: "Amplitude máxima" },
   { name: "Leg Press 45º", sets: 3, reps: "12", muscle: "Pernas", obs: "Pés largura ombro" },
   { name: "Cadeira Extensora", sets: 4, reps: "15", muscle: "Pernas", obs: "Quadríceps" },
+  { name: "Mesa Flexora", sets: 4, reps: "12", muscle: "Pernas", obs: "Foco em posteriores de coxa" },
+  { name: "Stiff com Barra ou Halteres", sets: 3, reps: "10", muscle: "Pernas", obs: "Alongamento dos glúteos e posterior" },
+  { name: "Afundo ou Passada", sets: 3, reps: "12 (cada perna)", muscle: "Pernas", obs: "Equilíbrio e glúteos" },
+  { name: "Elevação Pélvica", sets: 4, reps: "10-12", muscle: "Glúteos", obs: "Pico de contração no topo" },
+  { name: "Cadeira Abdutora", sets: 3, reps: "15-20", muscle: "Glúteos", obs: "Glúteo médio" },
   { name: "Panturrilha em Pé", sets: 5, reps: "20", muscle: "Panturrilha", obs: "Alongue bem" },
-  { name: "Prancha Abdominal", sets: 3, reps: "1 min", muscle: "Core", obs: "Core travado" }
+  { name: "Panturrilha Sentado", sets: 4, reps: "15", muscle: "Panturrilha", obs: "Foco no sóleo" },
+  { name: "Prancha Abdominal", sets: 3, reps: "1 min", muscle: "Core", obs: "Core travado" },
+  { name: "Abdominal Infra (Elevação de Pernas)", sets: 3, reps: "15", muscle: "Core", obs: "Controle a descida" },
+  { name: "Abdominal Supra (Crunch)", sets: 4, reps: "20", muscle: "Core", obs: "Contrair bem o abdômen" },
+  { name: "Supino Declinado", sets: 3, reps: "10-12", muscle: "Peito", obs: "Foco em peitoral inferior" },
+  { name: "Dips (Paralelas)", sets: 3, reps: "Falha", muscle: "Peito", obs: "Tronco inclinado para frente" },
+  { name: "Barra Fixa (Pull-up)", sets: 3, reps: "Falha", muscle: "Costas", obs: "Peso corporal" },
+  { name: "Remada Cavalinho", sets: 3, reps: "10", muscle: "Costas", obs: "Pegada fechada" },
+  { name: "Lombar no Banco Romano", sets: 3, reps: "15", muscle: "Costas", obs: "Foco em eretores da espinha" },
+  { name: "Elevação Lateral na Polia", sets: 3, reps: "12-15", muscle: "Ombros", obs: "Tensão constante" },
+  { name: "Crucifixo Inverso Halter", sets: 3, reps: "15", muscle: "Ombros", obs: "Deltoide posterior" },
+  { name: "Rosca Scott", sets: 3, reps: "10-12", muscle: "Bíceps", obs: "Isolamento total" },
+  { name: "Rosca 21", sets: 3, reps: "21", muscle: "Bíceps", obs: "7 curtas baixo, 7 alto, 7 completas" },
+  { name: "Tríceps Francês Halter", sets: 3, reps: "12", muscle: "Tríceps", obs: "Foco na porção longa" },
+  { name: "Tríceps Coice na Polia", sets: 3, reps: "15", muscle: "Tríceps", obs: "Extensão máxima" },
+  { name: "Cadeira Flexora", sets: 4, reps: "12-15", muscle: "Pernas", obs: "Posterior sentado" },
+  { name: "Hack Squat", sets: 3, reps: "10", muscle: "Pernas", obs: "Foco em quadríceps" },
+  { name: "Sumô com Halter", sets: 3, reps: "12", muscle: "Pernas", obs: "Foco em adutores e glúteos" },
+  { name: "Glúteo Cabo (Coice)", sets: 3, reps: "15", muscle: "Glúteos", obs: "Extensão de quadril" },
+  { name: "Abdominal Roda", sets: 3, reps: "10-12", muscle: "Core", obs: "Extensão máxima controlada" },
+  { name: "Russian Twist", sets: 3, reps: "30 seg", muscle: "Core", obs: "Foco em oblíquos" },
+  { name: "Burpees", sets: 3, reps: "15", muscle: "Cardio", obs: "Explosão e alta intensidade" },
+  { name: "Salto na Caixa", sets: 3, reps: "10", muscle: "Cardio", obs: "Pliometria" },
+  { name: "Pull-over com Halter", sets: 3, reps: "12", muscle: "Peito", obs: "Expansão torácica e serrátil" },
+  { name: "Supino Articulado Máquina", sets: 4, reps: "10", muscle: "Peito", obs: "Foco em falha concêntrica" },
+  { name: "Puxada Triângulo", sets: 3, reps: "12", muscle: "Costas", obs: "Foco na porção inferior do latíssimo" },
+  { name: "Remada Unilateral (Serrote)", sets: 3, reps: "10 (cada lado)", muscle: "Costas", obs: "Grande amplitude de movimento" },
+  { name: "Barra Fixa Supinada (Chin-up)", sets: 3, reps: "Falha", muscle: "Costas", obs: "Grande ativação de bíceps" },
+  { name: "Desenvolvimento Arnold", sets: 3, reps: "10", muscle: "Ombros", obs: "Rotação de punho durante a subida" },
+  { name: "Elevação Lateral Inclinado (Banco 45º)", sets: 3, reps: "12", muscle: "Ombros", obs: "Isolamento total do deltoide lateral" },
+  { name: "Remada Alta na Polia", sets: 3, reps: "15", muscle: "Ombros", obs: "Trapézio e deltoide lateral" },
+  { name: "Rosca Aranha (Spider Curl)", sets: 3, reps: "12", muscle: "Bíceps", obs: "Peito apoiado no banco inclinado" },
+  { name: "Rosca 45º (Halteres)", sets: 3, reps: "10", muscle: "Bíceps", obs: "Foco no alongamento da cabeça longa" },
+  { name: "Flexão de Punho", sets: 3, reps: "20", muscle: "Antebraço", obs: "Apoiado no banco" },
+  { name: "Tríceps Unilateral Inverso (Cabo)", sets: 3, reps: "15", muscle: "Tríceps", obs: "Pegada supinada para lateral" },
+  { name: "Tríceps Supinado (Pegada Fechada)", sets: 3, reps: "8-10", muscle: "Tríceps", obs: "Carga alta no supino" },
+  { name: "Agachamento Búlgaro", sets: 3, reps: "10 (cada perna)", muscle: "Pernas", obs: "Extrema exigência de glúteo e quadríceps" },
+  { name: "Cadeira Adutora", sets: 3, reps: "15", muscle: "Pernas", obs: "Parte interna da coxa" },
+  { name: "Agachamento Goblet", sets: 3, reps: "12", muscle: "Pernas", obs: "Halter junto ao peito" },
+  { name: "Sissy Squat (Peso Corporal)", sets: 3, reps: "Falha", muscle: "Pernas", obs: "Isolamento de quadríceps" },
+  { name: "Abdominal Canivete", sets: 3, reps: "15", muscle: "Core", obs: "Movimento simultâneo tronco e pernas" },
+  { name: "Prancha Lateral", sets: 3, reps: "45 seg (cada lado)", muscle: "Core", obs: "Foco em oblíquos e estabilidade" },
+  { name: "Perdigueiro (Bird-Dog)", sets: 3, reps: "12", muscle: "Core", obs: "Estabilidade lombar e coordenação" },
+  { name: "Panturrilha no Leg Press", sets: 4, reps: "15-20", muscle: "Panturrilha", obs: "Máxima amplitude" },
+  { name: "Supino Reto c/ Halteres", sets: 4, reps: "10", muscle: "Peito", obs: "Maior amplitude que a barra" },
+  { name: "Supino Inclinado c/ Barra", sets: 3, reps: "8-10", muscle: "Peito", obs: "Foco em força no peito superior" },
+  { name: "Crossover Polia Baixa", sets: 3, reps: "15", muscle: "Peito", obs: "Foco em peito superior e miolo" },
+  { name: "Flexão de Braços Declinada", sets: 3, reps: "Falha", muscle: "Peito", obs: "Pés elevados (foco superior)" },
+  { name: "Chest Press Hammer", sets: 3, reps: "12", muscle: "Peito", obs: "Máquina articulada convergente" },
+  { name: "Crucifixo Reto c/ Halteres", sets: 3, reps: "12-15", muscle: "Peito", obs: "Alongamento máximo controlado" },
+  { name: "Puxada Frontal Supinada", sets: 3, reps: "10-12", muscle: "Costas", obs: "Grande ativação de bíceps" },
+  { name: "Remada Pendlay", sets: 4, reps: "8", muscle: "Costas", obs: "Explosão saindo do chão" },
+  { name: "Puxada com Braços Estendidos", sets: 3, reps: "15", muscle: "Costas", obs: "Isolamento de latíssimo" },
+  { name: "Remada Meadows", sets: 3, reps: "10", muscle: "Costas", obs: "Unilateral com barra T lateral" },
+  { name: "Rack Pulls", sets: 3, reps: "5-8", muscle: "Costas", obs: "Meio terra (foco em trapézio e lombar)" },
+  { name: "Remada Alta com Barra", sets: 3, reps: "12", muscle: "Costas", obs: "Trapézio e deltoide lateral" },
+  { name: "Desenvolvimento com Halteres Sentado", sets: 4, reps: "10", muscle: "Ombros", obs: "Segurança para lombar" },
+  { name: "Z-Press", sets: 3, reps: "10", muscle: "Ombros", obs: "Desenvolvimento sentado no chão (core)" },
+  { name: "Elevação Lateral Unilateral Cabo", sets: 3, reps: "15", muscle: "Ombros", obs: "Cabo passando por trás" },
+  { name: "Landmine Press", sets: 3, reps: "12", muscle: "Ombros", obs: "Desenvolvimento no suporte de barra" },
+  { name: "Elevação Lateral 'Y'", sets: 3, reps: "15", muscle: "Ombros", obs: "Foco em fibras superiores" },
+  { name: "Rosca Inclinada com Halteres", sets: 3, reps: "10-12", muscle: "Bíceps", obs: "Banco 45º (máximo alongamento)" },
+  { name: "Rosca Zottman", sets: 3, reps: "12", muscle: "Bíceps", obs: "Sobe supinada, desce pronada" },
+  { name: "Rosca Direta no Cabo", sets: 3, reps: "15", muscle: "Bíceps", obs: "Tensão constante" },
+  { name: "Tríceps California Press", sets: 3, reps: "10", muscle: "Tríceps", obs: "Híbrido entre testa e supino" },
+  { name: "Tríceps Tate Press", sets: 3, reps: "12", muscle: "Tríceps", obs: "Halteres se tocando no peito" },
+  { name: "JM Press", sets: 3, reps: "10", muscle: "Tríceps", obs: "Foco em força bruta" },
+  { name: "Extensão de Punho", sets: 3, reps: "20", muscle: "Antebraço", obs: "Barra ou halter" },
+  { name: "Agachamento Frontal", sets: 3, reps: "8-10", muscle: "Pernas", obs: "Foco vertical no quadríceps" },
+  { name: "Agachamento Sumô no Step", sets: 3, reps: "15", muscle: "Pernas", obs: "Aumento de amplitude para adutores" },
+  { name: "Agachamento Zercher", sets: 3, reps: "10", muscle: "Pernas", obs: "Barra na dobra do cotovelo" },
+  { name: "Nórdico Reverso", sets: 3, reps: "10", muscle: "Pernas", obs: "Excêntrico de quadríceps" },
+  { name: "Flexão Nórdica", sets: 3, reps: "8", muscle: "Pernas", obs: "Foco extremo em posterior" },
+  { name: "Frog Pumps", sets: 3, reps: "30", muscle: "Glúteos", obs: "Ativação rápida de glúteo" },
+  { name: "Step Up (Subida no Banco)", sets: 3, reps: "12", muscle: "Pernas", obs: "Unilateral funcional" },
+  { name: "Farmer's Walk", sets: 3, reps: "40m", muscle: "Core", obs: "Caminhada com carga pesada" },
+  { name: "Kettlebell Swing", sets: 4, reps: "15", muscle: "Corpo Todo", obs: "Explosão de quadril" },
+  { name: "Abdominal Bicicleta", sets: 3, reps: "45 seg", muscle: "Core", obs: "Foco em oblíquos" },
+  { name: "Woodchopper Polia", sets: 3, reps: "12", muscle: "Core", obs: "Rotação de tronco" },
+  { name: "Deadbug (Inseto Morto)", sets: 3, reps: "15", muscle: "Core", obs: "Estabilidade lombar profunda" },
+  { name: "Hanging Leg Raise", sets: 3, reps: "10-12", muscle: "Core", obs: "Pernas esticadas na barra" },
+  { name: "Mountain Climbers", sets: 3, reps: "1 min", muscle: "Cardio", obs: "Alta intensidade" },
+  { name: "Thrusters", sets: 3, reps: "12", muscle: "Corpo Todo", obs: "Agachamento + Desenvolvimento" }
 ];
 
 const INITIAL_WEEKLY_PLAN: DayPlan[] = [
@@ -102,6 +211,7 @@ const INITIAL_WEEKLY_PLAN: DayPlan[] = [
   { day: "Qui", target: "Cardio e Core", muscles: ["Core"], duration: "40 min", calories: "300", exercises: [] },
   { day: "Sex", target: "Upper Body", muscles: ["Peito", "Costas", "Ombros"], duration: "60 min", calories: "450", exercises: [] },
   { day: "Sáb", target: "Lower Body", muscles: ["Pernas"], duration: "65 min", calories: "550", exercises: [] }
+  
 ];
 
 function formatClock(totalSec: number) {
@@ -153,9 +263,21 @@ export default function TrainingPage() {
   const [timerActive, setTimerActive] = useState(false);
   const [userPlans, setUserPlans] = useState<DayPlan[]>(INITIAL_WEEKLY_PLAN);
   const [showAI, setShowAI] = useState(false);
+  const [visibleExercises, setVisibleExercises] = useState(10);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [aiStep, setAiStep] = useState<'workout_goal' | 'add_manual' | 'result'>('workout_goal');
+
+  const [chatOpen, setChatOpen] = useState(false);
+const [chatInput, setChatInput] = useState('');
+const [chatLoading, setChatLoading] = useState(false);
+
+const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([
+  {
+    role: 'ai',
+    text: 'Olá! Sou o assistente da WEGYM 💪 Pergunte sobre treino, cardio, hipertrofia, emagrecimento ou recuperação.'
+  }
+]);
 
   const [trainingModality, setTrainingModality] = useState<TrainingModalityId>('gym');
   const [modalityMenuOpen, setModalityMenuOpen] = useState(false);
@@ -163,7 +285,7 @@ export default function TrainingPage() {
   const [sessionSec, setSessionSec] = useState(0);
   const [sessionRun, setSessionRun] = useState(false);
   const [distanceKm, setDistanceKm] = useState('');
-  /** metas corrida/ciclismo: ritmo mín = menor tempo (mais intenso), ritmo máx = maior tempo (mais leve) */
+ 
   const [paceChoice, setPaceChoice] = useState<'min' | 'max' | null>(null);
   const [sessionCountdownActive, setSessionCountdownActive] = useState(false);
   const [initialCountdownSec, setInitialCountdownSec] = useState(0);
@@ -199,6 +321,53 @@ export default function TrainingPage() {
     return Math.round((completedExercises / totalExercises) * 100);
   }, [currentPlan.exercises, completedIds]);
 
+  const sendChatMessage = useCallback(async () => {
+  if (!chatInput.trim()) return;
+
+  const userMessage = chatInput.trim();
+
+  setChatMessages(prev => [
+    ...prev,
+    {
+      role: 'user',
+      text: userMessage,
+    },
+  ]);
+
+  setChatInput('');
+  setChatLoading(true);
+
+  await new Promise(resolve => setTimeout(resolve, 1200));
+
+  let response = '';
+
+  const lower = userMessage.toLowerCase();
+
+  if (lower.includes('hipertrofia') || lower.includes('massa')) {
+    response = 'Para hipertrofia foque em progressão de carga, descanso de 60-90 segundos, alimentação hipercalórica e exercícios compostos como supino, agachamento e levantamento terra.';
+  } else if (lower.includes('emagrecer') || lower.includes('cut')) {
+    response = 'Para emagrecimento combine musculação + cardio moderado, mantenha déficit calórico e priorize constância. O ideal é manter proteína alta para preservar massa muscular.';
+  } else if (lower.includes('corrida')) {
+    response = 'Na corrida é importante controlar ritmo e progressão semanal. Evite aumentar distância drasticamente para reduzir risco de lesão.';
+  } else if (lower.includes('descanso')) {
+    response = 'O descanso é essencial para recuperação muscular. Dormir bem melhora força, desempenho e recuperação hormonal.';
+  } else if (lower.includes('cardio')) {
+    response = 'Cardio ajuda no condicionamento e saúde cardiovascular. Você pode alternar HIIT e cardio contínuo dependendo do objetivo.';
+  } else {
+    response = 'Entendi 💪 Continue consistente nos treinos, alimentação e recuperação. Pequenas evoluções diárias geram grandes resultados.';
+  }
+
+  setChatMessages(prev => [
+    ...prev,
+    {
+      role: 'ai',
+      text: response,
+    },
+  ]);
+
+  setChatLoading(false);
+}, [chatInput]);
+
   useEffect(() => {
     router.prefetch('/ProfilePage');
   }, [router]);
@@ -216,7 +385,6 @@ export default function TrainingPage() {
         combat: parsed.combat ?? [],
       });
     } catch {
-      // ignore
     }
   }, []);
 
@@ -396,6 +564,13 @@ export default function TrainingPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 relative overflow-hidden antialiased font-sans">
+      <button
+  type="button"
+  onClick={() => setChatOpen(true)}
+  className="fixed bottom-6 right-6 z-120 w-16 h-16 rounded-full bg-orange-600 border border-orange-400 shadow-2xl shadow-orange-600/40 flex items-center justify-center hover:scale-105 transition-all cursor-pointer"
+>
+  <MessageCircle className="text-white" size={28} />
+</button>
       <div className="fixed top-[-5%] right-[-5%] w-80 h-80 bg-orange-600/10 rounded-full blur-[120px] pointer-events-none" />
 
       <header className="sticky top-0 z-50 bg-zinc-950/40 backdrop-blur-md border-b border-white/5 px-4 sm:px-6 py-4 flex justify-between items-center gap-2">
@@ -408,7 +583,7 @@ export default function TrainingPage() {
             <button
               type="button"
               onClick={() => setModalityMenuOpen((o) => !o)}
-              className="flex items-center gap-1.5 sm:gap-2 bg-white/5 border border-white/10 pl-2 pr-2 sm:pl-3 sm:pr-3 py-2 rounded-xl hover:border-orange-500/50 transition-colors cursor-pointer max-w-[140px] sm:max-w-[200px]"
+              className="flex items-center gap-1.5 sm:gap-2 bg-white/5 border border-white/10 pl-2 pr-2 sm:pl-3 sm:pr-3 py-2 rounded-xl hover:border-orange-500/50 transition-colors cursor-pointer max-w-35 sm:max-w-50"
             >
               <LayoutGrid size={16} className="text-orange-500 shrink-0" />
               <span className="text-[9px] sm:text-[10px] font-black uppercase italic text-zinc-200 truncate">
@@ -420,7 +595,7 @@ export default function TrainingPage() {
               />
             </button>
             {modalityMenuOpen && (
-              <div className="absolute left-0 top-full mt-2 w-[min(100vw-2rem,16rem)] bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl z-[60] py-1 overflow-hidden">
+              <div className="absolute left-0 top-full mt-2 w-[min(100vw-2rem,16rem)] bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl z-60 py-1 overflow-hidden">
                 {MODALITY_OPTIONS.map((m) => {
                   const MIcon = m.Icon;
                   return (
@@ -471,7 +646,7 @@ export default function TrainingPage() {
             <Menu size={18} />
           </button>
           {mobileMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl z-[70] p-2 space-y-1">
+            <div className="absolute right-0 top-full mt-2 w-56 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl z-70 p-2 space-y-1">
               {trainingModality === 'gym' && (
                 <button
                   type="button"
