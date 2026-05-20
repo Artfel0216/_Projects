@@ -1,277 +1,67 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Dumbbell, Timer, RotateCcw, Zap, CheckCircle2,
-  Trophy, X, ChevronDown, Activity,
-  BrainCircuit, User, Plus, Flame,
-  Bike, Footprints, HeartPulse, Sword, LayoutGrid, History, Menu,
+import {Dumbbell, Timer, RotateCcw, Zap, Trophy, X, ChevronDown, Activity,BrainCircuit, User, Plus, Flame, LayoutGrid, History, Menu,
 } from 'lucide-react';
-import { Send, MessageCircle } from 'lucide-react';
-
-type TrainingModalityId = 'gym' | 'cycling' | 'running' | 'aerobic' | 'combat';
-
-const MODALITY_OPTIONS: {
-  id: TrainingModalityId;
-  label: string;
-  short: string;
-  Icon: React.ComponentType<{ size?: number; className?: string }>;
-  showDistance: boolean;
-}[] = [
-  { id: 'gym', label: 'Musculação & academia', short: 'Academia', Icon: Dumbbell, showDistance: false },
-  { id: 'cycling', label: 'Ciclismo', short: 'Bike', Icon: Bike, showDistance: true },
-  { id: 'running', label: 'Corrida', short: 'Run', Icon: Footprints, showDistance: true },
-  { id: 'aerobic', label: 'Aeróbico & cardio', short: 'Aeróbico', Icon: HeartPulse, showDistance: false },
-  { id: 'combat', label: 'Luta & artes marciais', short: 'Luta', Icon: Sword, showDistance: false },
-];
-
-interface ModalitySessionEntry {
-  id: string;
-  at: string;
-  durationSec: number;
-  distanceKm?: number;
-}
-
-interface AIChatMessage {
-  role: "user" | "ai";
-  text: string;
-}
-
-const MODALITY_STORAGE_KEY = 'wegym-modality-sessions-v1';
+import { MessageCircle } from 'lucide-react';
+import { TrainingModalityId, Exercise, ModalitySessionEntry, AIChatMessage, DayPlan } from '@/app/types/training';
+import { formatDurationHMS, parseKmInput } from '@/app/utils/training-helpers';
+import { MODALITY_OPTIONS } from '@/app/constants/modalities';
+import { ALL_AVAILABLE_EXERCISES } from '@/app/constants/exercises';
+import { ExerciseItem} from '@/app/components/ExerciseItem/ExerciseItem';
+import { INITIAL_WEEKLY_PLAN } from '@/app/constants/plans';
+import { getSuggestedCardioBlock } from '@/app/utils/calculations';
 
 
 
-const ExerciseItem = memo(({ ex, isCompleted, onToggle }: { ex: Exercise, isCompleted: boolean, onToggle: (id: string) => void }) => (
-  <div className="p-5 flex items-center justify-between">
-    <div className="flex items-center space-x-4">
-      <button 
-        onClick={() => ex.id && onToggle(ex.id)} 
-        className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-colors cursor-pointer ${isCompleted ? 'bg-emerald-500 border-emerald-400' : 'bg-zinc-950 border-zinc-800'}`}
-      >
-        {isCompleted && <CheckCircle2 size={18} className="text-zinc-950" />}
-      </button>
-      <div>
-        <p className={`font-black uppercase italic text-sm ${isCompleted ? 'text-zinc-600 line-through' : 'text-white'}`}>{ex.name}</p>
-        <p className="text-[10px] text-orange-500 font-bold">{ex.muscle} • {ex.sets}x{ex.reps}</p>
-      </div>
-    </div>
-    <input type="number" placeholder="KG" className="bg-zinc-950 border border-white/5 w-16 p-2 rounded-lg text-xs font-bold text-center outline-none focus:border-orange-500 text-white" />
-  </div>
-));
-ExerciseItem.displayName = 'ExerciseItem';
 
 
-
-interface Exercise {
-  id?: string;
-  name: string;
-  sets: number | string;
-  reps: string;
-  muscle: string;
-  obs: string;
-}
-
-interface DayPlan {
-  day: string;
-  target: string;
-  muscles: string[];
-  duration: string;
-  calories: string;
-  exercises: Exercise[];
-}
-
-const ALL_AVAILABLE_EXERCISES: Exercise[] = [
-  { name: "Supino Reto c/ Barra", sets: 4, reps: "8-10", muscle: "Peito", obs: "Foco em carga" },
-  { name: "Supino Inclinado Halter", sets: 3, reps: "12", muscle: "Peito", obs: "Peito superior" },
-  { name: "Crucifixo Máquina (Peck Deck)", sets: 3, reps: "15", muscle: "Peito", obs: "Foco em isolamento" },
-  { name: "Crossover Polia Alta", sets: 3, reps: "12-15", muscle: "Peito", obs: "Foco em peito inferior" },
-  { name: "Flexão de Braços", sets: 3, reps: "Falha", muscle: "Peito", obs: "Peso corporal" },
-  { name: "Supino Declinado", sets: 3, reps: "10-12", muscle: "Peito", obs: "Foco em peitoral inferior" },
-  { name: "Dips (Paralelas)", sets: 3, reps: "Falha", muscle: "Peito", obs: "Tronco inclinado para frente" },
-  { name: "Puxada Frontal Aberta", sets: 4, reps: "10-12", muscle: "Costas", obs: "Foco latíssimo" },
-  { name: "Remada Curvada Pronada", sets: 3, reps: "10", muscle: "Costas", obs: "Tronco inclinado" },
-  { name: "Remada Baixa Suportada", sets: 3, reps: "12", muscle: "Costas", obs: "Foco em espessura e romboides" },
-  { name: "Pull-Down na Polia", sets: 3, reps: "15", muscle: "Costas", obs: "Braços esticados" },
-  { name: "Levantamento Terra", sets: 3, reps: "5-8", muscle: "Costas", obs: "Cadeia posterior e força" },
-  { name: "Desenvolvimento Militar", sets: 3, reps: "10", muscle: "Ombros", obs: "Ombros estáveis" },
-  { name: "Elevação Lateral", sets: 4, reps: "15", muscle: "Ombros", obs: "Braços esticados" },
-  { name: "Face Pull", sets: 3, reps: "15", muscle: "Ombros", obs: "Deltoide posterior e postura" },
-  { name: "Elevação Frontal Halter", sets: 3, reps: "12", muscle: "Ombros", obs: "Deltoide anterior" },
-  { name: "Encolhimento de Ombros", sets: 4, reps: "15", muscle: "Ombros", obs: "Foco em trapézio" },
-  { name: "Rosca Direta Barra W", sets: 4, reps: "10", muscle: "Bíceps", obs: "Sem balançar" },
-  { name: "Rosca Martelo com Halteres", sets: 3, reps: "12", muscle: "Bíceps", obs: "Trabalha braquial e antebraço" },
-  { name: "Rosca Concentrada", sets: 3, reps: "12", muscle: "Bíceps", obs: "Pico de bíceps" },
-  { name: "Rosca Inversa Polia", sets: 3, reps: "15", muscle: "Antebraço", obs: "Braquiorradial" },
-  { name: "Tríceps Corda", sets: 3, reps: "12-15", muscle: "Tríceps", obs: "Pico de contração" },
-  { name: "Tríceps Testa com Barra", sets: 3, reps: "10-12", muscle: "Tríceps", obs: "Cotovelos fechados" },
-  { name: "Tríceps Pulley Barra Reta", sets: 3, reps: "12", muscle: "Tríceps", obs: "Foco em carga" },
-  { name: "Mergulho no Banco (Dips)", sets: 3, reps: "Falha", muscle: "Tríceps", obs: "Manter tronco vertical" },
-  { name: "Agachamento Livre", sets: 4, reps: "8-10", muscle: "Pernas", obs: "Amplitude máxima" },
-  { name: "Leg Press 45º", sets: 3, reps: "12", muscle: "Pernas", obs: "Pés largura ombro" },
-  { name: "Cadeira Extensora", sets: 4, reps: "15", muscle: "Pernas", obs: "Quadríceps" },
-  { name: "Mesa Flexora", sets: 4, reps: "12", muscle: "Pernas", obs: "Foco em posteriores de coxa" },
-  { name: "Stiff com Barra ou Halteres", sets: 3, reps: "10", muscle: "Pernas", obs: "Alongamento dos glúteos e posterior" },
-  { name: "Afundo ou Passada", sets: 3, reps: "12 (cada perna)", muscle: "Pernas", obs: "Equilíbrio e glúteos" },
-  { name: "Elevação Pélvica", sets: 4, reps: "10-12", muscle: "Glúteos", obs: "Pico de contração no topo" },
-  { name: "Cadeira Abdutora", sets: 3, reps: "15-20", muscle: "Glúteos", obs: "Glúteo médio" },
-  { name: "Panturrilha em Pé", sets: 5, reps: "20", muscle: "Panturrilha", obs: "Alongue bem" },
-  { name: "Panturrilha Sentado", sets: 4, reps: "15", muscle: "Panturrilha", obs: "Foco no sóleo" },
-  { name: "Prancha Abdominal", sets: 3, reps: "1 min", muscle: "Core", obs: "Core travado" },
-  { name: "Abdominal Infra (Elevação de Pernas)", sets: 3, reps: "15", muscle: "Core", obs: "Controle a descida" },
-  { name: "Abdominal Supra (Crunch)", sets: 4, reps: "20", muscle: "Core", obs: "Contrair bem o abdômen" },
-  { name: "Supino Declinado", sets: 3, reps: "10-12", muscle: "Peito", obs: "Foco em peitoral inferior" },
-  { name: "Dips (Paralelas)", sets: 3, reps: "Falha", muscle: "Peito", obs: "Tronco inclinado para frente" },
-  { name: "Barra Fixa (Pull-up)", sets: 3, reps: "Falha", muscle: "Costas", obs: "Peso corporal" },
-  { name: "Remada Cavalinho", sets: 3, reps: "10", muscle: "Costas", obs: "Pegada fechada" },
-  { name: "Lombar no Banco Romano", sets: 3, reps: "15", muscle: "Costas", obs: "Foco em eretores da espinha" },
-  { name: "Elevação Lateral na Polia", sets: 3, reps: "12-15", muscle: "Ombros", obs: "Tensão constante" },
-  { name: "Crucifixo Inverso Halter", sets: 3, reps: "15", muscle: "Ombros", obs: "Deltoide posterior" },
-  { name: "Rosca Scott", sets: 3, reps: "10-12", muscle: "Bíceps", obs: "Isolamento total" },
-  { name: "Rosca 21", sets: 3, reps: "21", muscle: "Bíceps", obs: "7 curtas baixo, 7 alto, 7 completas" },
-  { name: "Tríceps Francês Halter", sets: 3, reps: "12", muscle: "Tríceps", obs: "Foco na porção longa" },
-  { name: "Tríceps Coice na Polia", sets: 3, reps: "15", muscle: "Tríceps", obs: "Extensão máxima" },
-  { name: "Cadeira Flexora", sets: 4, reps: "12-15", muscle: "Pernas", obs: "Posterior sentado" },
-  { name: "Hack Squat", sets: 3, reps: "10", muscle: "Pernas", obs: "Foco em quadríceps" },
-  { name: "Sumô com Halter", sets: 3, reps: "12", muscle: "Pernas", obs: "Foco em adutores e glúteos" },
-  { name: "Glúteo Cabo (Coice)", sets: 3, reps: "15", muscle: "Glúteos", obs: "Extensão de quadril" },
-  { name: "Abdominal Roda", sets: 3, reps: "10-12", muscle: "Core", obs: "Extensão máxima controlada" },
-  { name: "Russian Twist", sets: 3, reps: "30 seg", muscle: "Core", obs: "Foco em oblíquos" },
-  { name: "Burpees", sets: 3, reps: "15", muscle: "Cardio", obs: "Explosão e alta intensidade" },
-  { name: "Salto na Caixa", sets: 3, reps: "10", muscle: "Cardio", obs: "Pliometria" },
-  { name: "Pull-over com Halter", sets: 3, reps: "12", muscle: "Peito", obs: "Expansão torácica e serrátil" },
-  { name: "Supino Articulado Máquina", sets: 4, reps: "10", muscle: "Peito", obs: "Foco em falha concêntrica" },
-  { name: "Puxada Triângulo", sets: 3, reps: "12", muscle: "Costas", obs: "Foco na porção inferior do latíssimo" },
-  { name: "Remada Unilateral (Serrote)", sets: 3, reps: "10 (cada lado)", muscle: "Costas", obs: "Grande amplitude de movimento" },
-  { name: "Barra Fixa Supinada (Chin-up)", sets: 3, reps: "Falha", muscle: "Costas", obs: "Grande ativação de bíceps" },
-  { name: "Desenvolvimento Arnold", sets: 3, reps: "10", muscle: "Ombros", obs: "Rotação de punho durante a subida" },
-  { name: "Elevação Lateral Inclinado (Banco 45º)", sets: 3, reps: "12", muscle: "Ombros", obs: "Isolamento total do deltoide lateral" },
-  { name: "Remada Alta na Polia", sets: 3, reps: "15", muscle: "Ombros", obs: "Trapézio e deltoide lateral" },
-  { name: "Rosca Aranha (Spider Curl)", sets: 3, reps: "12", muscle: "Bíceps", obs: "Peito apoiado no banco inclinado" },
-  { name: "Rosca 45º (Halteres)", sets: 3, reps: "10", muscle: "Bíceps", obs: "Foco no alongamento da cabeça longa" },
-  { name: "Flexão de Punho", sets: 3, reps: "20", muscle: "Antebraço", obs: "Apoiado no banco" },
-  { name: "Tríceps Unilateral Inverso (Cabo)", sets: 3, reps: "15", muscle: "Tríceps", obs: "Pegada supinada para lateral" },
-  { name: "Tríceps Supinado (Pegada Fechada)", sets: 3, reps: "8-10", muscle: "Tríceps", obs: "Carga alta no supino" },
-  { name: "Agachamento Búlgaro", sets: 3, reps: "10 (cada perna)", muscle: "Pernas", obs: "Extrema exigência de glúteo e quadríceps" },
-  { name: "Cadeira Adutora", sets: 3, reps: "15", muscle: "Pernas", obs: "Parte interna da coxa" },
-  { name: "Agachamento Goblet", sets: 3, reps: "12", muscle: "Pernas", obs: "Halter junto ao peito" },
-  { name: "Sissy Squat (Peso Corporal)", sets: 3, reps: "Falha", muscle: "Pernas", obs: "Isolamento de quadríceps" },
-  { name: "Abdominal Canivete", sets: 3, reps: "15", muscle: "Core", obs: "Movimento simultâneo tronco e pernas" },
-  { name: "Prancha Lateral", sets: 3, reps: "45 seg (cada lado)", muscle: "Core", obs: "Foco em oblíquos e estabilidade" },
-  { name: "Perdigueiro (Bird-Dog)", sets: 3, reps: "12", muscle: "Core", obs: "Estabilidade lombar e coordenação" },
-  { name: "Panturrilha no Leg Press", sets: 4, reps: "15-20", muscle: "Panturrilha", obs: "Máxima amplitude" },
-  { name: "Supino Reto c/ Halteres", sets: 4, reps: "10", muscle: "Peito", obs: "Maior amplitude que a barra" },
-  { name: "Supino Inclinado c/ Barra", sets: 3, reps: "8-10", muscle: "Peito", obs: "Foco em força no peito superior" },
-  { name: "Crossover Polia Baixa", sets: 3, reps: "15", muscle: "Peito", obs: "Foco em peito superior e miolo" },
-  { name: "Flexão de Braços Declinada", sets: 3, reps: "Falha", muscle: "Peito", obs: "Pés elevados (foco superior)" },
-  { name: "Chest Press Hammer", sets: 3, reps: "12", muscle: "Peito", obs: "Máquina articulada convergente" },
-  { name: "Crucifixo Reto c/ Halteres", sets: 3, reps: "12-15", muscle: "Peito", obs: "Alongamento máximo controlado" },
-  { name: "Puxada Frontal Supinada", sets: 3, reps: "10-12", muscle: "Costas", obs: "Grande ativação de bíceps" },
-  { name: "Remada Pendlay", sets: 4, reps: "8", muscle: "Costas", obs: "Explosão saindo do chão" },
-  { name: "Puxada com Braços Estendidos", sets: 3, reps: "15", muscle: "Costas", obs: "Isolamento de latíssimo" },
-  { name: "Remada Meadows", sets: 3, reps: "10", muscle: "Costas", obs: "Unilateral com barra T lateral" },
-  { name: "Rack Pulls", sets: 3, reps: "5-8", muscle: "Costas", obs: "Meio terra (foco em trapézio e lombar)" },
-  { name: "Remada Alta com Barra", sets: 3, reps: "12", muscle: "Costas", obs: "Trapézio e deltoide lateral" },
-  { name: "Desenvolvimento com Halteres Sentado", sets: 4, reps: "10", muscle: "Ombros", obs: "Segurança para lombar" },
-  { name: "Z-Press", sets: 3, reps: "10", muscle: "Ombros", obs: "Desenvolvimento sentado no chão (core)" },
-  { name: "Elevação Lateral Unilateral Cabo", sets: 3, reps: "15", muscle: "Ombros", obs: "Cabo passando por trás" },
-  { name: "Landmine Press", sets: 3, reps: "12", muscle: "Ombros", obs: "Desenvolvimento no suporte de barra" },
-  { name: "Elevação Lateral 'Y'", sets: 3, reps: "15", muscle: "Ombros", obs: "Foco em fibras superiores" },
-  { name: "Rosca Inclinada com Halteres", sets: 3, reps: "10-12", muscle: "Bíceps", obs: "Banco 45º (máximo alongamento)" },
-  { name: "Rosca Zottman", sets: 3, reps: "12", muscle: "Bíceps", obs: "Sobe supinada, desce pronada" },
-  { name: "Rosca Direta no Cabo", sets: 3, reps: "15", muscle: "Bíceps", obs: "Tensão constante" },
-  { name: "Tríceps California Press", sets: 3, reps: "10", muscle: "Tríceps", obs: "Híbrido entre testa e supino" },
-  { name: "Tríceps Tate Press", sets: 3, reps: "12", muscle: "Tríceps", obs: "Halteres se tocando no peito" },
-  { name: "JM Press", sets: 3, reps: "10", muscle: "Tríceps", obs: "Foco em força bruta" },
-  { name: "Extensão de Punho", sets: 3, reps: "20", muscle: "Antebraço", obs: "Barra ou halter" },
-  { name: "Agachamento Frontal", sets: 3, reps: "8-10", muscle: "Pernas", obs: "Foco vertical no quadríceps" },
-  { name: "Agachamento Sumô no Step", sets: 3, reps: "15", muscle: "Pernas", obs: "Aumento de amplitude para adutores" },
-  { name: "Agachamento Zercher", sets: 3, reps: "10", muscle: "Pernas", obs: "Barra na dobra do cotovelo" },
-  { name: "Nórdico Reverso", sets: 3, reps: "10", muscle: "Pernas", obs: "Excêntrico de quadríceps" },
-  { name: "Flexão Nórdica", sets: 3, reps: "8", muscle: "Pernas", obs: "Foco extremo em posterior" },
-  { name: "Frog Pumps", sets: 3, reps: "30", muscle: "Glúteos", obs: "Ativação rápida de glúteo" },
-  { name: "Step Up (Subida no Banco)", sets: 3, reps: "12", muscle: "Pernas", obs: "Unilateral funcional" },
-  { name: "Farmer's Walk", sets: 3, reps: "40m", muscle: "Core", obs: "Caminhada com carga pesada" },
-  { name: "Kettlebell Swing", sets: 4, reps: "15", muscle: "Corpo Todo", obs: "Explosão de quadril" },
-  { name: "Abdominal Bicicleta", sets: 3, reps: "45 seg", muscle: "Core", obs: "Foco em oblíquos" },
-  { name: "Woodchopper Polia", sets: 3, reps: "12", muscle: "Core", obs: "Rotação de tronco" },
-  { name: "Deadbug (Inseto Morto)", sets: 3, reps: "15", muscle: "Core", obs: "Estabilidade lombar profunda" },
-  { name: "Hanging Leg Raise", sets: 3, reps: "10-12", muscle: "Core", obs: "Pernas esticadas na barra" },
-  { name: "Mountain Climbers", sets: 3, reps: "1 min", muscle: "Cardio", obs: "Alta intensidade" },
-  { name: "Thrusters", sets: 3, reps: "12", muscle: "Corpo Todo", obs: "Agachamento + Desenvolvimento" }
-];
-
-const INITIAL_WEEKLY_PLAN: DayPlan[] = [
-  { day: "Dom", target: "Descanso Total", muscles: [], duration: "0 min", calories: "0", exercises: [] },
-  { day: "Seg", target: "Push (Peito/Ombro/Tríceps)", muscles: ["Peito", "Ombros", "Tríceps"], duration: "65 min", calories: "480", exercises: [] },
-  { day: "Ter", target: "Pull (Costas/Bíceps)", muscles: ["Costas", "Bíceps"], duration: "70 min", calories: "510", exercises: [] },
-  { day: "Qua", target: "Legs (Inferiores)", muscles: ["Pernas", "Panturrilha"], duration: "75 min", calories: "600", exercises: [] },
-  { day: "Qui", target: "Cardio e Core", muscles: ["Core"], duration: "40 min", calories: "300", exercises: [] },
-  { day: "Sex", target: "Upper Body", muscles: ["Peito", "Costas", "Ombros"], duration: "60 min", calories: "450", exercises: [] },
-  { day: "Sáb", target: "Lower Body", muscles: ["Pernas"], duration: "65 min", calories: "550", exercises: [] }
-  
-];
-
-function formatClock(totalSec: number) {
-  const t = Math.max(0, totalSec);
-  const m = Math.floor(t / 60);
-  const s = t % 60;
-  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-}
-
-function formatDurationHMS(totalSec: number) {
-  const t = Math.max(0, totalSec);
-  const h = Math.floor(t / 3600);
-  const m = Math.floor((t % 3600) / 60);
-  const s = t % 60;
-  if (h > 0) {
-    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  }
-  return formatClock(t);
-}
-
-function parseKmInput(s: string): number | null {
-  const t = s.replace(',', '.').trim();
-  if (!t) return null;
-  const n = parseFloat(t);
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
-
-function suggestedBlock(km: number, modality: 'cycling' | 'running') {
-  if (modality === 'running') {
-    const minTimeSec = Math.round(km * 4.5 * 60);
-    const maxTimeSec = Math.round(km * 7 * 60);
-    return { minTimeSec, maxTimeSec, minHint: '~4:30 /km', maxHint: '~7:00 /km' };
-  }
-  const vFast = 32;
-  const vSlow = 18;
-  return {
-    minTimeSec: Math.round((km / vFast) * 3600),
-    maxTimeSec: Math.round((km / vSlow) * 3600),
-    minHint: `~${vFast} km/h`,
-    maxHint: `~${vSlow} km/h`,
-  };
-}
 
 export default function TrainingPage() {
-  const router = useRouter();
-  const [activeDay, setActiveDay] = useState(new Date().getDay());
-  const [completedIds, setCompletedIds] = useState<string[]>([]);
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [timerActive, setTimerActive] = useState(false);
-  const [userPlans, setUserPlans] = useState<DayPlan[]>(INITIAL_WEEKLY_PLAN);
-  const [showAI, setShowAI] = useState(false);
-  const [visibleExercises, setVisibleExercises] = useState(10);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
-  const [aiStep, setAiStep] = useState<'workout_goal' | 'add_manual' | 'result'>('workout_goal');
 
-  const [chatOpen, setChatOpen] = useState(false);
+const router = useRouter();
+
+const modalityMenuRef = useRef<HTMLDivElement>(null);
+const mobileMenuRef = useRef<HTMLDivElement>(null);
+const progressBarRef = useRef<HTMLDivElement>(null);
+
+
+
+const [activeDay, setActiveDay] = useState(new Date().getDay());
+const [showAI, setShowAI] = useState(false);
+const [visibleExercises, setVisibleExercises] = useState(10);
+const [modalityMenuOpen, setModalityMenuOpen] = useState(false);
+const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+const [userPlans, setUserPlans] = useState<DayPlan[]>(INITIAL_WEEKLY_PLAN);
+const [completedIds, setCompletedIds] = useState<string[]>([]);
+const [timeLeft, setTimeLeft] = useState(60);
+const [timerActive, setTimerActive] = useState(false);
+
+const [trainingModality, setTrainingModality] = useState<TrainingModalityId>('gym');
+const [sessionSec, setSessionSec] = useState(0);
+const [sessionRun, setSessionRun] = useState(false);
+const [distanceKm, setDistanceKm] = useState('');
+const [paceChoice, setPaceChoice] = useState<'min' | 'max' | null>(null);
+const [sessionCountdownActive, setSessionCountdownActive] = useState(false);
+const [initialCountdownSec, setInitialCountdownSec] = useState(0);
+const [modalityHistory, setModalityHistory] = useState<Partial<Record<TrainingModalityId, ModalitySessionEntry[]>>>({
+  gym: [],
+  cycling: [],
+  running: [],
+  aerobic: [],
+  combat: [],
+});
+
+const [chatOpen, setChatOpen] = useState(false);
 const [chatInput, setChatInput] = useState('');
 const [chatLoading, setChatLoading] = useState(false);
-
+const [aiLoading, setAiLoading] = useState(false);
+const [aiResponse, setAiResponse] = useState('');
+const [aiStep, setAiStep] = useState<'workout_goal' | 'add_manual' | 'result'>('workout_goal');
 const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([
   {
     role: 'ai',
@@ -279,59 +69,218 @@ const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([
   }
 ]);
 
-  const [trainingModality, setTrainingModality] = useState<TrainingModalityId>('gym');
-  const [modalityMenuOpen, setModalityMenuOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sessionSec, setSessionSec] = useState(0);
-  const [sessionRun, setSessionRun] = useState(false);
-  const [distanceKm, setDistanceKm] = useState('');
- 
-  const [paceChoice, setPaceChoice] = useState<'min' | 'max' | null>(null);
-  const [sessionCountdownActive, setSessionCountdownActive] = useState(false);
-  const [initialCountdownSec, setInitialCountdownSec] = useState(0);
-  const [modalityHistory, setModalityHistory] = useState<Record<TrainingModalityId, ModalitySessionEntry[]>>({
-    gym: [],
-    cycling: [],
-    running: [],
-    aerobic: [],
-    combat: [],
-  });
-  const modalityMenuRef = useRef<HTMLDivElement>(null);
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  const progressBarRef = useRef<HTMLDivElement>(null);
-  const currentModalityMeta = useMemo(
-    () => MODALITY_OPTIONS.find((m) => m.id === trainingModality) ?? MODALITY_OPTIONS[0],
-    [trainingModality],
-  );
+const currentModalityMeta = useMemo(
+  () => MODALITY_OPTIONS.find((m) => m.id === trainingModality) ?? MODALITY_OPTIONS[0],
+  [trainingModality],
+);
 
-  const runOrBikeSuggest = useMemo(() => {
-    if (trainingModality !== 'running' && trainingModality !== 'cycling') return null;
-    const km = parseKmInput(distanceKm);
-    if (km == null) return null;
-    return suggestedBlock(km, trainingModality);
-  }, [distanceKm, trainingModality]);
+const runOrBikeSuggest = useMemo(() => {
+  if (trainingModality !== 'running' && trainingModality !== 'cycling') return null;
+  const km = parseKmInput(distanceKm);
+  if (km == null) return null;
+  return getSuggestedCardioBlock(km, trainingModality);
+}, [distanceKm, trainingModality]);
 
-  const currentPlan = useMemo(() => userPlans[activeDay], [userPlans, activeDay]);
+const currentPlan = useMemo(() => userPlans[activeDay], [userPlans, activeDay]);
+
+const progressPercentage = useMemo(() => {
+  const totalExercises = currentPlan.exercises.length;
+  if (totalExercises === 0) return 0;
+  const completedExercises = currentPlan.exercises.filter(ex => ex.id && completedIds.includes(ex.id)).length;
+  return Math.round((completedExercises / totalExercises) * 100);
+}, [currentPlan.exercises, completedIds]);
+
+
+
+useEffect(() => {
+  router.prefetch('/ProfilePage');
+}, [router]);
+
+useEffect(() => {
+  try {
+    const raw = localStorage.getItem(MODALITY_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as Record<string, ModalitySessionEntry[]>;
+    setModalityHistory({
+      gym: [],
+      cycling: parsed.cycling ?? [],
+      running: parsed.running ?? [],
+      aerobic: parsed.aerobic ?? [],
+      combat: parsed.combat ?? [],
+    });
+  } catch {
+  }
+}, []);
+
+useEffect(() => {
+  try {
+    localStorage.setItem(
+      MODALITY_STORAGE_KEY,
+      JSON.stringify({
+        cycling: modalityHistory.cycling,
+        running: modalityHistory.running,
+        aerobic: modalityHistory.aerobic,
+        combat: modalityHistory.combat,
+      }),
+    );
+  } catch {
+  }
+}, [modalityHistory]);
+
+useEffect(() => {
+  if (progressBarRef.current) {
+    progressBarRef.current.style.width = `${progressPercentage}%`;
+  }
+}, [progressPercentage]);
+
+useEffect(() => {
+  if (!timerActive) return;
+  const id = setInterval(() => {
+    setTimeLeft((t) => {
+      if (t <= 1) {
+        setTimerActive(false);
+        return 0;
+      }
+      return t - 1;
+    });
+  }, 1000);
+  return () => clearInterval(id);
+}, [timerActive]);
+
+useEffect(() => {
+  if (!sessionRun || trainingModality === 'gym') return;
+
+  const isCountdownMode = 
+    (trainingModality === 'running' || trainingModality === 'cycling') && sessionCountdownActive;
+
+  if (isCountdownMode) {
+    const id = setInterval(() => {
+      setSessionSec((s) => {
+        if (s <= 1) {
+          setSessionRun(false);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }
+
+  const id = setInterval(() => {
+    setSessionSec((s) => s + 1);
+  }, 1000);
+
+  return () => clearInterval(id);
+}, [sessionRun, trainingModality, sessionCountdownActive]);
+
+useEffect(() => {
+  if (trainingModality === 'gym') return;
+  setSessionRun(false);
+  setSessionSec(0);
+  setDistanceKm('');
+  setPaceChoice(null);
+  setSessionCountdownActive(false);
+  setInitialCountdownSec(0);
+}, [trainingModality]);
+
+useEffect(() => {
+  if (!modalityMenuOpen) return;
+  const close = (e: MouseEvent) => {
+    if (modalityMenuRef.current && !modalityMenuRef.current.contains(e.target as Node)) {
+      setModalityMenuOpen(false);
+    }
+  };
+  document.addEventListener('mousedown', close);
+  return () => document.removeEventListener('mousedown', close);
+}, [modalityMenuOpen]);
+
+useEffect(() => {
+  if (!mobileMenuOpen) return;
+  const close = (e: MouseEvent) => {
+    if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+      setMobileMenuOpen(false);
+    }
+  };
+  document.addEventListener('mousedown', close);
+  return () => document.removeEventListener('mousedown', close);
+}, [mobileMenuOpen]);
+
+
+
+const toggleExercise = useCallback((id: string) => {
+  setCompletedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+}, []);
+
+const addExerciseToPlan = useCallback((exercise: Exercise) => {
+  const newEx = { ...exercise, id: Math.random().toString(36).substr(2, 9) };
+  setUserPlans(prev => prev.map((p, i) => i === activeDay ? { ...p, exercises: [...p.exercises, newEx] } : p));
+  setShowAI(false);
+}, [activeDay]);
+
+const startRunBikeCountdown = useCallback(() => {
+  if (trainingModality !== 'running' && trainingModality !== 'cycling') return;
+  const km = parseKmInput(distanceKm);
+  if (km == null || !paceChoice) return;
+  const block = getSuggestedCardioBlock(km, trainingModality);
+  const total = paceChoice === 'min' ? block.minTimeSec : block.maxTimeSec;
+  setInitialCountdownSec(total);
+  setSessionSec(total);
+  setSessionCountdownActive(true);
+  setSessionRun(true);
+}, [distanceKm, paceChoice, trainingModality]);
+
+const finalizeModalitySession = useCallback(() => {
+  if (trainingModality === 'gym') return;
+  const distN = parseKmInput(distanceKm);
+  const isRunBikeCountdown =
+    (trainingModality === 'running' || trainingModality === 'cycling') && sessionCountdownActive;
   
-  const progressPercentage = useMemo(() => {
-    const totalExercises = currentPlan.exercises.length;
-    if (totalExercises === 0) return 0;
-    const completedExercises = currentPlan.exercises.filter(ex => ex.id && completedIds.includes(ex.id)).length;
-    return Math.round((completedExercises / totalExercises) * 100);
-  }, [currentPlan.exercises, completedIds]);
+  let durationSec: number;
+  if (isRunBikeCountdown) {
+    durationSec = initialCountdownSec - sessionSec;
+    if (durationSec <= 0) return;
+  } else {
+    if (sessionSec === 0) return;
+    durationSec = sessionSec;
+  }
+  
+  const entry: ModalitySessionEntry = {
+    id: Math.random().toString(36).slice(2, 12),
+    at: new Date().toISOString(),
+    durationSec,
+    ...(currentModalityMeta.showDistance && distN != null ? { distanceKm: distN } : {}),
+  };
+  
+  setModalityHistory((prev) => ({
+    ...prev,
+    [trainingModality]: [entry, ...(prev[trainingModality] ?? [])].slice(0, 50),
+  }));
+  
+  setSessionSec(0);
+  setSessionRun(false);
+  setDistanceKm('');
+  setPaceChoice(null);
+  setSessionCountdownActive(false);
+  setInitialCountdownSec(0);
+}, [
+  trainingModality,
+  distanceKm,
+  currentModalityMeta.showDistance,
+  sessionCountdownActive,
+  initialCountdownSec,
+  sessionSec,
+]);
 
-  const sendChatMessage = useCallback(async () => {
+// --- Funções do Assistente IA ---
+const sendChatMessage = useCallback(async () => {
   if (!chatInput.trim()) return;
 
   const userMessage = chatInput.trim();
 
   setChatMessages(prev => [
     ...prev,
-    {
-      role: 'user',
-      text: userMessage,
-    },
+    { role: 'user', text: userMessage },
   ]);
 
   setChatInput('');
@@ -340,7 +289,6 @@ const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([
   await new Promise(resolve => setTimeout(resolve, 1200));
 
   let response = '';
-
   const lower = userMessage.toLowerCase();
 
   if (lower.includes('hipertrofia') || lower.includes('massa')) {
@@ -359,208 +307,37 @@ const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([
 
   setChatMessages(prev => [
     ...prev,
-    {
-      role: 'ai',
-      text: response,
-    },
+    { role: 'ai', text: response },
   ]);
 
   setChatLoading(false);
 }, [chatInput]);
 
-  useEffect(() => {
-    router.prefetch('/ProfilePage');
-  }, [router]);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(MODALITY_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Record<string, ModalitySessionEntry[]>;
-      setModalityHistory({
-        gym: [],
-        cycling: parsed.cycling ?? [],
-        running: parsed.running ?? [],
-        aerobic: parsed.aerobic ?? [],
-        combat: parsed.combat ?? [],
-      });
-    } catch {
-    }
-  }, []);
-
-  const generateAIWorkout = useCallback(async (goal: 'cut' | 'bulk') => {
-    setAiLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const newPlans = INITIAL_WEEKLY_PLAN.map(plan => {
-      if (plan.day === "Dom") return plan;
-      const filtered = ALL_AVAILABLE_EXERCISES.filter(ex => 
-        plan.muscles.some(m => ex.muscle === m)
-      ).map(ex => ({
-        ...ex,
-        id: Math.random().toString(36).substr(2, 9),
-        sets: goal === 'bulk' ? 4 : 3,
-        reps: goal === 'bulk' ? "8-12" : "15-20"
-      }));
-      return { 
-        ...plan, 
-        target: `${goal === 'bulk' ? 'HIPERTROFIA' : 'DEFINIÇÃO'} - ${plan.target}`,
-        exercises: filtered 
-      };
-    });
-    setUserPlans(newPlans);
-    setAiResponse(`Novo plano de ${goal === 'bulk' ? 'Ganho de Massa' : 'Emagrecimento'} aplicado!`);
-    setAiStep('result');
-    setAiLoading(false);
-  }, []);
-
-  const addExerciseToPlan = useCallback((exercise: Exercise) => {
-    const newEx = { ...exercise, id: Math.random().toString(36).substr(2, 9) };
-    setUserPlans(prev => prev.map((p, i) => i === activeDay ? { ...p, exercises: [...p.exercises, newEx] } : p));
-    setShowAI(false);
-  }, [activeDay]);
-
-  const toggleExercise = useCallback((id: string) => {
-    setCompletedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  }, []);
-
-  useEffect(() => {
-    if (!timerActive) return;
-    const id = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          setTimerActive(false);
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [timerActive]);
-
-  useEffect(() => {
-    if (progressBarRef.current) {
-      progressBarRef.current.style.width = `${progressPercentage}%`;
-    }
-  }, [progressPercentage]);
-
-  useEffect(() => {
-    if (!sessionRun) return;
-    if (trainingModality === 'running' || trainingModality === 'cycling') {
-      if (!sessionCountdownActive) return;
-      const id = setInterval(() => {
-        setSessionSec((s) => {
-          if (s <= 1) {
-            setSessionRun(false);
-            return 0;
-          }
-          return s - 1;
-        });
-      }, 1000);
-      return () => clearInterval(id);
-    }
-    if (trainingModality === 'aerobic' || trainingModality === 'combat') {
-      const id = setInterval(() => setSessionSec((s) => s + 1), 1000);
-      return () => clearInterval(id);
-    }
-  }, [sessionRun, trainingModality, sessionCountdownActive]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        MODALITY_STORAGE_KEY,
-        JSON.stringify({
-          cycling: modalityHistory.cycling,
-          running: modalityHistory.running,
-          aerobic: modalityHistory.aerobic,
-          combat: modalityHistory.combat,
-        }),
-      );
-    } catch {
-      // ignore
-    }
-  }, [modalityHistory]);
-
-  useEffect(() => {
-    if (!modalityMenuOpen) return;
-    const close = (e: MouseEvent) => {
-      if (modalityMenuRef.current && !modalityMenuRef.current.contains(e.target as Node)) {
-        setModalityMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, [modalityMenuOpen]);
-
-  useEffect(() => {
-    if (!mobileMenuOpen) return;
-    const close = (e: MouseEvent) => {
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
-        setMobileMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, [mobileMenuOpen]);
-
-  useEffect(() => {
-    if (trainingModality === 'gym') return;
-    setSessionRun(false);
-    setSessionSec(0);
-    setDistanceKm('');
-    setPaceChoice(null);
-    setSessionCountdownActive(false);
-    setInitialCountdownSec(0);
-  }, [trainingModality]);
-
-  const finalizeModalitySession = useCallback(() => {
-    if (trainingModality === 'gym') return;
-    const distN = parseKmInput(distanceKm);
-    const isRunBikeCountdown =
-      (trainingModality === 'running' || trainingModality === 'cycling') && sessionCountdownActive;
-    let durationSec: number;
-    if (isRunBikeCountdown) {
-      durationSec = initialCountdownSec - sessionSec;
-      if (durationSec <= 0) return;
-    } else {
-      if (sessionSec === 0) return;
-      durationSec = sessionSec;
-    }
-    const entry: ModalitySessionEntry = {
-      id: Math.random().toString(36).slice(2, 12),
-      at: new Date().toISOString(),
-      durationSec,
-      ...(currentModalityMeta.showDistance && distN != null ? { distanceKm: distN } : {}),
-    };
-    setModalityHistory((prev) => ({
-      ...prev,
-      [trainingModality]: [entry, ...(prev[trainingModality] ?? [])].slice(0, 50),
+const generateAIWorkout = useCallback(async (goal: 'cut' | 'bulk') => {
+  setAiLoading(true);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  const newPlans = INITIAL_WEEKLY_PLAN.map(plan => {
+    if (plan.day === "Dom") return plan;
+    const filtered = ALL_AVAILABLE_EXERCISES.filter(ex => 
+      plan.muscles.some(m => ex.muscle === m)
+    ).map(ex => ({
+      ...ex,
+      id: Math.random().toString(36).substr(2, 9),
+      sets: goal === 'bulk' ? 4 : 3,
+      reps: goal === 'bulk' ? "8-12" : "15-20"
     }));
-    setSessionSec(0);
-    setSessionRun(false);
-    setDistanceKm('');
-    setPaceChoice(null);
-    setSessionCountdownActive(false);
-    setInitialCountdownSec(0);
-  }, [
-    trainingModality,
-    distanceKm,
-    currentModalityMeta.showDistance,
-    sessionCountdownActive,
-    initialCountdownSec,
-    sessionSec,
-  ]);
+    return { 
+      ...plan, 
+      target: `${goal === 'bulk' ? 'HIPERTROFIA' : 'DEFINIÇÃO'} - ${plan.target}`,
+      exercises: filtered 
+    };
+  });
+  setUserPlans(newPlans);
+  setAiResponse(`Novo plano de ${goal === 'bulk' ? 'Ganho de Massa' : 'Emagrecimento'} aplicado!`);
+  setAiStep('result');
+  setAiLoading(false);
+}, []);
 
-  const startRunBikeCountdown = useCallback(() => {
-    if (trainingModality !== 'running' && trainingModality !== 'cycling') return;
-    const km = parseKmInput(distanceKm);
-    if (km == null || !paceChoice) return;
-    const block = suggestedBlock(km, trainingModality);
-    const total = paceChoice === 'min' ? block.minTimeSec : block.maxTimeSec;
-    setInitialCountdownSec(total);
-    setSessionSec(total);
-    setSessionCountdownActive(true);
-    setSessionRun(true);
-  }, [distanceKm, paceChoice, trainingModality]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 relative overflow-hidden antialiased font-sans">
@@ -587,7 +364,7 @@ const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([
             >
               <LayoutGrid size={16} className="text-orange-500 shrink-0" />
               <span className="text-[9px] sm:text-[10px] font-black uppercase italic text-zinc-200 truncate">
-                {currentModalityMeta.short}
+                {currentModalityMeta.label}
               </span>
               <ChevronDown
                 size={14}
@@ -603,7 +380,7 @@ const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([
                       key={m.id}
                       type="button"
                       onClick={() => {
-                        setTrainingModality(m.id);
+                        setTrainingModality(m.id as TrainingModalityId);
                         setModalityMenuOpen(false);
                       }}
                       className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors cursor-pointer ${
@@ -669,7 +446,7 @@ const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([
                     key={m.id}
                     type="button"
                     onClick={() => {
-                      setTrainingModality(m.id);
+                      setTrainingModality(m.id as TrainingModalityId);
                       setMobileMenuOpen(false);
                     }}
                     className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-[11px] font-black uppercase italic ${
@@ -1031,7 +808,7 @@ const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([
                     {aiStep === 'result' && (
                       <div className="space-y-6">
                         <div className="bg-zinc-950 p-6 rounded-3xl border border-white/10 max-h-72 overflow-y-auto custom-scrollbar">
-                          <p className="text-zinc-300 text-xs leading-relaxed whitespace-pre-line font-mono">{aiResponse}</p>
+                          <p className="text-zinc-300 text-xs leading-relaxed whitespace-pre-line font-mono">{}</p>
                         </div>
                         <button onClick={() => setShowAI(false)} className="w-full py-4 bg-white text-black font-black uppercase italic rounded-2xl hover:bg-orange-500 hover:text-white transition-all cursor-pointer">Confirmar e Ver Plano</button>
                       </div>
