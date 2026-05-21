@@ -7,259 +7,43 @@ import {
   Users, Calendar, TrendingUp, MoreVertical, CalendarDays, User, Plus, Award,
   ChevronRight, Target, Dumbbell, Send, X, Bot, Trash2
 } from 'lucide-react';
+import { Student, WeeklyClass } from '../types/personal';
+import { INITIAL_STUDENTS, INITIAL_WEEKLY_CLASSES } from '../mocks/personalData';
+import { StatCard, Field } from '../components/ui/DashboardElements';
+import { EXPERIENCE_LEVELS, GENDER_OPTIONS, AVAILABLE_DAYS_OPTIONS, OTHER_DAYS_PREFIX, DAYS } from '@/app/constants/options';
+import { createEmptyStudentForm } from '@/app/utils/initializers';
+import { AgendaItem } from '@/app/components/ui/AgendaItem';
 
-type Exercise = { name: string; sets: string; reps: string; load: string };
-type WeeklyPlan = Record<string, Exercise[]>;
-type ProgressEntry = { date: string; weight: string; muscleMass: string; bodyFat: string; note: string };
-type Student = {
-  id: string;
-  name: string;
-  cpf: string;
-  email: string;
-  phone: string;
-  birthDate: string;
-  gender: string;
-  emergencyContact: string;
-  objective: string;
-  restrictions: string;
-  injuries: string;
-  medications: string;
-  experience: string;
-  availableDays: string;
-  height: string;
-  weight: string;
-  bodyFat: string;
-  observations: string;
-  lastTraining: string;
-  plan: string;
-  progress: number;
-  weeklyPlan: WeeklyPlan;
-  progressHistory: ProgressEntry[];
-};
 
-type WeeklyClass = {
-  id: string;
-  studentId: string;
-  day: string;
-  date: string;
-  time: string;
-  type: string;
-  status: 'confirmed' | 'pending' | 'canceled';
-};
 
-const INITIAL_STUDENTS: Student[] = [
-  {
-    id: 's1',
-    name: 'Carlos Silva',
-    cpf: '123.456.789-00',
-    email: 'carlos@email.com',
-    phone: '(11) 98888-0001',
-    birthDate: '1991-03-12',
-    gender: 'Masculino',
-    emergencyContact: 'Marina Silva - (11) 97777-3333',
-    objective: 'Hipertrofia',
-    restrictions: 'Nenhuma',
-    injuries: 'Lesão antiga no ombro esquerdo',
-    medications: 'Não utiliza',
-    experience: 'Intermediário',
-    availableDays: 'Seg, Qua, Sex',
-    height: '1.78',
-    weight: '84',
-    bodyFat: '18',
-    observations: 'Boa aderência ao treino. Precisa melhorar mobilidade.',
-    lastTraining: 'Hoje',
-    plan: 'Premium',
-    progress: 85,
-    weeklyPlan: {
-      Seg: [{ name: 'Supino Reto', sets: '4', reps: '8-10', load: '70kg' }],
-      Ter: [{ name: 'Agachamento Livre', sets: '4', reps: '8', load: '90kg' }],
-      Qua: [{ name: 'Remada Curvada', sets: '4', reps: '10', load: '60kg' }],
-      Qui: [{ name: 'Levantamento Terra', sets: '3', reps: '6', load: '110kg' }],
-      Sex: [{ name: 'Desenvolvimento Militar', sets: '4', reps: '10', load: '35kg' }],
-      Sab: [],
-      Dom: []
-    },
-    progressHistory: [
-      { date: '05/03/2026', weight: '82kg', muscleMass: '+0.6kg', bodyFat: '-0.5%', note: 'Evolução consistente de força.' },
-      { date: '05/04/2026', weight: '84kg', muscleMass: '+1.0kg', bodyFat: '-0.8%', note: 'Aumento de massa magra e boa recuperação.' }
-    ]
-  },
-  {
-    id: 's2',
-    name: 'Ana Souza',
-    cpf: '234.567.890-11',
-    email: 'ana@email.com',
-    phone: '(11) 97777-0002',
-    birthDate: '1997-07-21',
-    gender: 'Feminino',
-    emergencyContact: 'Paulo Souza - (11) 96666-2222',
-    objective: 'Condicionamento',
-    restrictions: 'Intolerância leve ao impacto',
-    injuries: 'Sem histórico',
-    medications: 'Não utiliza',
-    experience: 'Iniciante',
-    availableDays: 'Seg, Ter, Qui',
-    height: '1.65',
-    weight: '62',
-    bodyFat: '29',
-    observations: 'Boa disciplina, precisa evoluir técnica.',
-    lastTraining: 'Ontem',
-    plan: 'Basic',
-    progress: 40,
-    weeklyPlan: { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sab: [], Dom: [] },
-    progressHistory: [
-      { date: '10/03/2026', weight: '64kg', muscleMass: '+0.2kg', bodyFat: '-0.4%', note: 'Início de adaptação.' }
-    ]
-  },
-  {
-    id: 's3',
-    name: 'Beatriz Luz',
-    cpf: '345.678.901-22',
-    email: 'bia@email.com',
-    phone: '(11) 95555-0003',
-    birthDate: '1994-11-03',
-    gender: 'Feminino',
-    emergencyContact: 'Luciana Luz - (11) 98888-1212',
-    objective: 'Emagrecimento',
-    restrictions: 'Hipertensão controlada',
-    injuries: 'Dor lombar ocasional',
-    medications: 'Losartana',
-    experience: 'Intermediário',
-    availableDays: 'Qua, Qui, Sex',
-    height: '1.70',
-    weight: '78',
-    bodyFat: '34',
-    observations: 'Treino + cardiorrespiratório com progressão gradual.',
-    lastTraining: 'Há 2 dias',
-    plan: 'Premium',
-    progress: 65,
-    weeklyPlan: { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sab: [], Dom: [] },
-    progressHistory: [
-      { date: '01/03/2026', weight: '80kg', muscleMass: '+0.1kg', bodyFat: '-0.7%', note: 'Boa resposta ao treino metabólico.' }
-    ]
-  }
-];
-
-const INITIAL_WEEKLY_CLASSES: WeeklyClass[] = [
-  { id: '1', day: 'Seg', date: '21/04', time: '07:00', studentId: 's1', type: 'Hipertrofia', status: 'confirmed' },
-  { id: '2', day: 'Seg', date: '21/04', time: '08:30', studentId: 's2', type: 'Funcional', status: 'confirmed' },
-  { id: '3', day: 'Ter', date: '22/04', time: '18:00', studentId: 's1', type: 'Powerlifting', status: 'pending' },
-  { id: '4', day: 'Qua', date: '23/04', time: '06:00', studentId: 's3', type: 'Emagrecimento', status: 'confirmed' },
-  { id: '5', day: 'Qui', date: '24/04', time: '10:00', studentId: 's3', type: 'Mobilidade', status: 'canceled' }
-];
-
-const StatCard = ({ title, value, icon: Icon, trend }: any) => (
-  <div className="bg-zinc-900/50 p-5 rounded-3xl border border-white/5 relative overflow-hidden">
-    <div className="flex justify-between items-start mb-2">
-      <div className="p-2 bg-orange-600/10 rounded-xl">
-        <Icon className="text-orange-500" size={20} />
-      </div>
-      {trend && <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg">+{trend}%</span>}
-    </div>
-    <p className="text-zinc-500 text-[10px] font-black uppercase italic">{title}</p>
-    <p className="text-2xl font-black text-white italic tracking-tighter">{value}</p>
-  </div>
-);
-
-const Field = ({
-  label,
-  required = false,
-  className = '',
-  children
-}: {
-  label: string;
-  required?: boolean;
-  className?: string;
-  children: React.ReactNode;
-}) => (
-  <label className={`flex flex-col gap-1 ${className}`}>
-    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-      {label}
-      {required && <span className="text-red-500 ml-1">*</span>}
-    </span>
-    {children}
-  </label>
-);
-
-const DAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
-const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro', 'Prefiro não informar'];
-const AVAILABLE_DAYS_OPTIONS = [
-  'Seg a Sex',
-  'Seg, Qua e Sex',
-  'Ter e Qui',
-  'Somente fim de semana',
-  'Todos os dias',
-  'Outros'
-];
-const EXPERIENCE_LEVELS = ['Iniciante', 'Intermediário', 'Avançado'];
-const OTHER_DAYS_PREFIX = 'Outros: ';
-
-const emptyStudentForm = (): Omit<Student, 'id' | 'weeklyPlan' | 'progressHistory' | 'lastTraining' | 'progress'> => ({
-  name: '',
-  cpf: '',
-  email: '',
-  phone: '',
-  birthDate: '',
-  gender: '',
-  emergencyContact: '',
-  objective: '',
-  restrictions: '',
-  injuries: '',
-  medications: '',
-  experience: '',
-  availableDays: '',
-  height: '',
-  weight: '',
-  bodyFat: '',
-  observations: '',
-  plan: 'Basic'
-});
-
-function AgendaItem({ item, studentName, onOpenStudent }: { item: WeeklyClass; studentName: string; onOpenStudent: () => void }) {
-  return (
-    <div
-      className="flex items-center justify-between p-4 bg-zinc-900/30 border border-white/5 rounded-2xl hover:border-orange-500/50 transition-all group cursor-pointer"
-      onClick={onOpenStudent}
-    >
-      <div className="flex items-center gap-4">
-      <div className="flex flex-col items-center justify-center bg-zinc-950 w-14 h-14 rounded-xl border border-white/5">
-        <span className="text-[10px] font-black text-orange-500 uppercase">{item.day}</span>
-        <span className="text-sm font-black text-white">{item.time}</span>
-      </div>
-      <div>
-        <h4 className="font-black italic uppercase text-sm text-white">{studentName}</h4>
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">{item.type}</span>
-          <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'confirmed' ? 'bg-emerald-500' : item.status === 'canceled' ? 'bg-red-500' : 'bg-amber-500'}`} />
-        </div>
-      </div>
-      </div>
-      <button className="p-2 hover:bg-white/5 rounded-lg text-zinc-500 transition-colors cursor-pointer">
-      <MoreVertical size={18} />
-      </button>
-    </div>
-  );
-}
 
 export default function PersonalDashboard() {
-  const router = useRouter();
-  const [activeMobileTab, setActiveMobileTab] = useState<'home' | 'students' | 'create' | 'stats' | 'profile'>('home');
-  const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
-const [cursor, setCursor] = useState<string | null>(null);
-const [loadingMore, setLoadingMore] = useState(false);
-const [hasMore, setHasMore] = useState(true);
-const [weeklyClasses, setWeeklyClasses] = useState<WeeklyClass[]>(INITIAL_WEEKLY_CLASSES);
-const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-const [showNewStudentForm, setShowNewStudentForm] = useState(false);
-const [newStudent, setNewStudent] = useState(emptyStudentForm());
-const [showExerciseForm, setShowExerciseForm] = useState(false);
-const [exerciseToAdd, setExerciseToAdd] = useState({ day: 'Seg', name: '', sets: '', reps: '', load: '' });
-const [historyInput, setHistoryInput] = useState({ date: '', weight: '', muscleMass: '', bodyFat: '', note: '' });
+const router = useRouter();
 
-const [isChatOpen, setIsChatOpen] = useState(false);
-const [input, setInput] = useState('');
-const [messages, setMessages] = useState<{ role: string, content: string }[]>([]);
-const [loading, setLoading] = useState(false);
+  const [activeMobileTab, setActiveMobileTab] = useState<'home' | 'students' | 'create' | 'stats' | 'profile'>('home');
+
+  const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  const [weeklyClasses, setWeeklyClasses] = useState<WeeklyClass[]>(INITIAL_WEEKLY_CLASSES);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+
+  const [showNewStudentForm, setShowNewStudentForm] = useState(false);
+  const [newStudent, setNewStudent] = useState(createEmptyStudentForm());
+  
+  const [showExerciseForm, setShowExerciseForm] = useState(false);
+  const [exerciseToAdd, setExerciseToAdd] = useState({ day: 'Seg', name: '', sets: '', reps: '', load: '' });
+  
+  const [historyInput, setHistoryInput] = useState({ date: '', weight: '', muscleMass: '', bodyFat: '', note: '' });
+
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+
 
 const selectedStudent = useMemo(
   () => students.find((student) => student.id === selectedStudentId) ?? null,
@@ -267,69 +51,11 @@ const selectedStudent = useMemo(
 );
 
 const safeNewStudent = useMemo(
-  () => ({ ...emptyStudentForm(), ...newStudent }),
+  () => ({ ...createEmptyStudentForm(), ...newStudent }),
   [newStudent]
 );
 
-const openStudentProfile = (studentId: string) => {
-  setSelectedStudentId(studentId);
-  setShowExerciseForm(false);
-  setShowNewStudentForm(false);
-  setActiveMobileTab('students');
-};
 
-const updateSelectedStudentField = (field: keyof Student, value: any) => {
-  if (!selectedStudentId) return;
-  setStudents((prev) =>
-    prev.map((student) =>
-      student.id === selectedStudentId ? { ...student, [field]: value } : student
-    )
-  );
-};
-
-const addExerciseToSelectedStudent = () => {
-  if (!selectedStudentId || !exerciseToAdd.name || !exerciseToAdd.sets || !exerciseToAdd.reps) return;
-
-  setStudents((prev) =>
-    prev.map((student) => {
-      if (student.id !== selectedStudentId) return student;
-
-      const updatedPlan = { ...student.weeklyPlan };
-      const dayExercises = [...(updatedPlan[exerciseToAdd.day] ?? [])];
-
-      dayExercises.push({
-        name: exerciseToAdd.name,
-        sets: exerciseToAdd.sets || '-',
-        reps: exerciseToAdd.reps || '-',
-        load: exerciseToAdd.load || '-'
-      });
-
-      updatedPlan[exerciseToAdd.day] = dayExercises;
-
-      return { ...student, weeklyPlan: updatedPlan };
-    })
-  );
-
-  setExerciseToAdd({ day: 'Seg', name: '', sets: '', reps: '', load: '' });
-};
-
-const removeExercise = (day: string, idx: number) => {
-  if (!selectedStudentId) return;
-
-  setStudents((prev) =>
-    prev.map((student) => {
-      if (student.id !== selectedStudentId) return student;
-
-      const updatedPlan = { ...student.weeklyPlan };
-      const dayExercises = [...(updatedPlan[day] ?? [])];
-
-      dayExercises.splice(idx, 1);
-      updatedPlan[day] = dayExercises;
-
-      return { ...student, weeklyPlan: updatedPlan };
-    })
-  );
-};
 
 useEffect(() => {
   const controller = new AbortController();
@@ -340,11 +66,9 @@ useEffect(() => {
         signal: controller.signal,
         cache: 'no-store'
       });
-
       if (!res.ok) return;
 
       const data = await res.json();
-
       const formatted = (Array.isArray(data) ? data : data.data ?? []).map((c: any) => ({
         id: c.id,
         studentId: c.studentId,
@@ -360,7 +84,6 @@ useEffect(() => {
   };
 
   fetchClasses();
-
   return () => controller.abort();
 }, []);
 
@@ -373,11 +96,9 @@ useEffect(() => {
         cache: 'no-store',
         signal: controller.signal
       });
-
       if (!res.ok) return;
 
       const data = await res.json();
-
       const formatted = (data.data ?? []).map((a: any) => ({
         id: a.id,
         name: a.name,
@@ -420,7 +141,6 @@ useEffect(() => {
   };
 
   fetchStudents();
-
   return () => controller.abort();
 }, []);
 
@@ -432,14 +152,10 @@ useEffect(() => {
       setLoadingMore(true);
 
       try {
-        const res = await fetch(`/api/athletes?cursor=${cursor}`, {
-          cache: 'no-store'
-        });
-
+        const res = await fetch(`/api/athletes?cursor=${cursor}`, { cache: 'no-store' });
         if (!res.ok) return;
 
         const data = await res.json();
-
         const formatted = (data.data ?? []).map((a: any) => ({
           id: a.id,
           name: a.name,
@@ -488,50 +204,29 @@ useEffect(() => {
   return () => window.removeEventListener('scroll', handleScroll);
 }, [cursor, loadingMore, hasMore]);
 
-const addHistoryEntry = () => {
-  if (!selectedStudentId || !historyInput.date || !historyInput.weight) return;
 
-  setStudents((prev) =>
-    prev.map((student) =>
-      student.id === selectedStudentId
-        ? { ...student, progressHistory: [historyInput, ...student.progressHistory] }
-        : student
-    )
-  );
 
-  setHistoryInput({ date: '', weight: '', muscleMass: '', bodyFat: '', note: '' });
-};
-
-const deleteSelectedStudent = () => {
-  if (!selectedStudentId) return;
-
-  setStudents((prev) => prev.filter((student) => student.id !== selectedStudentId));
-  setWeeklyClasses((prev) => prev.filter((item) => item.studentId !== selectedStudentId));
-  setSelectedStudentId(null);
+const openStudentProfile = (studentId: string) => {
+  setSelectedStudentId(studentId);
+  setShowExerciseForm(false);
+  setShowNewStudentForm(false);
+  setActiveMobileTab('students');
 };
 
 const createStudent = async () => {
   const availableDaysValue = newStudent.availableDays ?? '';
-
   const hasValidAvailableDays = availableDaysValue.startsWith(OTHER_DAYS_PREFIX)
     ? availableDaysValue.replace(OTHER_DAYS_PREFIX, '').trim().length > 0
     : availableDaysValue.length > 0;
 
   if (
-    !newStudent.name ||
-    !newStudent.cpf ||
-    !newStudent.phone ||
-    !newStudent.birthDate ||
-    !newStudent.gender ||
-    !newStudent.objective ||
-    !newStudent.experience ||
-    !hasValidAvailableDays
+    !newStudent.name || !newStudent.cpf || !newStudent.phone || 
+    !newStudent.birthDate || !newStudent.gender || !newStudent.objective || 
+    !newStudent.experience || !hasValidAvailableDays
   ) return;
 
   try {
-    const age =
-      new Date().getFullYear() -
-      new Date(newStudent.birthDate).getFullYear();
+    const age = new Date().getFullYear() - new Date(newStudent.birthDate).getFullYear();
 
     const res = await fetch('/api/athletes/register', {
       method: 'POST',
@@ -558,7 +253,6 @@ const createStudent = async () => {
     }
 
     const id = `s${Date.now()}`;
-
     const student: Student = {
       ...newStudent,
       id,
@@ -569,7 +263,7 @@ const createStudent = async () => {
     };
 
     setStudents((prev) => [student, ...prev]);
-    setNewStudent(emptyStudentForm());
+    setNewStudent(createEmptyStudentForm());
     setShowNewStudentForm(false);
     setSelectedStudentId(id);
   } catch (err: any) {
@@ -577,11 +271,87 @@ const createStudent = async () => {
   }
 };
 
+const updateSelectedStudentField = (field: keyof Student, value: any) => {
+  if (!selectedStudentId) return;
+  setStudents((prev) =>
+    prev.map((student) =>
+      student.id === selectedStudentId ? { ...student, [field]: value } : student
+    )
+  );
+};
+
+const deleteSelectedStudent = () => {
+  if (!selectedStudentId) return;
+  setStudents((prev) => prev.filter((student) => student.id !== selectedStudentId));
+  setWeeklyClasses((prev) => prev.filter((item) => item.studentId !== selectedStudentId));
+  setSelectedStudentId(null);
+};
+
+
+
+const addExerciseToSelectedStudent = () => {
+  if (!selectedStudentId || !exerciseToAdd.name || !exerciseToAdd.sets || !exerciseToAdd.reps) return;
+
+  setStudents((prev) =>
+    prev.map((student) => {
+      if (student.id !== selectedStudentId) return student;
+
+      const updatedPlan = { ...student.weeklyPlan };
+      const dayExercises = [...(updatedPlan[exerciseToAdd.day] ?? [])];
+
+      dayExercises.push({
+        name: exerciseToAdd.name,
+        sets: exerciseToAdd.sets || '-',
+        reps: exerciseToAdd.reps || '-',
+        load: exerciseToAdd.load || '-'
+      });
+
+      updatedPlan[exerciseToAdd.day] = dayExercises;
+      return { ...student, weeklyPlan: updatedPlan };
+    })
+  );
+
+  setExerciseToAdd({ day: 'Seg', name: '', sets: '', reps: '', load: '' });
+};
+
+const removeExercise = (day: string, idx: number) => {
+  if (!selectedStudentId) return;
+
+  setStudents((prev) =>
+    prev.map((student) => {
+      if (student.id !== selectedStudentId) return student;
+
+      const updatedPlan = { ...student.weeklyPlan };
+      const dayExercises = [...(updatedPlan[day] ?? [])];
+
+      dayExercises.splice(idx, 1);
+      updatedPlan[day] = dayExercises;
+
+      return { ...student, weeklyPlan: updatedPlan };
+    })
+  );
+};
+
+const addHistoryEntry = () => {
+  if (!selectedStudentId || !historyInput.date || !historyInput.weight) return;
+
+  setStudents((prev) =>
+    prev.map((student) =>
+      student.id === selectedStudentId
+        ? { ...student, progressHistory: [historyInput, ...student.progressHistory] }
+        : student
+    )
+  );
+
+  setHistoryInput({ date: '', weight: '', muscleMass: '', bodyFat: '', note: '' });
+};
+
+
+
 const handleChat = async () => {
   if (!input.trim()) return;
 
   const userMsg = { role: 'user', content: input };
-
   setMessages((prev) => [...prev, userMsg]);
   setInput('');
   setLoading(true);
@@ -594,7 +364,6 @@ const handleChat = async () => {
     });
 
     const data = await res.json();
-
     setMessages((prev) => [...prev, { role: 'assistant', content: data.text }]);
   } catch {
     setMessages((prev) => [
@@ -635,7 +404,7 @@ const handleChat = async () => {
           <button
             onClick={() => {
               setShowNewStudentForm((prev) => !prev);
-              setNewStudent((prev) => ({ ...emptyStudentForm(), ...prev }));
+              setNewStudent((prev) => ({ ...createEmptyStudentForm(), ...prev }));
               setSelectedStudentId(null);
             }}
             className="bg-orange-600 hover:bg-orange-700 p-2.5 rounded-xl transition-all flex items-center gap-2 group cursor-pointer"

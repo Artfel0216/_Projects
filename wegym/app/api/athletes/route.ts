@@ -8,7 +8,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
 
-    const take = Math.min(Number(searchParams.get('take')) || 20, 100);
+    const take = Math.min(Number(searchParams.get('take')) || 20, 50); 
     const cursorParam = searchParams.get('cursor');
 
     const includePlans = searchParams.get('plans') === '1';
@@ -37,11 +37,11 @@ export async function GET(req: Request) {
     const sliced = hasMore ? athletes.slice(0, take) : athletes;
     const nextCursor = hasMore ? sliced[sliced.length - 1].id : null;
 
-    let data = sliced;
+    let data: any[] = sliced;
+    const ids = sliced.map(a => a.id);
 
-    if (includePlans || includeProgress || includeClasses) {
-      const ids = sliced.map(a => a.id);
-
+    if (ids.length > 0 && (includePlans || includeProgress || includeClasses)) {
+      
       const [plans, progress, classes] = await Promise.all([
         includePlans
           ? prisma.trainingPlan.findMany({
@@ -50,12 +50,7 @@ export async function GET(req: Request) {
                 athleteId: true,
                 day: true,
                 exercises: {
-                  select: {
-                    name: true,
-                    sets: true,
-                    reps: true,
-                    load: true
-                  }
+                  select: { name: true, sets: true, reps: true, load: true }
                 }
               }
             })
@@ -77,20 +72,20 @@ export async function GET(req: Request) {
           : Promise.resolve([]),
 
         includeClasses
-  ? prisma.weeklyClass.findMany({
-      where: { athleteId: { in: ids } },
-      orderBy: { date: 'asc' },
-      select: {
-        id: true,
-        athleteId: true,
-        day: true,
-        date: true,
-        time: true,
-        type: true,
-        status: true
-      }
-    })
-  : Promise.resolve([])
+          ? prisma.weeklyClass.findMany({
+              where: { athleteId: { in: ids } },
+              orderBy: { date: 'asc' },
+              select: {
+                id: true,
+                athleteId: true,
+                day: true,
+                date: true,
+                time: true,
+                type: true,
+                status: true
+              }
+            })
+          : Promise.resolve([])
       ]);
 
       const plansMap = new Map<string, any[]>();
@@ -107,10 +102,10 @@ export async function GET(req: Request) {
         progressMap.get(p.athleteId)!.push(p);
       }
 
-     for (const c of classes) {
-  if (!classesMap.has(c.athleteId)) classesMap.set(c.athleteId, []);
-  classesMap.get(c.athleteId)!.push(c);
-}
+      for (const c of classes) {
+        if (!classesMap.has(c.athleteId)) classesMap.set(c.athleteId, []);
+        classesMap.get(c.athleteId)!.push(c);
+      }
 
       data = sliced.map(a => ({
         ...a,
@@ -121,18 +116,17 @@ export async function GET(req: Request) {
     }
 
     return NextResponse.json(
+      { data, nextCursor, hasMore },
       {
-        data,
-        nextCursor,
-        hasMore
-      },
-      {
+        status: 200,
         headers: {
-          'Cache-Control': 'no-store'
+          'Cache-Control': 'private, no-store, must-revalidate',
+          'Content-Type': 'application/json'
         }
       }
     );
-  } catch {
+  } catch (error) {
+    console.error("Erro na rota GET atletas:", error);
     return NextResponse.json(
       { error: 'Erro ao buscar atletas' },
       { status: 500 }

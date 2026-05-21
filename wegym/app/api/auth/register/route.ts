@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs"; 
 import { prisma } from "../../../../lib/prisma";
 import { ratelimit } from "../../../../lib/rate-limit";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
-    const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
+    const ip = req.headers.get("x-forwarded-for")?.split(',')[0].trim() ?? "127.0.0.1";
     
     const [ratelimitResult, body] = await Promise.all([
       ratelimit.limit(ip),
@@ -22,16 +25,18 @@ export async function POST(req: Request) {
       injury, healthIssues, medications, cref
     } = body;
 
-    const email = String(body.email ?? "")
-      .trim()
-      .toLowerCase();
+    const email = String(body.email ?? "").trim().toLowerCase();
 
     if (!email || !password || !userType || !name) {
       return NextResponse.json({ error: "Dados obrigatórios ausentes." }, { status: 400 });
     }
 
+    if (userType !== "atleta" && userType !== "personal") {
+      return NextResponse.json({ error: "Tipo de usuário inválido." }, { status: 400 });
+    }
+
     const existingUser = await prisma.user.findFirst({
-      where: { email: { equals: email, mode: "insensitive" } },
+      where: { email },
       select: { id: true },
     });
 
@@ -41,34 +46,40 @@ export async function POST(req: Request) {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const userData = {
+    const userData: any = {
       email,
       passwordHash,
       role: userType,
-      ...(userType === "atleta" ? {
-        athlete: {
-          create: {
-            name, cpf, cep, city, state, sex, experienceLevel,
-            age: Number(age),
-            heightCm: Number(height),
-            weightKg: Number(weight),
-            injury: injury || null,
-            healthIssues: healthIssues || null,
-            medications: medications || null,
-          },
-        },
-      } : userType === "personal" ? {
-        personal: {
-          create: {
-            name,
-            cref: typeof cref === "string" ? cref.trim().toUpperCase() : String(cref ?? "").trim(),
-          },
-        },
-      } : null),
     };
 
-    if (!userData) {
-      return NextResponse.json({ error: "Tipo de usuário inválido." }, { status: 400 });
+    if (userType === "atleta") {
+      userData.athlete = {
+        create: {
+          name: name.trim(),
+          cpf: cpf?.replace(/\D/g, '') || null, 
+          cep, 
+          city, 
+          state, 
+          sex, 
+          experienceLevel,
+          age: age ? Number(age) : null,
+          heightCm: height ? Number(height) : null,
+          weightKg: weight ? Number(weight) : null,
+          injury: injury || null,
+          healthIssues: healthIssues || null,
+          medications: medications || null,
+        },
+      };
+    } else if (userType === "personal") {
+      if (!cref) {
+        return NextResponse.json({ error: "CREF é obrigatório para Personal Trainers." }, { status: 400 });
+      }
+      userData.personal = {
+        create: {
+          name: name.trim(),
+          cref: String(cref).trim().toUpperCase(),
+        },
+      };
     }
 
     await prisma.user.create({ 
@@ -82,6 +93,8 @@ export async function POST(req: Request) {
     if (error?.code === "P2002") {
       return NextResponse.json({ error: "E-mail, CPF ou CREF já cadastrados." }, { status: 400 });
     }
+    
+    console.error("Erro interno no cadastro:", error);
     return NextResponse.json({ error: "Erro interno." }, { status: 500 });
   }
 }

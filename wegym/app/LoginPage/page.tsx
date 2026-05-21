@@ -5,48 +5,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { getSession, signIn } from 'next-auth/react';
 import { Eye, EyeOff, Loader2, Dumbbell, Mail, Lock, User, IdCard, MapPin, ExternalLink, ChevronDown, Heart, Activity, CheckCircle2 } from 'lucide-react';
+import { AnimatedBackground } from '../components/ui/AnimatedBackground';
+import { EXPERIENCE_OPTIONS } from '../constants/options';
+import { LeftPanel } from '../components/ui/LeftPanel';
+import { maskCEP, maskCPF } from '../utils/masks';
 
-const EXPERIENCE_OPTIONS = [
-  { value: 'iniciante', label: '🥉 Iniciante', sub: 'Menos de 1 ano' },
-  { value: 'intermediario', label: '🥈 Intermediário', sub: '1 a 3 anos' },
-  { value: 'avancado', label: '🥇 Avançado', sub: 'Mais de 3 anos' },
-];
 
-const AnimatedBackground = React.memo(() => (
-  <>
-    <motion.div
-      animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.2, 0.1] }}
-      transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-      className="absolute top-[-10%] right-[-5%] w-[125vw] md:w-125 h-[125vw] md:h-125 bg-orange-600 rounded-full filter blur-[120px]"
-    />
-    <motion.div
-      animate={{ scale: [1, 1.3, 1], x: [0, -50, 0], opacity: [0.05, 0.15, 0.05] }}
-      transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-      className="absolute bottom-[-10%] left-[-5%] w-[150vw] md:w-150 h-[150vw] md:h-150 bg-zinc-700 rounded-full filter blur-[100px]"
-    />
-  </>
-));
-AnimatedBackground.displayName = 'AnimatedBackground';
-
-const LeftPanel = React.memo(() => (
-  <div className="hidden md:flex md:w-1/3 bg-zinc-900 p-12 flex-col justify-between relative overflow-hidden">
-    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle,#fff_1px,transparent_1px)] bg-size-[30px_30px]"></div>
-    <div className="relative z-10">
-      <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center space-x-2 mb-8">
-        <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center rotate-3">
-          <Dumbbell className="text-white w-6 h-6" />
-        </div>
-        <h1 className="text-2xl font-black text-white tracking-tighter italic">WEGYM</h1>
-      </motion.div>
-      <h2 className="text-5xl font-black text-white mb-6 leading-none uppercase italic">Supere seus <br /><span className="text-orange-500 underline decoration-zinc-700">Limites</span>.</h2>
-      <p className="text-zinc-400 text-lg leading-relaxed">Sua jornada para a melhor versão de si mesmo começa aqui.</p>
-    </div>
-  </div>
-));
-LeftPanel.displayName = 'LeftPanel';
 
 export default function LoginPage() {
   const router = useRouter();
+
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -62,119 +30,120 @@ export default function LoginPage() {
     injury: '', healthIssues: '', medications: '', cref: '',
   });
 
-  useEffect(() => {
-    router.prefetch('/TrainingPage');
-    router.prefetch('/PersonalPage');
-  }, [router]);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    let formattedValue = value;
+useEffect(() => {
+  router.prefetch('/TrainingPage');
+  router.prefetch('/PersonalPage');
+}, [router]);
 
-    if (name === 'cpf') {
-      formattedValue = value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4").substring(0, 14);
-    } else if (name === 'cep') {
-      formattedValue = value.replace(/\D/g, '').replace(/(\d{5})(\d{3})/, "$1-$2").substring(0, 9);
-    } else if (name === 'cref') {
-      formattedValue = value.toUpperCase();
-    }
+useEffect(() => {
+  const cepDigits = formData.cep.replace(/\D/g, '');
+  if (cepDigits.length === 8) {
+    if (formData.city && formData.state) return; 
 
-    setFormData(prev => ({ ...prev, [name]: formattedValue }));
-    if (error) setError(null);
-  }, [error]);
+    fetch(`https://viacep.com.br/ws/${cepDigits}/json/`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.erro) {
+          setFormData(prev => ({ ...prev, city: data.localidade, state: data.uf }));
+        }
+      })
+      .catch(() => null);
+  }
+}, [formData.cep, formData.city, formData.state]);
 
-  useEffect(() => {
-    const cepDigits = formData.cep.replace(/\D/g, '');
-    if (cepDigits.length === 8) {
-      if (formData.city && formData.state) return; 
 
-      fetch(`https://viacep.com.br/ws/${cepDigits}/json/`)
-        .then(res => res.json())
-        .then(data => {
-          if (!data.erro) {
-            setFormData(prev => ({ ...prev, city: data.localidade, state: data.uf }));
-          }
-        })
-        .catch(() => null);
-    }
-  }, [formData.cep, formData.city, formData.state]);
 
-  const verifyCref = useCallback(async () => {
-    setIsVerifyingCref(true);
-    setError(null);
+const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const { name, value } = e.target;
+  let formattedValue = value;
+
+  if (name === 'cpf') formattedValue = maskCPF(value);
+  if (name === 'cep') formattedValue = maskCEP(value);
+  if (name === 'cref') formattedValue = value.toUpperCase();
+
+  setFormData(prev => ({ ...prev, [name]: formattedValue }));
+  if (error) setError(null);
+}, [error]);
+
+
+
+const verifyCref = useCallback(async () => {
+  setIsVerifyingCref(true);
+  setError(null);
+  
+  setTimeout(() => {
+    setIsVerifyingCref(false);
+    const crefRegex = /^\d{6}-[A-Z]\/[A-Z]{2}$/;
     
-    setTimeout(() => {
-      setIsVerifyingCref(false);
-      const crefRegex = /^\d{6}-[A-Z]\/[A-Z]{2}$/;
-      
-      if (crefRegex.test(formData.cref)) {
-        setCrefVerified(true);
-      } else {
-        setError("CREF inválido ou inativo. Formato esperado: 000000-G/UF");
-        setCrefVerified(false);
-      }
-    }, 1000);
-  }, [formData.cref]);
-
-  const handleAuth = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!isLogin && formData.password !== formData.confirmPassword) {
-      return setError("As senhas não coincidem.");
+    if (crefRegex.test(formData.cref)) {
+      setCrefVerified(true);
+    } else {
+      setError("CREF inválido ou inativo. Formato esperado: 000000-G/UF");
+      setCrefVerified(false);
     }
+  }, 1000);
+}, [formData.cref]);
 
-    if (!isLogin && userType === 'personal' && !crefVerified) {
-      return setError("Valide o CREF antes de continuar.");
-    }
+const handleAuth = useCallback(async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(null);
 
-    setIsLoading(true);
+  if (!isLogin && formData.password !== formData.confirmPassword) {
+    return setError("As senhas não coincidem.");
+  }
 
-    try {
-      if (isLogin) {
-        const res = await signIn("credentials", {
-          redirect: false,
-          email: formData.email.trim(),
-          password: formData.password,
-        });
+  if (!isLogin && userType === 'personal' && !crefVerified) {
+    return setError("Valide o CREF antes de continuar.");
+  }
 
-        if (res?.error) {
-          setError(res.error);
-          setIsLoading(false);
-        } else {
-          const session = await getSession();
-          const role = (session?.user as { role?: string } | undefined)?.role;
+  setIsLoading(true);
 
-          if (role === 'personal') {
-            router.push('/PersonalPage');
-          } else {
-            router.push('/TrainingPage');
-          }
-        }
-      } else {
-        const res = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...formData, userType })
-        });
+  try {
+    if (isLogin) {
+      const res = await signIn("credentials", {
+        redirect: false,
+        email: formData.email.trim(),
+        password: formData.password,
+      });
 
-        if (!res.ok) {
-          const data = await res.json();
-          setError(data.error || "Erro no cadastro.");
-          setIsLoading(false);
-          return;
-        }
-
-        setIsLogin(true);
+      if (res?.error) {
+        setError(res.error);
         setIsLoading(false);
-        setCrefVerified(false);
-        setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
+      } else {
+        const session = await getSession();
+        const role = (session?.user as { role?: string } | undefined)?.role;
+
+        if (role === 'personal') {
+          router.push('/PersonalPage');
+        } else {
+          router.push('/TrainingPage');
+        }
       }
-    } catch {
-      setError("Falha de conexão.");
+    } else {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, userType })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Erro no cadastro.");
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLogin(true);
       setIsLoading(false);
+      setCrefVerified(false);
+      setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
     }
-  }, [isLogin, formData, userType, crefVerified, router]);
+  } catch {
+    setError("Falha de conexão.");
+    setIsLoading(false);
+  }
+}, [isLogin, formData, userType, crefVerified, router]);
 
   const inputClass = "w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all";
   const labelClass = "text-xs font-bold text-zinc-400 uppercase ml-1 flex items-center gap-1";
