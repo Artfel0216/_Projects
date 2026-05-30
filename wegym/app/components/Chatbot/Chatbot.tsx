@@ -190,21 +190,6 @@ export default function Chatbot() {
         <p className="text-[9px] text-gray-600 mt-3 text-center uppercase tracking-[0.2em]">Powered by Gemini 1.5 Flash • High Performance AI</p>
       </div>
 
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #0f0f0f;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #333;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #f97316;
-        }
-      `}</style>
     </div>
   );
 }

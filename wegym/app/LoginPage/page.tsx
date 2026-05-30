@@ -32,7 +32,7 @@ export default function LoginPage() {
 
 
 useEffect(() => {
-  router.prefetch('/TrainingPage');
+  router.prefetch('/HomePage');
   router.prefetch('/PersonalPage');
 }, [router]);
 
@@ -117,7 +117,7 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
         if (role === 'personal') {
           router.push('/PersonalPage');
         } else {
-          router.push('/TrainingPage');
+          router.push('/HomePage');
         }
       }
     } else {

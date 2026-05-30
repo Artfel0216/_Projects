@@ -2,9 +2,8 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
 import {
-  Users, Calendar, TrendingUp, MoreVertical, CalendarDays, User, Plus, Award,
+  Users, Calendar, TrendingUp, CalendarDays, Plus, Award,
   ChevronRight, Target, Dumbbell, Send, X, Bot, Trash2
 } from 'lucide-react';
 import { Student, WeeklyClass } from '../types/personal';
@@ -18,9 +17,7 @@ import { AgendaItem } from '@/app/components/ui/AgendaItem';
 
 
 export default function PersonalDashboard() {
-const router = useRouter();
-
-  const [activeMobileTab, setActiveMobileTab] = useState<'home' | 'students' | 'create' | 'stats' | 'profile'>('home');
+  const [activeMobileTab, setActiveMobileTab] = useState<'home' | 'students' | 'create'>('home');
 
   const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -714,7 +711,7 @@ const handleChat = async () => {
         )}
       </AnimatePresence>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-8 py-4 flex justify-between items-center lg:hidden z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-8 py-4 flex justify-around items-center lg:hidden z-50">
         <button
           type="button"
           onClick={() => {
@@ -756,28 +753,6 @@ const handleChat = async () => {
           aria-label="Cadastrar novo aluno"
         >
           <Plus size={24} className="text-white" />
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setActiveMobileTab('stats');
-            router.push('/StatsPage');
-          }}
-          className="cursor-pointer"
-          aria-label="Abrir estatísticas"
-        >
-          <TrendingUp size={24} className={activeMobileTab === 'stats' ? 'text-orange-500' : 'text-zinc-600'} />
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setActiveMobileTab('profile');
-            router.push('/ProfilePage');
-          }}
-          className="cursor-pointer"
-          aria-label="Abrir perfil"
-        >
-          <User size={24} className={activeMobileTab === 'profile' ? 'text-orange-500' : 'text-zinc-600'} />
         </button>
       </nav>
     </div>

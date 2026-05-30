@@ -20,7 +20,7 @@ export function useLoginForm() {
   });
 
   useEffect(() => {
-    router.prefetch('/TrainingPage');
+    router.prefetch('/HomePage');
     router.prefetch('/PersonalPage');
   }, [router]);
 
@@ -102,7 +102,7 @@ export function useLoginForm() {
           const session = await getSession();
           const role = (session?.user as { role?: string } | undefined)?.role;
 
-          router.push(role === 'personal' ? '/PersonalPage' : '/TrainingPage');
+          router.push(role === 'personal' ? '/PersonalPage' : '/HomePage');
         }
       } else {
         const res = await fetch('/api/auth/register', {

@@ -1,4 +1,6 @@
 import "./globals.css";
+import { SessionProviderWrapper } from "./components/providers/SessionProviderWrapper";
+import { AppShell } from "./components/ui/AppShell";
 
 export default function RootLayout({
   children,
@@ -7,7 +9,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        <SessionProviderWrapper>
+          <AppShell>{children}</AppShell>
+        </SessionProviderWrapper>
+      </body>
     </html>
   );
 }

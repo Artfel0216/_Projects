@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import {Dumbbell, Timer, RotateCcw, Zap, Trophy, X, ChevronDown, Activity,BrainCircuit, User, Plus, Flame, LayoutGrid, History, Menu,
+import {Timer, RotateCcw, Zap, Trophy, X, Activity, BrainCircuit, Plus, Flame, History,
 } from 'lucide-react';
 import { MessageCircle } from 'lucide-react';
 import { TrainingModalityId, Exercise, ModalitySessionEntry, AIChatMessage, DayPlan } from '@/app/types/training';
 import { formatDurationHMS, parseKmInput } from '@/app/utils/training-helpers';
 import { MODALITY_OPTIONS } from '@/app/constants/modalities';
+import { MODALITY_STORAGE_KEY } from '@/app/constants/keys';
 import { ALL_AVAILABLE_EXERCISES } from '@/app/constants/exercises';
 import { ExerciseItem} from '@/app/components/ExerciseItem/ExerciseItem';
 import { INITIAL_WEEKLY_PLAN } from '@/app/constants/plans';
@@ -23,9 +23,8 @@ import { getSuggestedCardioBlock } from '@/app/utils/calculations';
 export default function TrainingPage() {
 
 const router = useRouter();
+const searchParams = useSearchParams();
 
-const modalityMenuRef = useRef<HTMLDivElement>(null);
-const mobileMenuRef = useRef<HTMLDivElement>(null);
 const progressBarRef = useRef<HTMLDivElement>(null);
 
 
@@ -33,15 +32,18 @@ const progressBarRef = useRef<HTMLDivElement>(null);
 const [activeDay, setActiveDay] = useState(new Date().getDay());
 const [showAI, setShowAI] = useState(false);
 const [visibleExercises, setVisibleExercises] = useState(10);
-const [modalityMenuOpen, setModalityMenuOpen] = useState(false);
-const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
 const [userPlans, setUserPlans] = useState<DayPlan[]>(INITIAL_WEEKLY_PLAN);
 const [completedIds, setCompletedIds] = useState<string[]>([]);
 const [timeLeft, setTimeLeft] = useState(60);
 const [timerActive, setTimerActive] = useState(false);
 
-const [trainingModality, setTrainingModality] = useState<TrainingModalityId>('gym');
+const modalityParam = searchParams.get('modality');
+const trainingModality: TrainingModalityId = (
+  modalityParam && MODALITY_OPTIONS.some((m) => m.id === modalityParam)
+    ? (modalityParam as TrainingModalityId)
+    : 'gym'
+);
 const [sessionSec, setSessionSec] = useState(0);
 const [sessionRun, setSessionRun] = useState(false);
 const [distanceKm, setDistanceKm] = useState('');
@@ -183,30 +185,6 @@ useEffect(() => {
   setSessionCountdownActive(false);
   setInitialCountdownSec(0);
 }, [trainingModality]);
-
-useEffect(() => {
-  if (!modalityMenuOpen) return;
-  const close = (e: MouseEvent) => {
-    if (modalityMenuRef.current && !modalityMenuRef.current.contains(e.target as Node)) {
-      setModalityMenuOpen(false);
-    }
-  };
-  document.addEventListener('mousedown', close);
-  return () => document.removeEventListener('mousedown', close);
-}, [modalityMenuOpen]);
-
-useEffect(() => {
-  if (!mobileMenuOpen) return;
-  const close = (e: MouseEvent) => {
-    if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
-      setMobileMenuOpen(false);
-    }
-  };
-  document.addEventListener('mousedown', close);
-  return () => document.removeEventListener('mousedown', close);
-}, [mobileMenuOpen]);
-
-
 
 const toggleExercise = useCallback((id: string) => {
   setCompletedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -350,53 +328,17 @@ const generateAIWorkout = useCallback(async (goal: 'cut' | 'bulk') => {
 </button>
       <div className="fixed top-[-5%] right-[-5%] w-80 h-80 bg-orange-600/10 rounded-full blur-[120px] pointer-events-none" />
 
-      <header className="sticky top-0 z-50 bg-zinc-950/40 backdrop-blur-md border-b border-white/5 px-4 sm:px-6 py-4 flex justify-between items-center gap-2">
-        <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-          <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shrink-0">
-            <Dumbbell className="text-white w-5 h-5" />
-          </div>
-          <span className="text-xl font-black italic tracking-tighter text-white shrink-0">WEGYM</span>
-          <div ref={modalityMenuRef} className="relative min-w-0 ml-2 sm:ml-4 hidden sm:block">
-            <button
-              type="button"
-              onClick={() => setModalityMenuOpen((o) => !o)}
-              className="flex items-center gap-1.5 sm:gap-2 bg-white/5 border border-white/10 pl-2 pr-2 sm:pl-3 sm:pr-3 py-2 rounded-xl hover:border-orange-500/50 transition-colors cursor-pointer max-w-35 sm:max-w-50"
-            >
-              <LayoutGrid size={16} className="text-orange-500 shrink-0" />
-              <span className="text-[9px] sm:text-[10px] font-black uppercase italic text-zinc-200 truncate">
-                {currentModalityMeta.label}
-              </span>
-              <ChevronDown
-                size={14}
-                className={`text-zinc-500 shrink-0 transition-transform ${modalityMenuOpen ? 'rotate-180' : ''}`}
-              />
-            </button>
-            {modalityMenuOpen && (
-              <div className="absolute left-0 top-full mt-2 w-[min(100vw-2rem,16rem)] bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl z-60 py-1 overflow-hidden">
-                {MODALITY_OPTIONS.map((m) => {
-                  const MIcon = m.Icon;
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => {
-                        setTrainingModality(m.id as TrainingModalityId);
-                        setModalityMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors cursor-pointer ${
-                        trainingModality === m.id ? 'bg-orange-600/20 text-white' : 'text-zinc-300'
-                      }`}
-                    >
-                      <MIcon size={18} className="text-orange-500 shrink-0" />
-                      <span className="text-[10px] sm:text-[11px] font-black uppercase italic leading-tight">{m.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+      <header className="sticky top-0 z-50 bg-zinc-950/40 backdrop-blur-md border-b border-white/5 px-4 sm:px-6 py-4 flex justify-between items-center gap-2 pl-16 lg:pl-6">
+        <div className="flex items-center gap-3 min-w-0">
+          {React.createElement(currentModalityMeta.Icon, {
+            size: 22,
+            className: 'text-orange-500 shrink-0',
+          })}
+          <h1 className="text-lg sm:text-xl font-black italic uppercase tracking-tighter text-white truncate">
+            {currentModalityMeta.label}
+          </h1>
         </div>
-        <div className="hidden sm:flex items-center space-x-2 sm:space-x-3 shrink-0">
+        <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
           {trainingModality === 'gym' && (
             <button
               onClick={() => { setShowAI(true); setAiStep('add_manual'); }}
@@ -405,80 +347,6 @@ const generateAIWorkout = useCallback(async (goal: 'cut' | 'bulk') => {
               <Plus size={14} className="text-orange-500" />
               <span className="text-[10px] font-black uppercase italic text-zinc-300 hidden sm:inline">Adicionar mais exercícios</span>
             </button>
-          )}
-          <Link href="/TrainingPage" className="bg-orange-600 border border-orange-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase italic text-white cursor-pointer">
-            Treinos
-          </Link>
-          <button onClick={() => router.push('/ProfilePage')} title="Ir para perfil" className="w-10 h-10 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-zinc-400 hover:border-orange-500 transition-colors cursor-pointer">
-            <User size={20} />
-          </button>
-        </div>
-        <div ref={mobileMenuRef} className="relative sm:hidden">
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen((o) => !o)}
-            className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-200"
-            aria-label="Abrir menu"
-          >
-            <Menu size={18} />
-          </button>
-          {mobileMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl z-70 p-2 space-y-1">
-              {trainingModality === 'gym' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAI(true);
-                    setAiStep('add_manual');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-[11px] font-black uppercase italic text-zinc-200 hover:bg-white/5"
-                >
-                  <Plus size={14} className="text-orange-500" />
-                  Adicionar exercícios
-                </button>
-              )}
-              <div className="my-1 border-t border-white/10" />
-              {MODALITY_OPTIONS.map((m) => {
-                const MIcon = m.Icon;
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => {
-                      setTrainingModality(m.id as TrainingModalityId);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-[11px] font-black uppercase italic ${
-                      trainingModality === m.id ? 'bg-orange-600/20 text-white' : 'text-zinc-300 hover:bg-white/5'
-                    }`}
-                  >
-                    <MIcon size={14} className="text-orange-500" />
-                    {m.label}
-                  </button>
-                );
-              })}
-              <div className="my-1 border-t border-white/10" />
-              <Link
-                href="/TrainingPage"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-black uppercase italic bg-orange-600/20 text-white"
-              >
-                <Flame size={14} className="text-orange-500" />
-                Treinos
-              </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  router.push('/ProfilePage');
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-[11px] font-black uppercase italic text-zinc-300 hover:bg-white/5"
-              >
-                <User size={14} className="text-orange-500" />
-                Perfil
-              </button>
-            </div>
           )}
         </div>
       </header>

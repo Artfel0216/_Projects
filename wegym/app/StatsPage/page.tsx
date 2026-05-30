@@ -3,13 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  ChevronLeft, TrendingUp, Calendar, 
-  Flame, Target, Clock, Trophy, 
-  Activity, ArrowUpRight, BarChart3,
-  Dumbbell, Heart, User, Crown
+  ChevronLeft, TrendingUp,
+  Flame, Clock,
+  Dumbbell, Heart
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 export default function StatsPage() {
   const router = useRouter();
@@ -96,26 +94,6 @@ export default function StatsPage() {
         </section>
       </main>
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-zinc-900/80 backdrop-blur-2xl border border-white/10 h-16 rounded-3xl flex items-center justify-around px-2 z-100 shadow-2xl">
-        <div className="flex flex-col items-center gap-1 text-orange-500 px-4">
-           <BarChart3 size={20} />
-           <span className="text-[8px] font-black uppercase tracking-tighter">Stats</span>
-        </div>
-        
-        <Link href="/TrainingPage" className="w-12 h-12 bg-zinc-800 rounded-2xl flex items-center justify-center -mt-10 border-4 border-zinc-950 shadow-xl hover:bg-orange-600 transition-all active:scale-90 cursor-pointer">
-           <Flame size={24} className="text-white" />
-        </Link>
-
-        <Link href="/ProPage" className="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity px-4 cursor-pointer">
-           <Crown size={20} />
-           <span className="text-[8px] font-black uppercase tracking-tighter">Pro</span>
-        </Link>
-
-        <Link href="/ProfilePage" className="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity px-4 cursor-pointer">
-           <User size={20} />
-           <span className="text-[8px] font-black uppercase tracking-tighter">Perfil</span>
-        </Link>
-      </nav>
     </div>
   );
 }

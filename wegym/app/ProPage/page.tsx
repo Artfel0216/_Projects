@@ -4,9 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ChevronLeft, Crown, Zap, MapPin, 
-  Activity, BarChart3, Users, Check, 
-  Star, ShieldCheck, Flame, Sparkles,
-  CreditCard, CalendarCheck, Wallet
+  Activity, Check, Sparkles,
+  CreditCard, Wallet
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -167,29 +166,6 @@ export default function ProPage() {
 
       </main>
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-zinc-900/80 backdrop-blur-2xl border border-white/10 h-16 rounded-3xl flex items-center justify-around px-8 z-50 shadow-2xl">
-        <button 
-          onMouseEnter={() => router.prefetch('/StatsPage')}
-          onClick={() => handleNavigation('/StatsPage')}
-          className="flex flex-col items-center gap-1 opacity-40 cursor-pointer transition-all hover:opacity-100 active:scale-90"
-        >
-           <BarChart3 size={20} />
-           <span className="text-[8px] font-black uppercase tracking-tighter">Stats</span>
-        </button>
-        
-        <div 
-          onMouseEnter={() => router.prefetch('/TrainingPage')}
-          onClick={() => handleNavigation('/TrainingPage')}
-          className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center -mt-10 border-4 border-zinc-950 shadow-xl cursor-pointer hover:scale-110 transition-transform active:scale-95"
-        >
-           <Flame size={24} className="text-white" />
-        </div>
-
-        <div className="flex flex-col items-center gap-1 text-orange-500 cursor-default">
-           <Crown size={20} />
-           <span className="text-[8px] font-black uppercase tracking-tighter">Pro</span>
-        </div>
-      </nav>
     </div>
   );
 }
