@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   PanelLeftClose,
@@ -18,6 +18,9 @@ import {
   Home,
   LayoutGrid,
   ChevronRight,
+  CalendarDays,
+  Users,
+  UserPlus,
 } from "lucide-react";
 import { MODALITY_OPTIONS } from "@/app/constants/modalities";
 
@@ -78,13 +81,22 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
+
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const isPersonal = role === "personal";
 
   const activeModality = searchParams.get("modality") ?? "gym";
+  const personalView = searchParams.get("view") ?? "home";
   const isOnTraining = pathname === "/TrainingPage";
   const isOnProfile = pathname === "/ProfilePage";
   const isOnStats = pathname === "/StatsPage";
   const isOnPro = pathname === "/ProPage";
   const isOnHome = pathname === "/HomePage";
+  const isOnPersonal = pathname === "/PersonalPage";
+  const isOnPersonalHome = isOnPersonal && personalView === "home";
+  const isOnPersonalStudents = isOnPersonal && personalView === "students";
+  const isOnPersonalCreate = isOnPersonal && personalView === "create";
 
   // Until hydrated on the client, always render the expanded layout so the
   // server-rendered HTML matches the first client render (avoids hydration
@@ -249,163 +261,146 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto py-3 px-2 space-y-1 custom-scrollbar">
-        <button
-          type="button"
-          onClick={() => handleNavigate("/HomePage")}
-          title={!showLabels ? "Início" : undefined}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left cursor-pointer ${
-            isOnHome
-              ? "bg-orange-600/20 text-white border border-orange-500/30"
-              : "text-zinc-300 hover:bg-white/5 border border-transparent"
-          } ${showLabels ? "" : "justify-center"}`}
-        >
-          <Home
-            size={18}
-            className={`shrink-0 ${isOnHome ? "text-orange-500" : "text-zinc-500"}`}
-          />
-          {showLabels && (
-            <span className="text-[11px] font-black uppercase italic truncate">
-              Início
-            </span>
-          )}
-        </button>
+        {status === "loading" ? (
+          <SidebarSkeleton showLabels={showLabels} />
+        ) : isPersonal ? (
+          <>
+            <NavItem
+              icon={CalendarDays}
+              label="Agenda"
+              showLabels={showLabels}
+              active={isOnPersonalHome}
+              onClick={() => handleNavigate("/PersonalPage?view=home")}
+            />
+            <NavItem
+              icon={Users}
+              label="Meus Alunos"
+              showLabels={showLabels}
+              active={isOnPersonalStudents}
+              onClick={() => handleNavigate("/PersonalPage?view=students")}
+            />
+            <NavItem
+              icon={UserPlus}
+              label="Adicionar Aluno"
+              showLabels={showLabels}
+              active={isOnPersonalCreate}
+              onClick={() => handleNavigate("/PersonalPage?view=create")}
+            />
+          </>
+        ) : (
+          <>
+            <NavItem
+              icon={Home}
+              label="Início"
+              showLabels={showLabels}
+              active={isOnHome}
+              onClick={() => handleNavigate("/HomePage")}
+            />
 
-        <div className="h-px bg-white/5 my-2 mx-1" />
+            <div className="h-px bg-white/5 my-2 mx-1" />
 
-        <button
-          ref={triggerRef}
-          type="button"
-          onClick={toggleModalities}
-          onMouseEnter={mobile ? undefined : openModalities}
-          onMouseLeave={mobile ? undefined : scheduleClose}
-          onFocus={mobile ? undefined : openModalities}
-          aria-haspopup="menu"
-          aria-expanded={modalitiesOpen}
-          title={!showLabels ? "Modalidades" : undefined}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left cursor-pointer ${
-            isOnTraining
-              ? "bg-orange-600/20 text-white border border-orange-500/30"
-              : "text-zinc-300 hover:bg-white/5 border border-transparent"
-          } ${showLabels ? "" : "justify-center"}`}
-        >
-          <LayoutGrid
-            size={18}
-            className={`shrink-0 ${
-              isOnTraining ? "text-orange-500" : "text-zinc-500"
-            }`}
-          />
-          {showLabels && (
-            <>
-              <span className="text-[11px] font-black uppercase italic truncate flex-1">
-                Modalidades
-              </span>
-              <ChevronRight
-                size={14}
-                className={`text-zinc-500 shrink-0 transition-transform ${
-                  mobile && modalitiesOpen ? "rotate-90" : ""
+            <button
+              ref={triggerRef}
+              type="button"
+              onClick={toggleModalities}
+              onMouseEnter={mobile ? undefined : openModalities}
+              onMouseLeave={mobile ? undefined : scheduleClose}
+              onFocus={mobile ? undefined : openModalities}
+              aria-haspopup="menu"
+              aria-expanded={modalitiesOpen}
+              title={!showLabels ? "Modalidades" : undefined}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left cursor-pointer ${
+                isOnTraining
+                  ? "bg-orange-600/20 text-white border border-orange-500/30"
+                  : "text-zinc-300 hover:bg-white/5 border border-transparent"
+              } ${showLabels ? "" : "justify-center"}`}
+            >
+              <LayoutGrid
+                size={18}
+                className={`shrink-0 ${
+                  isOnTraining ? "text-orange-500" : "text-zinc-500"
                 }`}
               />
-            </>
-          )}
-        </button>
-
-        {mobile && modalitiesOpen && (
-          <div className="mt-1 ml-3 pl-3 border-l border-white/10 space-y-1">
-            {MODALITY_OPTIONS.map((m) => {
-              const Icon = m.Icon;
-              const isActive = isOnTraining && activeModality === m.id;
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => handleSelectModality(m.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left cursor-pointer transition-colors ${
-                    isActive
-                      ? "bg-orange-600/20 text-white"
-                      : "text-zinc-300 hover:bg-white/5"
-                  }`}
-                >
-                  <Icon
-                    size={16}
-                    className={`shrink-0 ${
-                      isActive ? "text-orange-500" : "text-zinc-500"
+              {showLabels && (
+                <>
+                  <span className="text-[11px] font-black uppercase italic truncate flex-1">
+                    Modalidades
+                  </span>
+                  <ChevronRight
+                    size={14}
+                    className={`text-zinc-500 shrink-0 transition-transform ${
+                      mobile && modalitiesOpen ? "rotate-90" : ""
                     }`}
                   />
-                  <span className="text-[10px] font-black uppercase italic truncate">
-                    {m.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                </>
+              )}
+            </button>
+
+            {mobile && modalitiesOpen && (
+              <div className="mt-1 ml-3 pl-3 border-l border-white/10 space-y-1">
+                {MODALITY_OPTIONS.map((m) => {
+                  const Icon = m.Icon;
+                  const isActive = isOnTraining && activeModality === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => handleSelectModality(m.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left cursor-pointer transition-colors ${
+                        isActive
+                          ? "bg-orange-600/20 text-white"
+                          : "text-zinc-300 hover:bg-white/5"
+                      }`}
+                    >
+                      <Icon
+                        size={16}
+                        className={`shrink-0 ${
+                          isActive ? "text-orange-500" : "text-zinc-500"
+                        }`}
+                      />
+                      <span className="text-[10px] font-black uppercase italic truncate">
+                        {m.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <NavItem
+              icon={BarChart3}
+              label="Estatísticas"
+              showLabels={showLabels}
+              active={isOnStats}
+              onClick={() => handleNavigate("/StatsPage")}
+            />
+          </>
         )}
 
-        <button
-          type="button"
-          onClick={() => handleNavigate("/StatsPage")}
-          title={!showLabels ? "Estatísticas" : undefined}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left cursor-pointer ${
-            isOnStats
-              ? "bg-orange-600/20 text-white border border-orange-500/30"
-              : "text-zinc-300 hover:bg-white/5 border border-transparent"
-          } ${showLabels ? "" : "justify-center"}`}
-        >
-          <BarChart3
-            size={18}
-            className={`shrink-0 ${isOnStats ? "text-orange-500" : "text-zinc-500"}`}
-          />
-          {showLabels && (
-            <span className="text-[11px] font-black uppercase italic truncate">
-              Estatísticas
-            </span>
-          )}
-        </button>
+        {status !== "loading" && (
+          <>
+            <div className="h-px bg-white/5 my-2 mx-1" />
 
-        <button
-          type="button"
-          onClick={() => handleNavigate("/ProPage")}
-          title={!showLabels ? "Wegym Pro" : undefined}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left cursor-pointer ${
-            isOnPro
-              ? "bg-orange-600/20 text-white border border-orange-500/30"
-              : "text-zinc-300 hover:bg-white/5 border border-transparent"
-          } ${showLabels ? "" : "justify-center"}`}
-        >
-          <Crown
-            size={18}
-            className={`shrink-0 ${isOnPro ? "text-orange-500" : "text-zinc-500"}`}
-          />
-          {showLabels && (
-            <span className="text-[11px] font-black uppercase italic truncate">
-              Wegym Pro
-            </span>
-          )}
-        </button>
-
-        <button
-          type="button"
-          onClick={handleGoProfile}
-          title={!showLabels ? "Meu Perfil" : undefined}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left cursor-pointer ${
-            isOnProfile
-              ? "bg-orange-600/20 text-white border border-orange-500/30"
-              : "text-zinc-300 hover:bg-white/5 border border-transparent"
-          } ${showLabels ? "" : "justify-center"}`}
-        >
-          <User
-            size={18}
-            className={`shrink-0 ${isOnProfile ? "text-orange-500" : "text-zinc-500"}`}
-          />
-          {showLabels && (
-            <span className="text-[11px] font-black uppercase italic truncate">
-              Meu Perfil
-            </span>
-          )}
-        </button>
+            <NavItem
+              icon={Crown}
+              label="Wegym Pro"
+              showLabels={showLabels}
+              active={isOnPro}
+              onClick={() => handleNavigate("/ProPage")}
+            />
+            <NavItem
+              icon={User}
+              label="Meu Perfil"
+              showLabels={showLabels}
+              active={isOnProfile}
+              onClick={handleGoProfile}
+            />
+          </>
+        )}
       </div>
 
       <ModalitiesFlyout
-        open={!mobile && modalitiesOpen}
+        open={!mobile && !isPersonal && modalitiesOpen}
         position={flyoutPos}
         flyoutRef={flyoutRef}
         activeModality={activeModality}
@@ -433,6 +428,59 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
         </button>
       </div>
     </aside>
+  );
+}
+
+type NavItemProps = {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
+  showLabels: boolean;
+  active: boolean;
+  onClick: () => void;
+};
+
+function NavItem({ icon: Icon, label, showLabels, active, onClick }: NavItemProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={!showLabels ? label : undefined}
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left cursor-pointer ${
+        active
+          ? "bg-orange-600/20 text-white border border-orange-500/30"
+          : "text-zinc-300 hover:bg-white/5 border border-transparent"
+      } ${showLabels ? "" : "justify-center"}`}
+    >
+      <Icon
+        size={18}
+        className={`shrink-0 ${active ? "text-orange-500" : "text-zinc-500"}`}
+      />
+      {showLabels && (
+        <span className="text-[11px] font-black uppercase italic truncate">
+          {label}
+        </span>
+      )}
+    </button>
+  );
+}
+
+function SidebarSkeleton({ showLabels }: { showLabels: boolean }) {
+  return (
+    <div className="space-y-2">
+      {[0, 1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${
+            showLabels ? "" : "justify-center"
+          }`}
+        >
+          <div className="w-[18px] h-[18px] rounded bg-zinc-800/60 animate-pulse shrink-0" />
+          {showLabels && (
+            <div className="h-3 flex-1 rounded bg-zinc-800/40 animate-pulse" />
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 

@@ -4,16 +4,36 @@ import { Ratelimit } from "@upstash/ratelimit";
 const url = process.env.UPSTASH_REDIS_REST_URL;
 const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-const redis = (url && token) 
-  ? new Redis({ url, token }) 
-  : null;
+type LimitResult = { success: boolean };
 
-export const ratelimit = (redis)
+const redis = url && token ? new Redis({ url, token }) : null;
+
+const upstashLimiter = redis
   ? new Ratelimit({
-      redis: redis,
+      redis,
       limiter: Ratelimit.slidingWindow(10, "10 s"),
       analytics: true,
     })
-  : { 
-      limit: async () => ({ success: true }) 
-    };
+  : null;
+
+// Avoid log spam if Upstash is down for an extended period.
+let warnedUnreachable = false;
+
+export const ratelimit = {
+  async limit(identifier: string): Promise<LimitResult> {
+    if (!upstashLimiter) return { success: true };
+    try {
+      const res = await upstashLimiter.limit(identifier);
+      return { success: res.success };
+    } catch (err) {
+      if (!warnedUnreachable) {
+        warnedUnreachable = true;
+        console.warn(
+          "[rate-limit] Upstash unreachable, allowing requests through:",
+          err instanceof Error ? err.message : err,
+        );
+      }
+      return { success: true };
+    }
+  },
+};
