@@ -305,8 +305,8 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20 relative overflow-hidden antialiased font-sans">
-      <div className="fixed top-[-12%] right-[-8%] w-[28rem] h-[28rem] bg-orange-600/8 rounded-full blur-[140px] pointer-events-none" />
-      <div className="fixed bottom-[-15%] left-[-10%] w-[24rem] h-[24rem] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed top-[-12%] right-[-8%] w-md h-112 bg-orange-600/8 rounded-full blur-[140px] pointer-events-none" />
+      <div className="fixed bottom-[-15%] left-[-10%] w-[24rem] h-96 bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
 
       <Toast toast={toast} />
 
@@ -359,11 +359,9 @@ export default function ProfilePage() {
   );
 }
 
-/* ---------------------------------- Toast --------------------------------- */
-
 function Toast({ toast }: { toast: { msg: string; tone: ToastTone } | null }) {
   return (
-    <div className="fixed bottom-6 right-6 z-[60] pointer-events-none">
+    <div className="fixed bottom-6 right-6 z-60 pointer-events-none">
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -394,8 +392,6 @@ function Toast({ toast }: { toast: { msg: string; tone: ToastTone } | null }) {
   );
 }
 
-/* ------------------------------ Identity card ----------------------------- */
-
 interface IdentityCardProps {
   userData: LocalUser;
   isAtleta: boolean;
@@ -420,7 +416,7 @@ function IdentityCard({
   onAvatarChange,
 }: IdentityCardProps) {
   return (
-    <section className="bg-zinc-900/40 border border-white/5 rounded-[32px] p-6 sm:p-8">
+    <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
         <div className="relative shrink-0">
           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-zinc-950 border border-white/10 overflow-hidden">
@@ -494,8 +490,6 @@ function IdentityCard({
   );
 }
 
-/* ----------------------------- Physical section --------------------------- */
-
 interface PhysicalDataSectionProps {
   pesoKg: number;
   alturaCm: number;
@@ -522,7 +516,7 @@ function PhysicalDataSection({
   const imcInfo = imc != null ? imcCategory(imc) : null;
 
   return (
-    <section className="bg-zinc-900/40 border border-white/5 rounded-[32px] p-6 sm:p-8">
+    <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
       <SectionHeader eyebrow="Dados físicos" title="Suas medidas" icon={Activity} />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
@@ -571,14 +565,11 @@ function PhysicalDataSection({
     </section>
   );
 }
-
-/* ---------------------------- Credential section -------------------------- */
-
 function CredentialSection({ cref }: { cref: string }) {
   return (
-    <section className="bg-zinc-900/40 border border-white/5 rounded-[32px] p-6 sm:p-8">
+    <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
       <SectionHeader eyebrow="Credencial" title="Registro profissional" icon={IdCard} />
-      <div className="mt-5 bg-zinc-950/60 border border-white/5 rounded-[24px] p-5 flex items-center gap-4">
+      <div className="mt-5 bg-zinc-950/60 border border-white/5 rounded-4xl p-5 flex items-center gap-4">
         <div className="w-12 h-12 rounded-2xl bg-orange-600/15 text-orange-500 flex items-center justify-center shrink-0">
           <IdCard size={22} />
         </div>
@@ -593,8 +584,6 @@ function CredentialSection({ cref }: { cref: string }) {
   );
 }
 
-/* ----------------------------- Account section ---------------------------- */
-
 interface AccountSectionProps {
   isPro: boolean;
   isSyncing: boolean;
@@ -604,7 +593,7 @@ interface AccountSectionProps {
 
 function AccountSection({ isPro, isSyncing, onUpgrade, onSync }: AccountSectionProps) {
   return (
-    <section className="bg-zinc-900/40 border border-white/5 rounded-[32px] p-6 sm:p-8">
+    <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
       <SectionHeader eyebrow="Conta" title="Plano e dispositivos" icon={Settings} />
 
       <div className="mt-6 space-y-3">
@@ -618,7 +607,7 @@ function AccountSection({ isPro, isSyncing, onUpgrade, onSync }: AccountSectionP
 function PlanRow({ isPro, onUpgrade }: { isPro: boolean; onUpgrade: () => void }) {
   return (
     <div
-      className={`rounded-[24px] border p-4 sm:p-5 flex items-center gap-4 transition-colors ${
+      className={`rounded-4xl border p-4 sm:p-5 flex items-center gap-4 transition-colors ${
         isPro
           ? "bg-orange-600/10 border-orange-500/30"
           : "bg-zinc-950/60 border-white/5 hover:border-white/10"
@@ -662,7 +651,7 @@ function SyncRow({ isSyncing, onSync }: { isSyncing: boolean; onSync: () => void
       type="button"
       onClick={onSync}
       disabled={isSyncing}
-      className="w-full rounded-[24px] border border-white/5 bg-zinc-950/60 hover:border-white/10 p-4 sm:p-5 flex items-center gap-4 text-left cursor-pointer transition-colors disabled:cursor-wait disabled:opacity-80"
+      className="w-full rounded-4xl border border-white/5 bg-zinc-950/60 hover:border-white/10 p-4 sm:p-5 flex items-center gap-4 text-left cursor-pointer transition-colors disabled:cursor-wait disabled:opacity-80"
     >
       <div className="w-12 h-12 rounded-2xl bg-white/5 text-zinc-200 flex items-center justify-center shrink-0">
         {isSyncing ? (
@@ -684,8 +673,6 @@ function SyncRow({ isSyncing, onSync }: { isSyncing: boolean; onSync: () => void
     </button>
   );
 }
-
-/* ------------------------------ Shared pieces ----------------------------- */
 
 interface SectionHeaderProps {
   eyebrow: string;
@@ -825,8 +812,6 @@ function InlineEditor({
   );
 }
 
-/* -------------------------------- Metric ---------------------------------- */
-
 interface EditableMetricProps {
   label: string;
   unit: string;
@@ -857,7 +842,7 @@ function EditableMetric({
   step,
 }: EditableMetricProps) {
   return (
-    <div className="bg-zinc-950/60 border border-white/5 rounded-[24px] p-5 flex flex-col gap-3 hover:border-white/10 transition-colors">
+    <div className="bg-zinc-950/60 border border-white/5 rounded-3xl p-5 flex flex-col gap-3 hover:border-white/10 transition-colors">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Icon size={16} className={accentClass} />
@@ -917,7 +902,7 @@ interface MetricCardProps {
 
 function MetricCard({ label, unit, unitClass, icon: Icon, accentClass, display }: MetricCardProps) {
   return (
-    <div className="bg-zinc-950/60 border border-white/5 rounded-[24px] p-5 flex flex-col gap-3">
+    <div className="bg-zinc-950/60 border border-white/5 rounded-3xl p-5 flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <Icon size={16} className={accentClass} />
         <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
@@ -934,8 +919,6 @@ function MetricCard({ label, unit, unitClass, icon: Icon, accentClass, display }
   );
 }
 
-/* ------------------------------- Skeleton --------------------------------- */
-
 function ProfileSkeleton() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased pb-20">
@@ -944,7 +927,7 @@ function ProfileSkeleton() {
         <div className="h-5 w-32 rounded bg-zinc-800/60 animate-pulse" />
       </header>
       <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 space-y-6">
-        <div className="bg-zinc-900/40 border border-white/5 rounded-[32px] p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+        <div className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-zinc-800/50 animate-pulse" />
           <div className="flex-1 space-y-3 w-full">
             <div className="h-3 w-24 bg-zinc-800/40 rounded animate-pulse" />
@@ -957,20 +940,20 @@ function ProfileSkeleton() {
             </div>
           </div>
         </div>
-        <div className="bg-zinc-900/40 border border-white/5 rounded-[32px] p-6 sm:p-8 space-y-4">
+        <div className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8 space-y-4">
           <div className="h-3 w-24 bg-zinc-800/40 rounded animate-pulse" />
           <div className="h-6 w-40 bg-zinc-800/60 rounded animate-pulse" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="h-28 rounded-[24px] bg-zinc-800/30 animate-pulse" />
-            <div className="h-28 rounded-[24px] bg-zinc-800/30 animate-pulse" />
-            <div className="h-28 rounded-[24px] bg-zinc-800/30 animate-pulse" />
+            <div className="h-28 rounded-3xl bg-zinc-800/30 animate-pulse" />
+            <div className="h-28 rounded-3xl bg-zinc-800/30 animate-pulse" />
+            <div className="h-28 rounded-3xl bg-zinc-800/30 animate-pulse" />
           </div>
         </div>
-        <div className="bg-zinc-900/40 border border-white/5 rounded-[32px] p-6 sm:p-8 space-y-4">
+        <div className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8 space-y-4">
           <div className="h-3 w-24 bg-zinc-800/40 rounded animate-pulse" />
           <div className="h-6 w-48 bg-zinc-800/60 rounded animate-pulse" />
-          <div className="h-20 rounded-[24px] bg-zinc-800/30 animate-pulse" />
-          <div className="h-20 rounded-[24px] bg-zinc-800/30 animate-pulse" />
+          <div className="h-20 rounded-3xl bg-zinc-800/30 animate-pulse" />
+          <div className="h-20 rounded-3xl bg-zinc-800/30 animate-pulse" />
         </div>
       </main>
     </div>

@@ -5,17 +5,14 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   Flame, Clock, Trophy, MapPin, Activity,
-  ChevronRight, Loader2, Sparkles, Calendar, Zap, History,
+  ChevronRight, Loader2, Sparkles, Calendar, Zap, History, Dumbbell, Wind, Bike,
 } from 'lucide-react';
-import { MODALITY_OPTIONS } from '@/app/constants/modalities';
-import { MODALITY_STORAGE_KEY } from '@/app/constants/keys';
-import { formatDurationHMS } from '@/app/utils/training-helpers';
 import {
   buildHomeStats,
   formatRelative,
   readSessionsFromStorage,
-} from '@/app/utils/home-stats';
-import { HomeStats } from '@/app/types/home';
+} from '../utils/home-stats';
+import { HomeStats } from '../types/home';
 
 type ProfileLite = {
   name: string;
@@ -30,7 +27,23 @@ const EXPERIENCE_LABEL: Record<string, string> = {
   avancado: 'Avançado',
 };
 
+type ModalityOption = {
+  id: string;
+  label: string;
+  Icon: React.ComponentType<{ size?: number; className?: string }>;
+};
+
+const MODALITY_OPTIONS: ModalityOption[] = [
+  { id: 'gym', label: 'Academia', Icon: Dumbbell },
+  { id: 'running', label: 'Corrida', Icon: Activity },
+  { id: 'cycling', label: 'Ciclismo', Icon: Bike },
+  { id: 'aerobic', label: 'Aeróbico', Icon: Wind },
+];
+
 const QUICK_MODALITY_IDS = ['gym', 'running', 'cycling', 'aerobic'] as const;
+
+// Key used to persist sessions in localStorage
+const MODALITY_STORAGE_KEY = 'wegym:modality_sessions';
 
 const STAT_FORMATTERS = {
   hours: (sec: number) => {
@@ -192,7 +205,7 @@ export default function HomePage() {
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-zinc-900/40 border border-white/5 rounded-[32px] p-6 sm:p-8">
+          <div className="lg:col-span-2 bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
             <div className="flex items-start justify-between gap-4 mb-6">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-1">
@@ -258,7 +271,7 @@ export default function HomePage() {
             )}
           </div>
 
-          <aside className="bg-linear-to-br from-orange-600 to-orange-700 rounded-[32px] p-6 sm:p-8 relative overflow-hidden shadow-2xl shadow-orange-900/30">
+          <aside className="bg-linear-to-br from-orange-600 to-orange-700 rounded-4xl p-6 sm:p-8 relative overflow-hidden shadow-2xl shadow-orange-900/30">
             <div className="relative z-10 space-y-5">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/70 mb-2">
@@ -351,7 +364,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="bg-zinc-900/40 border border-white/5 rounded-[32px] p-6 sm:p-8">
+        <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-1">
@@ -375,6 +388,21 @@ export default function HomePage() {
               {stats.recentSessions.map((s) => {
                 const meta = MODALITY_OPTIONS.find((opt) => opt.id === s.modalityId);
                 const Icon = meta?.Icon ?? Activity;
+                function formatDurationHMS(durationSec: number): React.ReactNode {
+                  const totalSeconds = Math.max(0, Math.round(durationSec));
+                  const hours = Math.floor(totalSeconds / 3600);
+                  const minutes = Math.floor((totalSeconds % 3600) / 60);
+                  const seconds = totalSeconds % 60;
+
+                  if (hours > 0) {
+                    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds
+                      .toString()
+                      .padStart(2, '0')}`;
+                  }
+
+                  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+
                 return (
                   <li key={s.id} className="py-3 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-zinc-950 border border-white/5 flex items-center justify-center shrink-0">
@@ -431,7 +459,7 @@ const ACCENT_COLORS: Record<StatCardProps['accent'], string> = {
 
 function StatCard({ label, value, sub, icon: Icon, accent }: StatCardProps) {
   return (
-    <div className="bg-zinc-900/40 border border-white/5 rounded-[24px] p-4 sm:p-5 relative overflow-hidden">
+    <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-4 sm:p-5 relative overflow-hidden">
       <div className={`mb-2 ${ACCENT_COLORS[accent]}`}>
         <Icon size={18} />
       </div>

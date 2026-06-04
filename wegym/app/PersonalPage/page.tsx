@@ -11,9 +11,31 @@ import {
 import { Student, WeeklyClass } from '../types/personal';
 import { INITIAL_STUDENTS, INITIAL_WEEKLY_CLASSES } from '../mocks/personalData';
 import { StatCard, Field } from '../components/ui/DashboardElements';
-import { EXPERIENCE_LEVELS, GENDER_OPTIONS, AVAILABLE_DAYS_OPTIONS, OTHER_DAYS_PREFIX, DAYS } from '@/app/constants/options';
-import { createEmptyStudentForm } from '@/app/utils/initializers';
-import { AgendaItem } from '@/app/components/ui/AgendaItem';
+import { EXPERIENCE_LEVELS, GENDER_OPTIONS, AVAILABLE_DAYS_OPTIONS, OTHER_DAYS_PREFIX, DAYS } from '../constants/options';
+
+const createEmptyStudentForm = () => ({
+  id: '',
+  name: '',
+  email: '',
+  cpf: '',
+  birthDate: '',
+  phone: '',
+  gender: '',
+  emergencyContact: '',
+  experience: '',
+  objective: '',
+  plan: '',
+  height: '',
+  weight: '',
+  availableDays: '',
+  notes: '',
+  bodyFat: '',
+  restrictions: '',
+  injuries: '',
+  medications: '',
+  observations: ''
+});
+
 
 
 
@@ -240,8 +262,6 @@ useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [searchParams]);
 
-
-
 const openStudentProfile = (studentId: string) => {
   setSelectedStudentId(studentId);
   setShowExerciseForm(false);
@@ -250,7 +270,10 @@ const openStudentProfile = (studentId: string) => {
 };
 
 const createStudent = async () => {
-  const availableDaysValue = newStudent.availableDays ?? '';
+  const availableDaysValue = Array.isArray(newStudent.availableDays)
+    ? newStudent.availableDays.join(' ')
+    : String(newStudent.availableDays ?? '');
+
   const hasValidAvailableDays = availableDaysValue.startsWith(OTHER_DAYS_PREFIX)
     ? availableDaysValue.replace(OTHER_DAYS_PREFIX, '').trim().length > 0
     : availableDaysValue.length > 0;
@@ -365,6 +388,23 @@ const removeExercise = (day: string, idx: number) => {
 
       return { ...student, weeklyPlan: updatedPlan };
     })
+  );
+};
+
+// Simple AgendaItem component used in the weekly classes list
+const AgendaItem: React.FC<{
+  item: WeeklyClass;
+  studentName: string;
+  onOpenStudent: () => void;
+}> = ({ item, studentName, onOpenStudent }) => {
+  return (
+    <button onClick={onOpenStudent} className="w-full text-left bg-zinc-900/30 hover:bg-zinc-900/60 border border-white/5 rounded-2xl p-4 flex items-center justify-between transition-colors">
+      <div>
+        <p className="text-sm font-black italic uppercase text-white">{studentName}</p>
+        <p className="text-[11px] text-zinc-400">{item.day} · {item.time} · {item.type}</p>
+      </div>
+      <div className="text-xs text-zinc-500">{item.status}</div>
+    </button>
   );
 };
 
@@ -564,7 +604,7 @@ const handleChat = async () => {
                   </div>
 
                   {students.length === 0 ? (
-                    <div className="text-center py-16 px-6 bg-zinc-900/30 rounded-[32px] border border-white/5">
+                    <div className="text-center py-16 px-6 bg-zinc-900/30 rounded-4xl border border-white/5">
                       <div className="w-14 h-14 rounded-2xl bg-zinc-950 border border-white/5 flex items-center justify-center mx-auto mb-4">
                         <Users size={22} className="text-zinc-500" />
                       </div>
@@ -589,7 +629,7 @@ const handleChat = async () => {
                       </button>
                     </div>
                   ) : filteredStudents.length === 0 ? (
-                    <div className="text-center py-12 px-6 bg-zinc-900/30 rounded-[32px] border border-white/5">
+                    <div className="text-center py-12 px-6 bg-zinc-900/30 rounded-4xl border border-white/5">
                       <p className="text-sm font-black italic uppercase text-white tracking-tight">
                         Nenhum aluno encontrado
                       </p>
@@ -618,7 +658,7 @@ const handleChat = async () => {
                             key={student.id}
                             type="button"
                             onClick={() => openStudentProfile(student.id)}
-                            className="text-left bg-zinc-900/40 hover:bg-zinc-900/70 border border-white/5 hover:border-orange-500/30 rounded-[24px] p-5 flex flex-col gap-4 transition-all cursor-pointer group"
+                            className="text-left bg-zinc-900/40 hover:bg-zinc-900/70 border border-white/5 hover:border-orange-500/30 rounded-3xl p-5 flex flex-col gap-4 transition-all cursor-pointer group"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="w-12 h-12 rounded-2xl bg-orange-600/15 text-orange-400 border border-orange-500/20 flex items-center justify-center shrink-0 font-black italic text-sm">

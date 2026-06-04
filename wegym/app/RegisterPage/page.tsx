@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Loader2, Dumbbell, Mail, Lock, User, IdCard, MapPin, ExternalLink, ChevronDown, Heart, Activity } from 'lucide-react';
-import { EXPERIENCE_OPTIONS } from '@/app/constants/options';
+import { EXPERIENCE_OPTIONS } from '@/constants/options';
 import { LeftPanel } from '../components/ui/LeftPanel';
 import {AnimatedBackground} from '../components/ui/AnimatedBackground';
 

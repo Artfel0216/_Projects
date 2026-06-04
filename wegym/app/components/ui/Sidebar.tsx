@@ -22,7 +22,7 @@ import {
   Users,
   UserPlus,
 } from "lucide-react";
-import { MODALITY_OPTIONS } from "@/app/constants/modalities";
+import { MODALITY_OPTIONS } from "../../constants/modalities";
 
 const STORAGE_KEY = "wegym-sidebar-collapsed";
 
@@ -474,7 +474,7 @@ function SidebarSkeleton({ showLabels }: { showLabels: boolean }) {
             showLabels ? "" : "justify-center"
           }`}
         >
-          <div className="w-[18px] h-[18px] rounded bg-zinc-800/60 animate-pulse shrink-0" />
+          <div className="w-4.5 h-4.5 rounded bg-zinc-800/60 animate-pulse shrink-0" />
           {showLabels && (
             <div className="h-3 flex-1 rounded bg-zinc-800/40 animate-pulse" />
           )}
@@ -529,7 +529,7 @@ function ModalitiesFlyout({
             maxHeight: position.maxHeight,
             zIndex: 60,
           }}
-          className="w-[360px] bg-zinc-950/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/40 p-3 flex flex-col overflow-y-auto"
+          className="w-90 bg-zinc-950/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/40 p-3 flex flex-col overflow-y-auto"
           role="menu"
           aria-label="Modalidades de treino"
         >
@@ -574,7 +574,6 @@ function ModalitiesFlyout({
   );
 }
 
-/** Hamburger button used on mobile to open the drawer. */
 export function SidebarMobileTrigger({ onOpen }: { onOpen: () => void }) {
   return (
     <button
@@ -588,7 +587,6 @@ export function SidebarMobileTrigger({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-/** Mobile drawer that wraps Sidebar in an animated overlay. */
 export function SidebarMobileDrawer({
   open,
   onClose,

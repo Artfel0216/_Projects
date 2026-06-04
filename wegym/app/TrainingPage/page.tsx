@@ -6,14 +6,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {Timer, RotateCcw, Zap, Trophy, X, Activity, BrainCircuit, Plus, Flame, History,
 } from 'lucide-react';
 import { MessageCircle } from 'lucide-react';
-import { TrainingModalityId, Exercise, ModalitySessionEntry, AIChatMessage, DayPlan } from '@/app/types/training';
-import { formatDurationHMS, parseKmInput } from '@/app/utils/training-helpers';
-import { MODALITY_OPTIONS } from '@/app/constants/modalities';
-import { MODALITY_STORAGE_KEY } from '@/app/constants/keys';
-import { ALL_AVAILABLE_EXERCISES } from '@/app/constants/exercises';
-import { ExerciseItem} from '@/app/components/ExerciseItem/ExerciseItem';
-import { INITIAL_WEEKLY_PLAN } from '@/app/constants/plans';
-import { getSuggestedCardioBlock } from '@/app/utils/calculations';
+
+import { MODALITY_OPTIONS } from '../constants/modalities';
+import { MODALITY_STORAGE_KEY } from '../constants/keys';
+import { ALL_AVAILABLE_EXERCISES } from '../constants/exercises';
+import { ExerciseItem } from '../components/ExerciseItem/ExerciseItem';
+import { INITIAL_WEEKLY_PLAN } from '../constants/plans';
+import { getSuggestedCardioBlock } from '../utils/calculations';
+import type { DayPlan, TrainingModalityId, ModalitySessionEntry, AIChatMessage, Exercise } from '../types/training';
+import { parseKmInput } from '../utils/training-helpers';
 
 
 
@@ -296,9 +297,9 @@ const generateAIWorkout = useCallback(async (goal: 'cut' | 'bulk') => {
   await new Promise(resolve => setTimeout(resolve, 1000));
   const newPlans = INITIAL_WEEKLY_PLAN.map(plan => {
     if (plan.day === "Dom") return plan;
-    const filtered = ALL_AVAILABLE_EXERCISES.filter(ex => 
-      plan.muscles.some(m => ex.muscle === m)
-    ).map(ex => ({
+const filtered = ALL_AVAILABLE_EXERCISES.filter(ex => 
+  plan.muscles.some((m: string) => ex.muscle === m)
+).map(ex => ({
       ...ex,
       id: Math.random().toString(36).substr(2, 9),
       sets: goal === 'bulk' ? 4 : 3,
@@ -316,6 +317,21 @@ const generateAIWorkout = useCallback(async (goal: 'cut' | 'bulk') => {
   setAiLoading(false);
 }, []);
 
+
+  function formatDurationHMS(sessionSec: number): React.ReactNode {
+    const totalSeconds = Math.max(0, Math.floor(sessionSec));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const pad = (value: number) => String(value).padStart(2, '0');
+
+    if (hours > 0) {
+      return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+    }
+
+    return `${pad(minutes)}:${pad(seconds)}`;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 relative overflow-hidden antialiased font-sans">
