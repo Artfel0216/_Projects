@@ -17,7 +17,6 @@ body {
   color: var(--foreground);
 }
 
-/* Apply a thin, discreet scrollbar to every scrollable element by default. */
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
@@ -53,13 +52,11 @@ body {
   background: transparent;
 }
 
-/* Backwards-compatible alias: existing markup uses .custom-scrollbar. */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
 }
 
-/* Hide scrollbar entirely (used by horizontal scroll rows). */
 .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;

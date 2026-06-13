@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Loader2, Dumbbell, Mail, Lock, User, IdCard, MapPin, ExternalLink, ChevronDown, Heart, Activity } from 'lucide-react';
-import { EXPERIENCE_OPTIONS } from '@/constants/options';
+import { EXPERIENCE_OPTIONS } from '@/app/constants/options';
 import { LeftPanel } from '../components/ui/LeftPanel';
 import {AnimatedBackground} from '../components/ui/AnimatedBackground';
 
@@ -14,6 +14,7 @@ export default function CadastroPage() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isVerifyingCref, setIsVerifyingCref] = useState<boolean>(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -104,7 +105,21 @@ export default function CadastroPage() {
     setIsLoading(true);
 
     try {
-      const crefNormalized = formData.cref.trim().toUpperCase();
+      const crefValidation = await fetch("/api/cref/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cref: formData.cref }),
+      });
+
+      const crefResult = await crefValidation.json();
+
+      if (!crefResult.valid) {
+        setError(crefResult.errors?.[0] || "CREF inválido.");
+        setIsLoading(false);
+        return;
+      }
+
+      const crefNormalized = crefResult.cref;
 
       const res = await fetch("/api/auth/register", {
         method: "POST",

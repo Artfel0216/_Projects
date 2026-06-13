@@ -12,7 +12,6 @@ interface AgendaItemProps {
 }
 
 export function AgendaItem({ item, studentName, onOpenStudent }: AgendaItemProps) {
-  // Mapeamento de cores de status para evitar ifs complexos no JSX
   const statusColors = {
     confirmed: 'bg-emerald-500',
     canceled: 'bg-red-500',
@@ -25,13 +24,11 @@ export function AgendaItem({ item, studentName, onOpenStudent }: AgendaItemProps
       onClick={onOpenStudent}
     >
       <div className="flex items-center gap-4">
-        {/* Bloco de Data/Hora */}
         <div className="flex flex-col items-center justify-center bg-zinc-950 w-14 h-14 rounded-xl border border-white/5">
           <span className="text-[10px] font-black text-orange-500 uppercase">{item.day}</span>
           <span className="text-sm font-black text-white">{item.time}</span>
         </div>
         
-        {/* Informações do Aluno e da Aula */}
         <div>
           <h4 className="font-black italic uppercase text-sm text-white">{studentName}</h4>
           <div className="flex items-center gap-2">
@@ -43,12 +40,11 @@ export function AgendaItem({ item, studentName, onOpenStudent }: AgendaItemProps
         </div>
       </div>
 
-      {/* Botão de Ações */}
       <button 
         type="button"
         className="p-2 hover:bg-white/5 rounded-lg text-zinc-500 transition-colors cursor-pointer"
         onClick={(e) => {
-          e.stopPropagation(); // Impede de abrir o aluno ao clicar nas opções
+          e.stopPropagation(); 
         }}
       >
         <MoreVertical size={18} />

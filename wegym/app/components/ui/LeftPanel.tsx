@@ -7,11 +7,9 @@ import { Dumbbell } from 'lucide-react';
 
 export const LeftPanel = React.memo(() => (
   <div className="hidden md:flex md:w-1/3 bg-zinc-900 p-12 flex-col justify-between relative overflow-hidden">
-    {/* Grid de Pontos de Fundo */}
     <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle,#fff_1px,transparent_1px)] bg-size-[30px_30px]" />
     
     <div className="relative z-10">
-      {/* Logo Area */}
       <motion.div 
         initial={{ y: -20, opacity: 0 }} 
         animate={{ y: 0, opacity: 1 }} 
@@ -23,7 +21,6 @@ export const LeftPanel = React.memo(() => (
         <h1 className="text-2xl font-black text-white tracking-tighter italic">WEGYM</h1>
       </motion.div>
       
-      {/* Conteúdo Principal */}
       <h2 className="text-5xl font-black text-white mb-6 leading-none uppercase italic">
         Supere seus <br />
         <span className="text-orange-500 underline decoration-zinc-700">Limites</span>.

@@ -391,7 +391,6 @@ const removeExercise = (day: string, idx: number) => {
   );
 };
 
-// Simple AgendaItem component used in the weekly classes list
 const AgendaItem: React.FC<{
   item: WeeklyClass;
   studentName: string;

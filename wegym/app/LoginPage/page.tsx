@@ -71,18 +71,30 @@ const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | H
 const verifyCref = useCallback(async () => {
   setIsVerifyingCref(true);
   setError(null);
-  
-  setTimeout(() => {
-    setIsVerifyingCref(false);
-    const crefRegex = /^\d{6}-[A-Z]\/[A-Z]{2}$/;
-    
-    if (crefRegex.test(formData.cref)) {
+  setCrefVerified(false);
+
+  try {
+    const res = await fetch("/api/cref/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cref: formData.cref }),
+    });
+
+    const data = await res.json();
+
+    if (data.valid) {
       setCrefVerified(true);
     } else {
-      setError("CREF inválido ou inativo. Formato esperado: 000000-G/UF");
+      const msg = data.errors?.[0] || "CREF inválido. Verifique o formato e tente novamente.";
+      setError(msg);
       setCrefVerified(false);
     }
-  }, 1000);
+  } catch {
+    setError("Falha ao validar CREF. Verifique sua conexão.");
+    setCrefVerified(false);
+  } finally {
+    setIsVerifyingCref(false);
+  }
 }, [formData.cref]);
 
 const handleAuth = useCallback(async (e: React.FormEvent) => {

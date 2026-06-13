@@ -11,6 +11,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@mercadopago/sdk-react": "^1.0.7",
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^6.19.3",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
@@ -24,6 +25,7 @@
     "next": "16.2.2",
     "next-auth": "^4.24.13",
     "openai": "^6.34.0",
+    "pg": "^8.21.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -32,6 +34,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -39,7 +38,7 @@ model Athlete {
   sex                UserSex
 
   heightCm           Int      @db.SmallInt
-  weightKg           Float    // 🔥 melhor que Decimal pro seu caso (mais rápido no JS)
+  weightKg           Float    
 
   experienceLevel    ExperienceLevel
 
@@ -59,7 +58,7 @@ model Athlete {
 
   @@index([personalId])
   @@index([state, city])
-  @@index([createdAt]) // 🔥 paginação mais rápida
+  @@index([createdAt]) 
   @@map("athletes")
 }
 
@@ -87,7 +86,7 @@ model TrainingPlan {
   athlete   Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
   exercises Exercise[]
 
-  @@index([athleteId, day]) // 🔥 queries por dia muito mais rápidas
+  @@index([athleteId, day]) 
   @@map("training_plans")
 }
 
@@ -117,7 +116,7 @@ model ProgressEntry {
 
   athlete     Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 
-  @@index([athleteId, date]) // 🔥 histórico ordenado rápido
+  @@index([athleteId, date]) 
   @@map("progress_entries")
 }
 

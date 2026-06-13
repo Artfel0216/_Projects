@@ -16,7 +16,6 @@ const upstashLimiter = redis
     })
   : null;
 
-// Avoid log spam if Upstash is down for an extended period.
 let warnedUnreachable = false;
 
 export const ratelimit = {

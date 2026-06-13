@@ -5,7 +5,6 @@ import { ChevronLeft, ShieldCheck, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
-// Carregamento dinâmico com SSR desativado para evitar o erro de Public Key no servidor
 const CardPayment = dynamic(
   () => import('@mercadopago/sdk-react').then((mod) => mod.CardPayment),
   { 
@@ -51,7 +50,6 @@ export default function PaymentPage() {
 
   const onSubmit = async (formData: any) => {
     console.log("Dados do formulário prontos:", formData);
-    // O backend será integrado depois
   };
 
   return (
@@ -71,7 +69,6 @@ export default function PaymentPage() {
       </header>
 
       <main className="max-w-md mx-auto">
-        {/* Card de Resumo do Plano */}
         <div className="mb-6 p-6 bg-linear-to-br from-zinc-900 to-zinc-950 border border-white/5 rounded-[35px] flex items-center justify-between">
           <div>
             <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Plano Selecionado</p>
@@ -83,7 +80,6 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        {/* Container do Formulário de Cartão */}
         <div className="bg-zinc-900/50 border border-white/5 p-6 rounded-[35px] shadow-2xl min-h-105 flex flex-col justify-center">
           {isClient && mpInitialized ? (
             <CardPayment

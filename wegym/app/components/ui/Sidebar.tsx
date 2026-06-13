@@ -70,9 +70,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 }
 
 type SidebarProps = {
-  /** When true, sidebar is rendered as a mobile drawer overlay. */
   mobile?: boolean;
-  /** Close handler (only used in mobile mode). */
   onClose?: () => void;
 };
 
@@ -98,9 +96,7 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
   const isOnPersonalStudents = isOnPersonal && personalView === "students";
   const isOnPersonalCreate = isOnPersonal && personalView === "create";
 
-  // Until hydrated on the client, always render the expanded layout so the
-  // server-rendered HTML matches the first client render (avoids hydration
-  // mismatch when the user had the sidebar collapsed in a previous session).
+
   const effectiveCollapsed = hydrated ? collapsed : false;
   const showLabels = mobile ? true : !effectiveCollapsed;
   const widthClass = mobile
