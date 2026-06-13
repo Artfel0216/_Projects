@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {Timer, RotateCcw, Zap, Trophy, X, Activity, BrainCircuit, Plus, Flame, History,
-  HeartPulse, Bluetooth,
+  HeartPulse, Bluetooth, Send,
 } from 'lucide-react';
 import { MessageCircle } from 'lucide-react';
 import { BluetoothManager, type HRData, type ConnectionState } from '@/lib/bluetooth';
@@ -290,29 +290,26 @@ const sendChatMessage = useCallback(async () => {
   setChatInput('');
   setChatLoading(true);
 
-  await new Promise(resolve => setTimeout(resolve, 1200));
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: userMessage }),
+    });
 
-  let response = '';
-  const lower = userMessage.toLowerCase();
+    const data = await res.json();
+    const response = data.text ?? 'Não foi possível processar sua solicitação.';
 
-  if (lower.includes('hipertrofia') || lower.includes('massa')) {
-    response = 'Para hipertrofia foque em progressão de carga, descanso de 60-90 segundos, alimentação hipercalórica e exercícios compostos como supino, agachamento e levantamento terra.';
-  } else if (lower.includes('emagrecer') || lower.includes('cut')) {
-    response = 'Para emagrecimento combine musculação + cardio moderado, mantenha déficit calórico e priorize constância. O ideal é manter proteína alta para preservar massa muscular.';
-  } else if (lower.includes('corrida')) {
-    response = 'Na corrida é importante controlar ritmo e progressão semanal. Evite aumentar distância drasticamente para reduzir risco de lesão.';
-  } else if (lower.includes('descanso')) {
-    response = 'O descanso é essencial para recuperação muscular. Dormir bem melhora força, desempenho e recuperação hormonal.';
-  } else if (lower.includes('cardio')) {
-    response = 'Cardio ajuda no condicionamento e saúde cardiovascular. Você pode alternar HIIT e cardio contínuo dependendo do objetivo.';
-  } else {
-    response = 'Entendi 💪 Continue consistente nos treinos, alimentação e recuperação. Pequenas evoluções diárias geram grandes resultados.';
+    setChatMessages(prev => [
+      ...prev,
+      { role: 'ai', text: response },
+    ]);
+  } catch {
+    setChatMessages(prev => [
+      ...prev,
+      { role: 'ai', text: 'Houve um erro de conexão. Tente novamente mais tarde.' },
+    ]);
   }
-
-  setChatMessages(prev => [
-    ...prev,
-    { role: 'ai', text: response },
-  ]);
 
   setChatLoading(false);
 }, [chatInput]);
@@ -347,8 +344,11 @@ const filtered = ALL_AVAILABLE_EXERCISES.filter(ex =>
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 relative overflow-hidden antialiased font-sans">
       <button
   type="button"
+  role="button"
+  tabIndex={0}
   onClick={() => setChatOpen(true)}
-  className="fixed bottom-6 right-6 z-120 w-16 h-16 rounded-full bg-orange-600 border border-orange-400 shadow-2xl shadow-orange-600/40 flex items-center justify-center hover:scale-105 transition-all cursor-pointer"
+  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setChatOpen(true); } }}
+  className="fixed bottom-6 right-6 z-120 w-16 h-16 rounded-full bg-orange-600 border border-orange-400 shadow-2xl shadow-orange-600/40 flex items-center justify-center hover:scale-105 transition-all btn-fab"
 >
   <MessageCircle className="text-white" size={28} />
 </button>
@@ -697,7 +697,7 @@ const filtered = ALL_AVAILABLE_EXERCISES.filter(ex =>
                   <div className="w-10 h-10 bg-orange-600 rounded-2xl flex items-center justify-center"><BrainCircuit className="text-white w-6 h-6" /></div>
                   <h3 className="text-lg font-black uppercase italic text-white">Wegym IA</h3>
                 </div>
-                <X size={24} className="text-zinc-500 cursor-pointer" onClick={() => setShowAI(false)} />
+                <X size={24} role="button" tabIndex={0} className="text-zinc-500 cursor-pointer" onClick={() => setShowAI(false)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowAI(false); } }} />
               </div>
               <div className="p-6">
                 {aiLoading ? (
@@ -739,6 +739,55 @@ const filtered = ALL_AVAILABLE_EXERCISES.filter(ex =>
                 )}
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {chatOpen && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="fixed bottom-24 right-6 w-95 h-125 bg-zinc-900 border border-white/10 rounded-3xl shadow-2xl flex flex-col z-100 overflow-hidden backdrop-blur-xl">
+            <div className="p-4 bg-orange-600 flex justify-between items-center">
+              <div className="flex items-center gap-2 text-white">
+                <BrainCircuit size={20} />
+                <span className="font-black italic uppercase text-xs">Assistente Wegym</span>
+              </div>
+              <button type="button" onClick={() => setChatOpen(false)} className="text-white/80 cursor-pointer"><X size={20} /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {chatMessages.map((msg, i) => (
+                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed ${msg.role === 'user' ? 'bg-orange-600 text-white' : 'bg-zinc-800 text-zinc-300'}`}>{msg.text}</div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-zinc-800 p-3 rounded-2xl">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-white/5 flex gap-2">
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !chatLoading) sendChatMessage(); }}
+                placeholder="Pergunte sobre treinos, exercícios..."
+                className="flex-1 bg-zinc-800 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-orange-500/50"
+              />
+              <button
+                type="button"
+                onClick={sendChatMessage}
+                disabled={chatLoading || !chatInput.trim()}
+                className="bg-orange-600 hover:bg-orange-700 disabled:opacity-40 p-2.5 rounded-xl text-white cursor-pointer disabled:cursor-not-allowed transition-colors"
+              >
+                <Send size={18} />
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

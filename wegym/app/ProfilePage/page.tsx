@@ -478,7 +478,7 @@ function IdentityCard({
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
         <div className="relative shrink-0">
           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-zinc-950 border border-white/10 overflow-hidden">
-            <img src={userData.foto} alt="" className="w-full h-full object-cover" />
+            <img src={userData.foto} alt={userData.nome} className="w-full h-full object-cover" />
           </div>
           <label
             className="absolute -bottom-1.5 -right-1.5 bg-orange-600 hover:bg-orange-700 p-2 rounded-2xl border-4 border-zinc-950 text-white cursor-pointer transition-colors"

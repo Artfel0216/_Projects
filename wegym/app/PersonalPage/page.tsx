@@ -103,7 +103,8 @@ useEffect(() => {
       if (!res.ok) return;
 
       const data = await res.json();
-      const formatted = (Array.isArray(data) ? data : data.data ?? []).map((c: any) => ({
+      type RawClass = { id: string; studentId: string; day: string; date: string; time: string; type: string; status: string };
+      const formatted = (Array.isArray(data) ? data : data.data ?? []).map((c: RawClass) => ({
         id: c.id,
         studentId: c.studentId,
         day: c.day,
@@ -311,12 +312,12 @@ const createStudent = async () => {
     setNewStudent(createEmptyStudentForm());
     setShowNewStudentForm(false);
     setSelectedStudentId(id);
-  } catch (err: any) {
-    alert(err.message || 'Erro ao cadastrar atleta');
+  } catch (err) {
+    alert((err as Error).message || 'Erro ao cadastrar atleta');
   }
 };
 
-const updateSelectedStudentField = (field: keyof Student, value: any) => {
+const updateSelectedStudentField = (field: keyof Student, value: string) => {
   if (!selectedStudentId) return;
   setStudents((prev) =>
     prev.map((student) =>
@@ -532,7 +533,7 @@ const handleChat = async () => {
               <Field label="Observações gerais" className="md:col-span-3"><textarea value={safeNewStudent.observations} onChange={(e) => setNewStudent({ ...safeNewStudent, observations: e.target.value })} placeholder="Rotina, preferências e observações" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white min-h-24 resize-none" /></Field>
             </div>
             <div className="mt-4 flex gap-2">
-              <button onClick={createStudent} className="bg-orange-600 hover:bg-orange-700 rounded-xl px-4 py-2 text-[11px] font-black uppercase italic cursor-pointer">Salvar aluno</button>
+              <button               onClick={createStudent} className="btn-primary">Salvar aluno</button>
               <button onClick={() => setShowNewStudentForm(false)} className="bg-white/10 hover:bg-white/20 rounded-xl px-4 py-2 text-[11px] font-black uppercase italic cursor-pointer">Cancelar</button>
             </div>
           </div>
@@ -767,8 +768,8 @@ const handleChat = async () => {
                   </div>
 
                   <div className="flex gap-2 mb-6">
-                    <button onClick={() => setShowExerciseForm((prev) => !prev)} className="bg-orange-600 hover:bg-orange-700 rounded-xl px-4 py-2 text-[11px] font-black uppercase italic cursor-pointer">+ ADICIONAR EXERCÍCIOS</button>
-                    <button onClick={deleteSelectedStudent} className="bg-red-600/90 hover:bg-red-600 rounded-xl px-4 py-2 text-[11px] font-black uppercase italic cursor-pointer">Excluir aluno</button>
+                    <button onClick={() => setShowExerciseForm((prev) => !prev)} className="btn-primary">+ ADICIONAR EXERCÍCIOS</button>
+                    <button onClick={deleteSelectedStudent} className="btn-primary bg-red-600/90 hover:bg-red-600">Excluir aluno</button>
                   </div>
 
                   {showExerciseForm && (
@@ -868,7 +869,7 @@ const handleChat = async () => {
               <Bot size={160} className="hidden sm:block absolute -right-10 -bottom-10 text-white/10 -rotate-12" />
             </div>
 
-            <div className="bg-zinc-900/50 rounded-3xl border border-white/5 p-6">
+            <div className="card-base p-6">
               <h3 className="text-white font-black italic uppercase text-sm mb-4">Meus Alunos</h3>
               <div className="space-y-5">
                 {students.map((student) => (
@@ -897,7 +898,7 @@ const handleChat = async () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="fixed bottom-24 right-6 w-95 h-125 bg-zinc-900 border border-white/10 rounded-3xl shadow-2xl flex flex-col z-100 overflow-hidden backdrop-blur-xl">
             <div className="p-4 bg-orange-600 flex justify-between items-center">
               <div className="flex items-center gap-2 text-white"><Bot size={20} /><span className="font-black italic uppercase text-xs">Gemini Copilot</span></div>
-              <button onClick={() => setIsChatOpen(false)} className="text-white/80 cursor-pointer"><X size={20} /></button>
+              <button type="button" onClick={() => setIsChatOpen(false)} className="text-white/80 cursor-pointer"><X size={20} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.map((msg, i) => (

@@ -147,7 +147,7 @@ export default function HomePage() {
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-white/10 overflow-hidden shrink-0">
             {profile?.avatar ? (
-              <img src={profile.avatar} alt="" className="w-full h-full object-cover" />
+              <img src={profile.avatar} alt={profile.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-zinc-800" />
             )}
