@@ -25,7 +25,16 @@ import {
   User as UserIcon,
   Weight,
   X,
+  Bluetooth,
+  Watch,
+  HeartPulse,
+  Battery,
+  Wifi,
+  Download,
+  Smartphone as SmartphoneIcon,
 } from "lucide-react";
+import { BluetoothManager, type HRData, type DeviceInfo, type ConnectionState } from "@/lib/bluetooth";
+import { usePWAInstall } from "@/lib/use-pwa-install";
 
 const EXPERIENCE_LABEL: Record<string, string> = {
   iniciante: "Iniciante",
@@ -144,6 +153,11 @@ export default function ProfilePage() {
   const [userData, setUserData] = useState<LocalUser | null>(null);
   const [isPro] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [bleState, setBleState] = useState<ConnectionState>("idle");
+  const [bleDevice, setBleDevice] = useState<DeviceInfo | null>(null);
+  const [lastHR, setLastHR] = useState<HRData | null>(null);
+  const btRef = useRef<BluetoothManager | null>(null);
+  const { isInstallable, install, isStandalone } = usePWAInstall();
 
   const [editingField, setEditingField] = useState<EditableField>(null);
   const [draft, setDraft] = useState("");
@@ -270,14 +284,47 @@ export default function ProfilePage() {
     return value;
   }, [userData]);
 
-  const syncHealthData = () => {
-    if (isSyncing) return;
+  const syncHealthData = useCallback(() => {
+    if (isSyncing || bleState === "scanning" || bleState === "connecting") return;
+
+    if (bleState === "connected" && btRef.current) {
+      btRef.current.disconnect();
+      setBleDevice(null);
+      setLastHR(null);
+      triggerToast("Desconectado");
+      return;
+    }
+
     setIsSyncing(true);
-    setTimeout(() => {
-      setIsSyncing(false);
-      triggerToast("Dispositivo sincronizado");
-    }, 1600);
-  };
+    setBleState("scanning");
+
+    const manager = new BluetoothManager({
+      onHR: (data: HRData) => {
+        setLastHR(data);
+      },
+      onState: (state: ConnectionState) => {
+        setBleState(state);
+        if (state === "connected" || state === "disconnected" || state === "unsupported" || state === "idle") {
+          setIsSyncing(false);
+        }
+        if (state === "connected") {
+          triggerToast("Smartwatch conectado!");
+        }
+        if (state === "unsupported") {
+          triggerToast("Bluetooth não suportado neste dispositivo", "info");
+        }
+      },
+      onDevice: (device: DeviceInfo) => {
+        setBleDevice(device);
+      },
+      onError: (error: string) => {
+        triggerToast(error, "info");
+      },
+    });
+
+    btRef.current = manager;
+    manager.scan();
+  }, [isSyncing, bleState, triggerToast]);
 
   if (loadState === "error") {
     return (
@@ -353,7 +400,18 @@ export default function ProfilePage() {
           isSyncing={isSyncing}
           onUpgrade={() => router.push("/ProPage")}
           onSync={syncHealthData}
+          bleState={bleState}
+          bleDevice={bleDevice}
+          lastHR={lastHR}
         />
+        <DevicesSection
+          bleState={bleState}
+          bleDevice={bleDevice}
+          lastHR={lastHR}
+          onSync={syncHealthData}
+          isSyncing={isSyncing}
+        />
+        <PwaSection isInstallable={isInstallable} isStandalone={isStandalone} onInstall={install} />
       </main>
     </div>
   );
@@ -589,16 +647,185 @@ interface AccountSectionProps {
   isSyncing: boolean;
   onUpgrade: () => void;
   onSync: () => void;
+  bleState: ConnectionState;
+  bleDevice: DeviceInfo | null;
+  lastHR: HRData | null;
 }
 
-function AccountSection({ isPro, isSyncing, onUpgrade, onSync }: AccountSectionProps) {
+function AccountSection({ isPro, isSyncing, onUpgrade }: AccountSectionProps) {
   return (
     <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
-      <SectionHeader eyebrow="Conta" title="Plano e dispositivos" icon={Settings} />
+      <SectionHeader eyebrow="Conta" title="Seu plano" icon={Settings} />
 
       <div className="mt-6 space-y-3">
         <PlanRow isPro={isPro} onUpgrade={onUpgrade} />
-        <SyncRow isSyncing={isSyncing} onSync={onSync} />
+      </div>
+    </section>
+  );
+}
+
+function DevicesSection({
+  bleState,
+  bleDevice,
+  lastHR,
+  onSync,
+  isSyncing,
+}: {
+  bleState: ConnectionState;
+  bleDevice: DeviceInfo | null;
+  lastHR: HRData | null;
+  onSync: () => void;
+  isSyncing: boolean;
+}) {
+  const stateLabel: Record<ConnectionState, string> = {
+    idle: "Conectar smartwatch",
+    scanning: "Buscando dispositivos…",
+    connecting: "Conectando…",
+    connected: "Desconectar",
+    disconnected: "Conexão perdida",
+    unsupported: "Não suportado",
+  };
+
+  const isBusy = bleState === "scanning" || bleState === "connecting" || isSyncing;
+  const isConnected = bleState === "connected";
+
+  return (
+    <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
+      <SectionHeader eyebrow="Dispositivos" title="Smartwatch & sensores" icon={Watch} />
+
+      <div className="mt-6 space-y-3">
+        <button
+          type="button"
+          onClick={onSync}
+          disabled={isBusy}
+          className={`w-full rounded-4xl border p-4 sm:p-5 flex items-center gap-4 text-left cursor-pointer transition-colors disabled:cursor-wait disabled:opacity-80 ${
+            isConnected
+              ? "bg-emerald-600/10 border-emerald-500/30 hover:border-emerald-500/50"
+              : "bg-zinc-950/60 border-white/5 hover:border-white/10"
+          }`}
+        >
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+            isConnected ? "bg-emerald-600/20 text-emerald-400" : "bg-white/5 text-zinc-200"
+          }`}>
+            {isBusy ? (
+              <Loader2 size={20} className="animate-spin text-orange-500" />
+            ) : isConnected ? (
+              <Bluetooth size={20} />
+            ) : (
+              <Watch size={20} />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
+              Bluetooth LE
+            </p>
+            <p className="text-sm font-black italic uppercase text-white tracking-tight truncate">
+              {isConnected && bleDevice
+                ? `${bleDevice.name}`
+                : stateLabel[bleState]}
+            </p>
+            {isConnected && lastHR && (
+              <p className="text-[10px] text-emerald-400 mt-0.5 font-bold">
+                {lastHR.bpm} BPM · {bleDevice?.battery != null ? `${bleDevice.battery}%` : "Conectado"}
+              </p>
+            )}
+            {!isConnected && (
+              <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
+                {bleState === "unsupported"
+                  ? "Bluetooth não disponível"
+                  : isBusy
+                    ? "Aguardando dispositivos…"
+                    : "Relógios, monitores cardíacos e sensores"}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {isConnected && lastHR && (
+              <span className="text-2xl font-black italic text-emerald-400 tabular-nums">
+                {lastHR.bpm}
+              </span>
+            )}
+            <ChevronRight size={16} className="text-zinc-600" />
+          </div>
+        </button>
+
+        <div className="bg-zinc-950/60 border border-white/5 rounded-3xl p-4">
+          <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-2">
+            Dispositivos compatíveis
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase italic tracking-wider text-zinc-300">
+              <HeartPulse size={10} className="text-rose-400" /> Apple Watch
+            </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase italic tracking-wider text-zinc-300">
+              <HeartPulse size={10} className="text-emerald-400" /> Google Fit
+            </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase italic tracking-wider text-zinc-300">
+              <HeartPulse size={10} className="text-blue-400" /> Garmin
+            </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase italic tracking-wider text-zinc-300">
+              <HeartPulse size={10} className="text-orange-400" /> Polar
+            </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase italic tracking-wider text-zinc-300">
+              <Battery size={10} className="text-purple-400" /> HR Band
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PwaSection({
+  isInstallable,
+  isStandalone,
+  onInstall,
+}: {
+  isInstallable: boolean;
+  isStandalone: boolean;
+  onInstall: () => void;
+}) {
+  if (isStandalone) return null;
+
+  return (
+    <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
+      <SectionHeader eyebrow="App" title="Instalar no celular" icon={SmartphoneIcon} />
+
+      <div className="mt-5">
+        {isInstallable ? (
+          <button
+            type="button"
+            onClick={onInstall}
+            className="w-full rounded-4xl border border-orange-500/30 bg-orange-600/10 hover:bg-orange-600/20 p-4 sm:p-5 flex items-center gap-4 text-left cursor-pointer transition-colors group"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-orange-600/20 text-orange-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Download size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-black italic uppercase text-white tracking-tight">
+                Instalar WEGYM
+              </p>
+              <p className="text-[10px] text-zinc-400 mt-0.5">
+                Adicione à tela inicial para acesso rápido
+              </p>
+            </div>
+            <Download size={16} className="text-orange-400 shrink-0" />
+          </button>
+        ) : (
+          <div className="rounded-4xl border border-white/5 bg-zinc-950/60 p-4 sm:p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/5 text-zinc-400 flex items-center justify-center shrink-0">
+              <Wifi size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-black italic uppercase text-white tracking-tight">
+                Disponível como app
+              </p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">
+                No Chrome/Safari: menu &ldquo;Adicionar à tela inicial&rdquo;
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

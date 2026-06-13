@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-export const fitnessModel = genAI.getGenerativeModel({ 
-  model: "gemini-1.5-flash",
-  systemInstruction: "Você é um personal trainer assistente da academia..." 
-});
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error("GEMINI_API_KEY não definida no .env");
+}
+
+export const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);

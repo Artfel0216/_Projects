@@ -14,12 +14,10 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const email = String(credentials.email).trim();
+        const email = String(credentials.email).trim().toLowerCase();
 
-        const user = await prisma.user.findFirst({
-          where: {
-            email: { equals: email, mode: "insensitive" },
-          },
+        const user = await prisma.user.findUnique({
+          where: { email },
           select: {
             id: true,
             email: true,

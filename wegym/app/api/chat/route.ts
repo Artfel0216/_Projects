@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { genAI } from "@/lib/gemini";
 
 const LIBRARY = {
   peito: [
@@ -108,8 +108,6 @@ const LIBRARY = {
   ]
 } as const;
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 export async function POST(request: Request) {
   try {
     const { message, level } = await request.json(); 
@@ -119,7 +117,7 @@ export async function POST(request: Request) {
     }
 
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       generationConfig: { responseMimeType: "application/json" },
       systemInstruction: `Você é um Personal Trainer de elite especializado em musculação, alta performance e mobilidade.
         Sua base de dados é esta LIBRARY: ${JSON.stringify(LIBRARY)}.

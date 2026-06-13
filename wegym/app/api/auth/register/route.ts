@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Tipo de usuário inválido." }, { status: 400 });
     }
 
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await prisma.user.findUnique({
       where: { email },
       select: { id: true },
     });

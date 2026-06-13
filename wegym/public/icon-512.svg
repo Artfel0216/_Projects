@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#09090b"/>
+  <text x="50%" y="52%" dominant-baseline="central" text-anchor="middle"
+        font-family="system-ui, sans-serif" font-weight="900" font-size="256"
+        fill="#ea580c" font-style="italic">W</text>
+  <circle cx="384" cy="128" r="32" fill="#ea580c" opacity="0.3"/>
+  <circle cx="428" cy="172" r="16" fill="#ea580c" opacity="0.2"/>
+</svg>

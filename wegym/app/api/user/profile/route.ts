@@ -107,7 +107,7 @@ export async function PATCH(req: Request) {
       }
     }
 
-    return GET();
+    return NextResponse.json({ message: "Perfil atualizado" });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Erro no servidor" }, { status: 500 });

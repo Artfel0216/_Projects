@@ -4,8 +4,10 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {Timer, RotateCcw, Zap, Trophy, X, Activity, BrainCircuit, Plus, Flame, History,
+  HeartPulse, Bluetooth,
 } from 'lucide-react';
 import { MessageCircle } from 'lucide-react';
+import { BluetoothManager, type HRData, type ConnectionState } from '@/lib/bluetooth';
 
 import { MODALITY_OPTIONS } from '../constants/modalities';
 import { MODALITY_STORAGE_KEY } from '../constants/keys';
@@ -62,6 +64,9 @@ const [modalityHistory, setModalityHistory] = useState<Partial<Record<TrainingMo
 const [chatOpen, setChatOpen] = useState(false);
 const [chatInput, setChatInput] = useState('');
 const [chatLoading, setChatLoading] = useState(false);
+const [bleState, setBleState] = useState<ConnectionState>("idle");
+const [lastHR, setLastHR] = useState<HRData | null>(null);
+const btRef = useRef<BluetoothManager | null>(null);
 const [aiLoading, setAiLoading] = useState(false);
 const [aiResponse, setAiResponse] = useState('');
 const [aiStep, setAiStep] = useState<'workout_goal' | 'add_manual' | 'result'>('workout_goal');
@@ -251,6 +256,26 @@ const finalizeModalitySession = useCallback(() => {
   sessionSec,
 ]);
 
+// --- Bluetooth ---
+const toggleBLE = useCallback(() => {
+  if (bleState === "connected" && btRef.current) {
+    btRef.current.disconnect();
+    setLastHR(null);
+    return;
+  }
+  const manager = new BluetoothManager({
+    onHR: (data: HRData) => setLastHR(data),
+    onState: (state: ConnectionState) => setBleState(state),
+    onDevice: () => {},
+    onError: () => {},
+  });
+  btRef.current = manager;
+  manager.scan();
+}, [bleState]);
+
+useEffect(() => {
+  return () => { btRef.current?.disconnect(); };
+}, []);
 // --- Funções do Assistente IA ---
 const sendChatMessage = useCallback(async () => {
   if (!chatInput.trim()) return;
@@ -355,6 +380,27 @@ const filtered = ALL_AVAILABLE_EXERCISES.filter(ex =>
           </h1>
         </div>
         <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+          <button
+            type="button"
+            onClick={toggleBLE}
+            className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-colors cursor-pointer ${
+              bleState === "connected"
+                ? "bg-emerald-600/15 border-emerald-500/30 text-emerald-400"
+                : "bg-white/5 border-white/10 text-zinc-400 hover:text-zinc-200"
+            }`}
+            aria-label="Conectar smartwatch"
+          >
+            {bleState === "connected" && lastHR ? (
+              <>
+                <HeartPulse size={14} className="text-emerald-400" />
+                <span className="text-xs font-black tabular-nums">{lastHR.bpm}</span>
+              </>
+            ) : bleState === "scanning" || bleState === "connecting" ? (
+              <Bluetooth size={14} className="animate-pulse text-orange-500" />
+            ) : (
+              <Bluetooth size={14} />
+            )}
+          </button>
           {trainingModality === 'gym' && (
             <button
               onClick={() => { setShowAI(true); setAiStep('add_manual'); }}
@@ -582,6 +628,13 @@ const filtered = ALL_AVAILABLE_EXERCISES.filter(ex =>
                   <p className="text-5xl sm:text-6xl font-black text-white font-mono tracking-tight tabular-nums">
                     {formatDurationHMS(sessionSec)}
                   </p>
+                  {bleState === "connected" && lastHR && (
+                    <div className="mt-4 flex items-center justify-center gap-2 text-emerald-400">
+                      <HeartPulse size={18} className="animate-pulse" />
+                      <span className="text-3xl font-black tabular-nums">{lastHR.bpm}</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">BPM</span>
+                    </div>
+                  )}
                   <div className="mt-6 flex flex-wrap gap-2 justify-center">
                     <button
                       type="button"
