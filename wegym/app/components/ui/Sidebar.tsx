@@ -50,7 +50,9 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored === "1") setCollapsedState(true);
-    } catch {}
+    } catch {
+      // localStorage indisponível
+    }
     setHydrated(true);
   }, []);
 
@@ -58,7 +60,9 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     setCollapsedState(v);
     try {
       localStorage.setItem(STORAGE_KEY, v ? "1" : "0");
-    } catch {}
+    } catch {
+      // localStorage indisponível
+    }
   }, []);
 
   const value = React.useMemo<SidebarState>(

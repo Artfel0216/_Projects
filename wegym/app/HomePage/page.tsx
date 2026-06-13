@@ -12,6 +12,7 @@ import {
   formatRelative,
   readSessionsFromStorage,
 } from '../utils/home-stats';
+import { formatDurationHMS } from '../utils/training-helpers';
 import { HomeStats } from '../types/home';
 
 type ProfileLite = {
@@ -388,20 +389,6 @@ export default function HomePage() {
               {stats.recentSessions.map((s) => {
                 const meta = MODALITY_OPTIONS.find((opt) => opt.id === s.modalityId);
                 const Icon = meta?.Icon ?? Activity;
-                function formatDurationHMS(durationSec: number): React.ReactNode {
-                  const totalSeconds = Math.max(0, Math.round(durationSec));
-                  const hours = Math.floor(totalSeconds / 3600);
-                  const minutes = Math.floor((totalSeconds % 3600) / 60);
-                  const seconds = totalSeconds % 60;
-
-                  if (hours > 0) {
-                    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds
-                      .toString()
-                      .padStart(2, '0')}`;
-                  }
-
-                  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                }
 
                 return (
                   <li key={s.id} className="py-3 flex items-center gap-3">

@@ -16,7 +16,7 @@ import { ExerciseItem } from '../components/ExerciseItem/ExerciseItem';
 import { INITIAL_WEEKLY_PLAN } from '../constants/plans';
 import { getSuggestedCardioBlock } from '../utils/calculations';
 import type { DayPlan, TrainingModalityId, ModalitySessionEntry, AIChatMessage, Exercise } from '../types/training';
-import { parseKmInput } from '../utils/training-helpers';
+import { parseKmInput, formatDurationHMS } from '../utils/training-helpers';
 
 
 
@@ -342,21 +342,6 @@ const filtered = ALL_AVAILABLE_EXERCISES.filter(ex =>
   setAiLoading(false);
 }, []);
 
-
-  function formatDurationHMS(sessionSec: number): React.ReactNode {
-    const totalSeconds = Math.max(0, Math.floor(sessionSec));
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    const pad = (value: number) => String(value).padStart(2, '0');
-
-    if (hours > 0) {
-      return `${hours}:${pad(minutes)}:${pad(seconds)}`;
-    }
-
-    return `${pad(minutes)}:${pad(seconds)}`;
-  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 relative overflow-hidden antialiased font-sans">

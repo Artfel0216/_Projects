@@ -67,6 +67,8 @@ export class BluetoothManager {
   private _state: ConnectionState = "idle";
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 3;
+  private onDisconnected: (() => void) | null = null;
+  private onHRChange: ((event: Event) => void) | null = null;
 
   constructor(callbacks: BTEventCallback) {
     this.callbacks = callbacks;
@@ -102,10 +104,11 @@ export class BluetoothManager {
         return;
       }
 
-      this.device.addEventListener("gattserverdisconnected", () => {
+      this.onDisconnected = () => {
         this.setState("disconnected");
         this.attemptReconnect();
-      });
+      };
+      this.device.addEventListener("gattserverdisconnected", this.onDisconnected);
 
       this.callbacks.onDevice({
         name: this.device.name || "Desconhecido",
@@ -134,6 +137,13 @@ export class BluetoothManager {
       const hrService = await this.server.getPrimaryService(HR_SERVICE);
       this.hrCharacteristic = await hrService.getCharacteristic(HR_MEASUREMENT);
       await this.hrCharacteristic.startNotifications();
+      this.onHRChange = (event: Event) => {
+        const characteristic = event.target as BluetoothRemoteGATTCharacteristic;
+        if (!characteristic.value) return;
+        const data = parseHRValue(characteristic.value);
+        data.battery = this._battery;
+        this.callbacks.onHR(data);
+      };
       this.hrCharacteristic.addEventListener("characteristicvaluechanged", this.onHRChange);
 
       try {
@@ -147,7 +157,6 @@ export class BluetoothManager {
           battery: this._battery,
         });
       } catch {
-        // Bateria opcional
       }
 
       this.reconnectAttempts = 0;
@@ -157,14 +166,6 @@ export class BluetoothManager {
       this.callbacks.onError(err instanceof Error ? err.message : "Falha na conexão");
     }
   }
-
-  private onHRChange = (event: Event) => {
-    const characteristic = event.target as BluetoothRemoteGATTCharacteristic;
-    if (!characteristic.value) return;
-    const data = parseHRValue(characteristic.value);
-    data.battery = this._battery;
-    this.callbacks.onHR(data);
-  };
 
   private attemptReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) return;
@@ -179,9 +180,14 @@ export class BluetoothManager {
     if (this.hrCharacteristic) {
       try {
         await this.hrCharacteristic.stopNotifications();
-        this.hrCharacteristic.removeEventListener("characteristicvaluechanged", this.onHRChange);
+        if (this.onHRChange) {
+          this.hrCharacteristic.removeEventListener("characteristicvaluechanged", this.onHRChange);
+        }
       } catch { /* ignorar */ }
       this.hrCharacteristic = null;
+    }
+    if (this.device && this.onDisconnected) {
+      this.device.removeEventListener("gattserverdisconnected", this.onDisconnected);
     }
     if (this.server) {
       try { this.server.disconnect(); } catch { /* ignorar */ }

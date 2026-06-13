@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { genAI } from "@/lib/gemini";
 
 const LIBRARY = {
@@ -108,10 +110,19 @@ const LIBRARY = {
   ]
 } as const;
 
+const VALID_LEVELS = new Set(["Iniciante", "Intermediário", "Avançado"]);
+
 export async function POST(request: Request) {
   try {
-    const { message, level } = await request.json(); 
-    
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const message = typeof body.message === "string" ? body.message.trim() : "";
+    const level = VALID_LEVELS.has(body.level) ? body.level : "Iniciante";
+
     if (!message) {
       return NextResponse.json({ error: "Mensagem vazia" }, { status: 400 });
     }
@@ -155,7 +166,7 @@ export async function POST(request: Request) {
       }
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro na Rota Gemini:", error);
     return NextResponse.json({ error: 'Erro ao processar treino com IA' }, { status: 500 });
   }

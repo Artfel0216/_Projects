@@ -15,29 +15,28 @@ export async function GET(req: Request) {
     const includeProgress = searchParams.get('progress') === '1';
     const includeClasses = searchParams.get('classes') === '1';
 
-    const baseQuery: any = {
+    const athletes = await prisma.athlete.findMany({
       take: take + 1,
       orderBy: { id: 'desc' },
+      ...(cursorParam ? { cursor: { id: cursorParam }, skip: 1 } : {}),
       select: {
         id: true,
         name: true,
         cpf: true,
-        experienceLevel: true
-      }
-    };
-
-    if (cursorParam) {
-      baseQuery.cursor = { id: cursorParam };
-      baseQuery.skip = 1;
-    }
-
-    const athletes = await prisma.athlete.findMany(baseQuery);
+        experienceLevel: true,
+      },
+    });
 
     const hasMore = athletes.length > take;
     const sliced = hasMore ? athletes.slice(0, take) : athletes;
     const nextCursor = hasMore ? sliced[sliced.length - 1].id : null;
 
-    let data: any[] = sliced;
+    type AthleteRow = (typeof sliced)[number] & {
+      trainingPlans?: unknown[];
+      progressEntries?: unknown[];
+      weeklyClasses?: unknown[];
+    };
+    let data: AthleteRow[] = sliced;
     const ids = sliced.map(a => a.id);
 
     if (ids.length > 0 && (includePlans || includeProgress || includeClasses)) {
@@ -88,9 +87,12 @@ export async function GET(req: Request) {
           : Promise.resolve([])
       ]);
 
-      const plansMap = new Map<string, any[]>();
-      const progressMap = new Map<string, any[]>();
-      const classesMap = new Map<string, any[]>();
+      type PlanItem = { athleteId: string; day: string; exercises: { name: string; sets: string; reps: string; load: string }[] };
+      type ProgressItem = { athleteId: string; date: Date; weight: number; muscleMass: number | null; bodyFat: number | null; note: string | null };
+      type ClassItem = { id: string; athleteId: string; day: string; date: Date; time: string; type: string; status: string };
+      const plansMap = new Map<string, PlanItem[]>();
+      const progressMap = new Map<string, ProgressItem[]>();
+      const classesMap = new Map<string, ClassItem[]>();
 
       for (const p of plans) {
         if (!plansMap.has(p.athleteId)) plansMap.set(p.athleteId, []);

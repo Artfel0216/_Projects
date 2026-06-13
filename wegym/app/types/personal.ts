@@ -1,6 +1,3 @@
-import { DietaryRestriction } from '@prisma/client';
-
-
 type Exercise = { name: string; sets: string; reps: string; load: string };
 type WeeklyPlan = Record<string, Exercise[]>;
 type ProgressEntry = { date: string; weight: string; muscleMass: string; bodyFat: string; note: string };
@@ -45,14 +42,14 @@ export interface AthleteRegisterRequest {
   name: string;
   cpf: string;
   phone: string;
-  birthDate?: string; 
+  birthDate?: string;
 
   sex: 'masculino' | 'feminino' | 'outro';
-  heightCm: number; 
-  weightKg: number; 
+  heightCm: number;
+  weightKg: number;
   experienceLevel: 'iniciante' | 'intermediario' | 'avancado';
-  
-  dietaryRestriction?: DietaryRestriction; 
+
+  dietaryRestriction?: string;
 
   cep: string;
   city: string;

@@ -114,12 +114,60 @@ useEffect(() => {
       }));
 
       setWeeklyClasses(formatted);
-    } catch {}
+    } catch (err) {
+      console.error("Erro ao buscar aulas:", err);
+    }
   };
 
   fetchClasses();
   return () => controller.abort();
 }, []);
+
+type AthleteAPI = {
+  id: string;
+  name: string;
+  cpf: string;
+  experienceLevel?: string;
+  trainingPlans?: { day: string; exercises: unknown[] }[];
+  progressEntries?: { date: string; weight: string; muscleMass: string; bodyFat: string; note: string }[];
+};
+
+function formatAthlete(a: AthleteAPI) {
+  return {
+    id: a.id,
+    name: a.name,
+    cpf: a.cpf,
+    email: '',
+    phone: '',
+    birthDate: '',
+    gender: '',
+    emergencyContact: '',
+    objective: '',
+    restrictions: '',
+    injuries: '',
+    medications: '',
+    experience: a.experienceLevel ?? '',
+    availableDays: '',
+    height: '',
+    weight: '',
+    bodyFat: '',
+    observations: '',
+    lastTraining: 'Recente',
+    plan: 'Basic',
+    progress: 0,
+    weeklyPlan: (a.trainingPlans ?? []).reduce<Record<string, unknown[]>>((acc, plan) => {
+      acc[plan.day] = plan.exercises ?? [];
+      return acc;
+    }, { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sab: [], Dom: [] }),
+    progressHistory: (a.progressEntries ?? []).map((p) => ({
+      date: p.date ?? '',
+      weight: p.weight ?? '',
+      muscleMass: p.muscleMass ?? '',
+      bodyFat: p.bodyFat ?? '',
+      note: p.note ?? ''
+    }))
+  };
+}
 
 useEffect(() => {
   const controller = new AbortController();
@@ -133,45 +181,14 @@ useEffect(() => {
       if (!res.ok) return;
 
       const data = await res.json();
-      const formatted = (data.data ?? []).map((a: any) => ({
-        id: a.id,
-        name: a.name,
-        cpf: a.cpf,
-        email: '',
-        phone: '',
-        birthDate: '',
-        gender: '',
-        emergencyContact: '',
-        objective: '',
-        restrictions: '',
-        injuries: '',
-        medications: '',
-        experience: a.experienceLevel ?? '',
-        availableDays: '',
-        height: '',
-        weight: '',
-        bodyFat: '',
-        observations: '',
-        lastTraining: 'Recente',
-        plan: 'Basic',
-        progress: 0,
-        weeklyPlan: (a.trainingPlans ?? []).reduce((acc: any, plan: any) => {
-          acc[plan.day] = plan.exercises ?? [];
-          return acc;
-        }, { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sab: [], Dom: [] }),
-        progressHistory: (a.progressEntries ?? []).map((p: any) => ({
-          date: p.date ?? '',
-          weight: p.weight ?? '',
-          muscleMass: p.muscleMass ?? '',
-          bodyFat: p.bodyFat ?? '',
-          note: p.note ?? ''
-        }))
-      }));
+      const formatted = (data.data ?? []).map(formatAthlete);
 
       setStudents(formatted);
       setCursor(data.nextCursor ?? null);
       setHasMore(!!data.nextCursor);
-    } catch {}
+    } catch (err) {
+      console.error("Erro ao buscar alunos:", err);
+    }
   };
 
   fetchStudents();
@@ -190,45 +207,14 @@ useEffect(() => {
         if (!res.ok) return;
 
         const data = await res.json();
-        const formatted = (data.data ?? []).map((a: any) => ({
-          id: a.id,
-          name: a.name,
-          cpf: a.cpf,
-          email: '',
-          phone: '',
-          birthDate: '',
-          gender: '',
-          emergencyContact: '',
-          objective: '',
-          restrictions: '',
-          injuries: '',
-          medications: '',
-          experience: a.experienceLevel ?? '',
-          availableDays: '',
-          height: '',
-          weight: '',
-          bodyFat: '',
-          observations: '',
-          lastTraining: 'Recente',
-          plan: 'Basic',
-          progress: 0,
-          weeklyPlan: (a.trainingPlans ?? []).reduce((acc: any, plan: any) => {
-            acc[plan.day] = plan.exercises ?? [];
-            return acc;
-          }, { Seg: [], Ter: [], Qua: [], Qui: [], Sex: [], Sab: [], Dom: [] }),
-          progressHistory: (a.progressEntries ?? []).map((p: any) => ({
-            date: p.date ?? '',
-            weight: p.weight ?? '',
-            muscleMass: p.muscleMass ?? '',
-            bodyFat: p.bodyFat ?? '',
-            note: p.note ?? ''
-          }))
-        }));
+        const formatted = (data.data ?? []).map(formatAthlete);
 
         setStudents((prev) => [...prev, ...formatted]);
         setCursor(data.nextCursor ?? null);
         setHasMore(!!data.nextCursor);
-      } catch {}
+      } catch (err) {
+        console.error("Erro ao carregar mais alunos:", err);
+      }
 
       setLoadingMore(false);
     }
