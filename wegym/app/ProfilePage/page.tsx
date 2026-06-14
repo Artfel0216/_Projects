@@ -1,8 +1,10 @@
-"use client";
+﻿"use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { AuthGuard } from "../components/auth/AuthGuard";
 import {
   Activity,
   Calendar,
@@ -38,8 +40,8 @@ import { usePWAInstall } from "@/lib/use-pwa-install";
 
 const EXPERIENCE_LABEL: Record<string, string> = {
   iniciante: "Iniciante",
-  intermediario: "Intermediário",
-  avancado: "Avançado",
+  intermediario: "IntermediÃ¡rio",
+  avancado: "AvanÃ§ado",
 };
 
 type ApiProfile = {
@@ -104,7 +106,7 @@ function mapApiToLocal(data: ApiProfile): LocalUser {
       role: "atleta",
       memberSinceLabel: since,
       experienceLabel: EXPERIENCE_LABEL[a.experienceLevel] ?? a.experienceLevel,
-      cityState: `${a.city} · ${a.state}`,
+      cityState: `${a.city} Â· ${a.state}`,
       cref: "",
     };
   }
@@ -126,7 +128,7 @@ function mapApiToLocal(data: ApiProfile): LocalUser {
   }
   return {
     userId: data.id,
-    nome: "Usuário",
+    nome: "UsuÃ¡rio",
     foto: data.avatarPlaceholder,
     pesoKg: 0,
     alturaCm: 0,
@@ -141,7 +143,7 @@ function mapApiToLocal(data: ApiProfile): LocalUser {
 
 function imcCategory(imc: number): { label: string; tone: string } {
   if (imc < 18.5) return { label: "Abaixo do peso", tone: "text-blue-400" };
-  if (imc < 25) return { label: "Saudável", tone: "text-emerald-400" };
+  if (imc < 25) return { label: "SaudÃ¡vel", tone: "text-emerald-400" };
   if (imc < 30) return { label: "Sobrepeso", tone: "text-amber-400" };
   return { label: "Obesidade", tone: "text-rose-400" };
 }
@@ -188,7 +190,7 @@ export default function ProfilePage() {
       }
       if (!res.ok) {
         const j = (await res.json().catch(() => ({}))) as { error?: string };
-        setLoadError(j.error || "Não foi possível carregar o perfil.");
+        setLoadError(j.error || "NÃ£o foi possÃ­vel carregar o perfil.");
         setLoadState("error");
         return;
       }
@@ -196,7 +198,7 @@ export default function ProfilePage() {
       setUserData(mapApiToLocal(data));
       setLoadState("ready");
     } catch {
-      setLoadError("Falha de conexão. Verifique sua internet.");
+      setLoadError("Falha de conexÃ£o. Verifique sua internet.");
       setLoadState("error");
     }
   }, [router]);
@@ -222,7 +224,7 @@ export default function ProfilePage() {
         const data = (await res.json()) as ApiProfile;
         setUserData(mapApiToLocal(data));
       } else {
-        triggerToast("Não foi possível salvar.", "info");
+        triggerToast("NÃ£o foi possÃ­vel salvar.", "info");
       }
     },
     [userData, triggerToast],
@@ -311,7 +313,7 @@ export default function ProfilePage() {
           triggerToast("Smartwatch conectado!");
         }
         if (state === "unsupported") {
-          triggerToast("Bluetooth não suportado neste dispositivo", "info");
+          triggerToast("Bluetooth nÃ£o suportado neste dispositivo", "info");
         }
       },
       onDevice: (device: DeviceInfo) => {
@@ -328,6 +330,7 @@ export default function ProfilePage() {
 
   if (loadState === "error") {
     return (
+      <AuthGuard>
       <div className="min-h-screen bg-zinc-950 text-white flex flex-col items-center justify-center gap-5 px-6 font-sans">
         <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
           <Info size={22} className="text-rose-400" />
@@ -340,17 +343,19 @@ export default function ProfilePage() {
         >
           Tentar de novo
         </button>
-      </div>
-    );
-  }
+    </div>
+    </AuthGuard>
+  );
+}
 
   if (loadState === "loading" || !userData) {
-    return <ProfileSkeleton />;
+    return <AuthGuard><ProfileSkeleton /></AuthGuard>;
   }
 
   const isAtleta = userData.role === "atleta";
 
   return (
+    <AuthGuard>
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20 relative overflow-hidden antialiased font-sans">
       <div className="fixed top-[-12%] right-[-8%] w-md h-112 bg-orange-600/8 rounded-full blur-[140px] pointer-events-none" />
       <div className="fixed bottom-[-15%] left-[-10%] w-[24rem] h-96 bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
@@ -404,6 +409,7 @@ export default function ProfilePage() {
           bleDevice={bleDevice}
           lastHR={lastHR}
         />
+        <DataPrivacySection triggerToast={triggerToast} />
         <DevicesSection
           bleState={bleState}
           bleDevice={bleDevice}
@@ -414,6 +420,7 @@ export default function ProfilePage() {
         <PwaSection isInstallable={isInstallable} isStandalone={isStandalone} onInstall={install} />
       </main>
     </div>
+    </AuthGuard>
   );
 }
 
@@ -575,7 +582,7 @@ function PhysicalDataSection({
 
   return (
     <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
-      <SectionHeader eyebrow="Dados físicos" title="Suas medidas" icon={Activity} />
+      <SectionHeader eyebrow="Dados fÃ­sicos" title="Suas medidas" icon={Activity} />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
         <EditableMetric
@@ -589,7 +596,7 @@ function PhysicalDataSection({
           onStartEdit={() => onStartEdit("weight")}
           onCommit={onCommit}
           onCancel={onCancel}
-          display={pesoKg > 0 ? pesoKg.toFixed(1) : "—"}
+          display={pesoKg > 0 ? pesoKg.toFixed(1) : "â€”"}
           step="0.1"
         />
         <EditableMetric
@@ -603,7 +610,7 @@ function PhysicalDataSection({
           onStartEdit={() => onStartEdit("height")}
           onCommit={onCommit}
           onCancel={onCancel}
-          display={alturaCm > 0 ? String(alturaCm) : "—"}
+          display={alturaCm > 0 ? String(alturaCm) : "â€”"}
           step="1"
         />
         <MetricCard
@@ -612,13 +619,13 @@ function PhysicalDataSection({
           unitClass={imcInfo?.tone ?? "text-zinc-600"}
           icon={Heart}
           accentClass="text-emerald-400"
-          display={imc != null ? imc.toFixed(1) : "—"}
+          display={imc != null ? imc.toFixed(1) : "â€”"}
         />
       </div>
 
       <p className="mt-4 text-[10px] text-zinc-600 font-medium leading-relaxed">
-        Toque em peso ou altura para atualizar. O IMC é recalculado automaticamente e serve apenas
-        como referência.
+        Toque em peso ou altura para atualizar. O IMC Ã© recalculado automaticamente e serve apenas
+        como referÃªncia.
       </p>
     </section>
   );
@@ -634,7 +641,7 @@ function CredentialSection({ cref }: { cref: string }) {
         <div className="flex-1 min-w-0">
           <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">CREF</p>
           <p className="text-lg font-black italic uppercase text-white tracking-tight truncate">
-            {cref || "—"}
+            {cref || "â€”"}
           </p>
         </div>
       </div>
@@ -664,6 +671,166 @@ function AccountSection({ isPro, isSyncing, onUpgrade }: AccountSectionProps) {
   );
 }
 
+function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone?: "success" | "info") => void }) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteText, setDeleteText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetch("/api/user/export", { credentials: "include" });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        triggerToast(err.error || "Erro ao exportar dados.", "info");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "dados-pessoais.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      triggerToast("Dados exportados com sucesso!");
+    } catch {
+      triggerToast("Falha ao exportar dados.", "info");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (deleteText !== "EXCLUIR") return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/user/account", { method: "DELETE", credentials: "include" });
+      if (res.ok) {
+        triggerToast("Conta exclu\u00edda com sucesso.");
+        window.location.href = "/";
+      } else {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        triggerToast(err.error || "Erro ao excluir conta.", "info");
+      }
+    } catch {
+      triggerToast("Falha ao excluir conta.", "info");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+      setDeleteText("");
+    }
+  };
+
+  return (
+    <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
+      <SectionHeader eyebrow="LGPD" title="Dados pessoais" icon={ShieldCheck} />
+
+      <div className="mt-6 space-y-3">
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={isExporting}
+          className="w-full rounded-4xl border border-white/5 bg-zinc-950/60 hover:border-white/10 p-4 sm:p-5 flex items-center gap-4 text-left cursor-pointer transition-colors disabled:opacity-60"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0">
+            {isExporting ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">Portabilidade</p>
+            <p className="text-sm font-black italic uppercase text-white tracking-tight truncate">
+              {isExporting ? "Exportando\u2026" : "Exportar meus dados"}
+            </p>
+            <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
+              Baixe todos os seus dados pessoais (formato JSON)
+            </p>
+          </div>
+          <Download size={16} className="text-zinc-500 shrink-0" />
+        </button>
+
+        {!showDeleteConfirm ? (
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full rounded-4xl border border-rose-500/20 bg-rose-600/5 hover:bg-rose-600/10 p-4 sm:p-5 flex items-center gap-4 text-left cursor-pointer transition-colors"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-rose-600/20 text-rose-400 flex items-center justify-center shrink-0">
+              <X size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">Exclus\u00e3o</p>
+              <p className="text-sm font-black italic uppercase text-white tracking-tight truncate">
+                Excluir minha conta
+              </p>
+              <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
+                Seus dados ser\u00e3o anonimizados permanentemente
+              </p>
+            </div>
+            <ChevronRight size={16} className="text-zinc-500 shrink-0" />
+          </button>
+        ) : (
+          <div className="bg-rose-600/10 border border-rose-500/30 rounded-4xl p-5 space-y-4">
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              Esta a\u00e7\u00e3o <strong className="text-rose-400">anonimizar\u00e1 permanentemente</strong> todos os seus dados
+              pessoais. Seus treinos registrados ser\u00e3o mantidos mas desvinculados da sua identidade.
+              Esta opera\u00e7\u00e3o n\u00e3o pode ser desfeita.
+            </p>
+            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400">
+              Digite <span className="text-rose-400">EXCLUIR</span> para confirmar
+            </label>
+            <input
+              type="text"
+              value={deleteText}
+              onChange={(e) => setDeleteText(e.target.value)}
+              placeholder="EXCLUIR"
+              className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-rose-500 outline-none uppercase tracking-widest font-bold"
+            />
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => { setShowDeleteConfirm(false); setDeleteText(""); }}
+                disabled={isDeleting}
+                className="flex-1 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-black uppercase italic cursor-pointer transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleteText !== "EXCLUIR" || isDeleting}
+                className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:bg-zinc-700 text-white text-xs font-black uppercase italic cursor-pointer transition-colors disabled:cursor-not-allowed"
+              >
+                {isDeleting ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Confirmar exclus\u00e3o"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <Link
+          href="/PrivacyPage"
+          className="block w-full rounded-4xl border border-white/5 bg-zinc-950/60 hover:border-white/10 p-4 sm:p-5 flex items-center gap-4 text-left transition-colors"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-orange-600/20 text-orange-400 flex items-center justify-center shrink-0">
+            <Info size={20} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">LGPD</p>
+            <p className="text-sm font-black italic uppercase text-white tracking-tight truncate">
+              Pol\u00edtica de Privacidade
+            </p>
+            <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
+              Saiba como tratamos seus dados pessoais
+            </p>
+          </div>
+          <ChevronRight size={16} className="text-zinc-500 shrink-0" />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 function DevicesSection({
   bleState,
   bleDevice,
@@ -679,11 +846,11 @@ function DevicesSection({
 }) {
   const stateLabel: Record<ConnectionState, string> = {
     idle: "Conectar smartwatch",
-    scanning: "Buscando dispositivos…",
-    connecting: "Conectando…",
+    scanning: "Buscando dispositivosâ€¦",
+    connecting: "Conectandoâ€¦",
     connected: "Desconectar",
-    disconnected: "Conexão perdida",
-    unsupported: "Não suportado",
+    disconnected: "ConexÃ£o perdida",
+    unsupported: "NÃ£o suportado",
   };
 
   const isBusy = bleState === "scanning" || bleState === "connecting" || isSyncing;
@@ -726,16 +893,16 @@ function DevicesSection({
             </p>
             {isConnected && lastHR && (
               <p className="text-[10px] text-emerald-400 mt-0.5 font-bold">
-                {lastHR.bpm} BPM · {bleDevice?.battery != null ? `${bleDevice.battery}%` : "Conectado"}
+                {lastHR.bpm} BPM Â· {bleDevice?.battery != null ? `${bleDevice.battery}%` : "Conectado"}
               </p>
             )}
             {!isConnected && (
               <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
                 {bleState === "unsupported"
-                  ? "Bluetooth não disponível"
+                  ? "Bluetooth nÃ£o disponÃ­vel"
                   : isBusy
-                    ? "Aguardando dispositivos…"
-                    : "Relógios, monitores cardíacos e sensores"}
+                    ? "Aguardando dispositivosâ€¦"
+                    : "RelÃ³gios, monitores cardÃ­acos e sensores"}
               </p>
             )}
           </div>
@@ -751,7 +918,7 @@ function DevicesSection({
 
         <div className="bg-zinc-950/60 border border-white/5 rounded-3xl p-4">
           <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-2">
-            Dispositivos compatíveis
+            Dispositivos compatÃ­veis
           </p>
           <div className="flex flex-wrap gap-2">
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase italic tracking-wider text-zinc-300">
@@ -806,7 +973,7 @@ function PwaSection({
                 Instalar WEGYM
               </p>
               <p className="text-[10px] text-zinc-400 mt-0.5">
-                Adicione à tela inicial para acesso rápido
+                Adicione Ã  tela inicial para acesso rÃ¡pido
               </p>
             </div>
             <Download size={16} className="text-orange-400 shrink-0" />
@@ -818,10 +985,10 @@ function PwaSection({
             </div>
             <div className="flex-1">
               <p className="text-sm font-black italic uppercase text-white tracking-tight">
-                Disponível como app
+                DisponÃ­vel como app
               </p>
               <p className="text-[10px] text-zinc-500 mt-0.5">
-                No Chrome/Safari: menu &ldquo;Adicionar à tela inicial&rdquo;
+                No Chrome/Safari: menu &ldquo;Adicionar Ã  tela inicial&rdquo;
               </p>
             </div>
           </div>
@@ -854,8 +1021,8 @@ function PlanRow({ isPro, onUpgrade }: { isPro: boolean; onUpgrade: () => void }
         </p>
         <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
           {isPro
-            ? "Acesso completo a treinos com IA e análise biométrica."
-            : "Faça upgrade para treinos com IA e análise avançada."}
+            ? "Acesso completo a treinos com IA e anÃ¡lise biomÃ©trica."
+            : "FaÃ§a upgrade para treinos com IA e anÃ¡lise avanÃ§ada."}
         </p>
       </div>
       {!isPro && (
@@ -892,9 +1059,9 @@ function SyncRow({ isSyncing, onSync }: { isSyncing: boolean; onSync: () => void
           Dispositivos
         </p>
         <p className="text-sm font-black italic uppercase text-white tracking-tight truncate">
-          {isSyncing ? "Sincronizando…" : "Sincronizar agora"}
+          {isSyncing ? "Sincronizandoâ€¦" : "Sincronizar agora"}
         </p>
-        <p className="text-[10px] text-zinc-500 mt-0.5 truncate">Apple Health · Google Fit</p>
+        <p className="text-[10px] text-zinc-500 mt-0.5 truncate">Apple Health Â· Google Fit</p>
       </div>
       <ChevronRight size={16} className="text-zinc-600 shrink-0" />
     </button>
@@ -1108,7 +1275,7 @@ function EditableMetric({
         >
           <p className="text-3xl font-black italic text-white leading-none">
             {display}
-            {display !== "—" && (
+            {display !== "â€”" && (
               <span className="text-sm font-bold text-zinc-500 ml-1.5">{unit}</span>
             )}
           </p>

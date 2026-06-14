@@ -21,6 +21,7 @@ import {
   CalendarDays,
   Users,
   UserPlus,
+  ShieldCheck,
 } from "lucide-react";
 import { MODALITY_OPTIONS } from "../../constants/modalities";
 
@@ -99,6 +100,7 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
   const isOnPersonalHome = isOnPersonal && personalView === "home";
   const isOnPersonalStudents = isOnPersonal && personalView === "students";
   const isOnPersonalCreate = isOnPersonal && personalView === "create";
+  const isOnPrivacy = pathname === "/PrivacyPage";
 
 
   const effectiveCollapsed = hydrated ? collapsed : false;
@@ -394,6 +396,13 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
               showLabels={showLabels}
               active={isOnProfile}
               onClick={handleGoProfile}
+            />
+            <NavItem
+              icon={ShieldCheck}
+              label="Privacidade"
+              showLabels={showLabels}
+              active={isOnPrivacy}
+              onClick={() => handleNavigate("/PrivacyPage")}
             />
           </>
         )}

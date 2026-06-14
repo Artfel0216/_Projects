@@ -1,0 +1,6 @@
+-- AlterTable: Add LGPD consent fields to users table
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "termsAcceptedAt" TIMESTAMPTZ;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "privacyAcceptedAt" TIMESTAMPTZ;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "dataConsentAt" TIMESTAMPTZ;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "markedForDeletionAt" TIMESTAMPTZ;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "anonymizedAt" TIMESTAMPTZ;

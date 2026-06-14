@@ -23,7 +23,8 @@ export async function POST(req: Request) {
     const {
       userType, password, name, cpf, cep, city, state,
       age, sex, height, weight, experienceLevel,
-      injury, healthIssues, medications, cref
+      injury, healthIssues, medications, cref,
+      termsAccepted, privacyAccepted
     } = body;
 
     const email = String(body.email ?? "").trim().toLowerCase();
@@ -31,6 +32,12 @@ export async function POST(req: Request) {
     if (!email || !password || !userType || !name) {
       return NextResponse.json({ error: "Dados obrigatórios ausentes." }, { status: 400 });
     }
+
+    if (!termsAccepted || !privacyAccepted) {
+      return NextResponse.json({ error: "Você precisa aceitar os Termos de Uso e a Política de Privacidade." }, { status: 400 });
+    }
+
+    const now = new Date();
 
     if (userType !== "atleta" && userType !== "personal") {
       return NextResponse.json({ error: "Tipo de usuário inválido." }, { status: 400 });
@@ -53,6 +60,9 @@ export async function POST(req: Request) {
           email,
           passwordHash,
           role: "atleta",
+          termsAcceptedAt: now,
+          privacyAcceptedAt: now,
+          dataConsentAt: now,
           athlete: {
             create: {
               name: name.trim(),
@@ -96,6 +106,9 @@ export async function POST(req: Request) {
           email,
           passwordHash,
           role: "personal",
+          termsAcceptedAt: now,
+          privacyAcceptedAt: now,
+          dataConsentAt: now,
           personal: {
             create: {
               name: name.trim(),

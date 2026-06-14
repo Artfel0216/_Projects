@@ -17,7 +17,7 @@ import { INITIAL_WEEKLY_PLAN } from '../constants/plans';
 import { getSuggestedCardioBlock } from '../utils/calculations';
 import type { DayPlan, TrainingModalityId, ModalitySessionEntry, AIChatMessage, Exercise } from '../types/training';
 import { parseKmInput, formatDurationHMS } from '../utils/training-helpers';
-
+import { AuthGuard } from '../components/auth/AuthGuard';
 
 
 
@@ -341,6 +341,7 @@ const filtered = ALL_AVAILABLE_EXERCISES.filter(ex =>
 
 
   return (
+    <AuthGuard>
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 relative overflow-hidden antialiased font-sans">
       <button
   type="button"
@@ -792,5 +793,6 @@ const filtered = ALL_AVAILABLE_EXERCISES.filter(ex =>
         )}
       </AnimatePresence>
     </div>
+    </AuthGuard>
   );
 }

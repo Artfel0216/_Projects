@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AuthGuard } from '../components/auth/AuthGuard';
 import {
   Users, Calendar, TrendingUp, CalendarDays, Plus, Award,
   ChevronRight, Target, Dumbbell, Send, X, Bot, Trash2,
@@ -438,6 +439,7 @@ const handleChat = async () => {
 };
 
   return (
+    <AuthGuard>
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 relative overflow-hidden antialiased font-sans">
       <div className="fixed top-[-10%] left-[-5%] w-96 h-96 bg-orange-600/5 rounded-full blur-[120px] pointer-events-none" />
 
@@ -916,5 +918,6 @@ const handleChat = async () => {
       </AnimatePresence>
 
     </div>
+    </AuthGuard>
   );
 }

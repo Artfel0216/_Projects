@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { getSession, signIn } from 'next-auth/react';
+import { getSession, signIn, useSession } from 'next-auth/react';
 import { Eye, EyeOff, Loader2, Dumbbell, Mail, Lock, User, IdCard, MapPin, ExternalLink, ChevronDown, Heart, Activity, CheckCircle2 } from 'lucide-react';
 import { AnimatedBackground } from '../components/ui/AnimatedBackground';
 import { EXPERIENCE_OPTIONS } from '../constants/options';
@@ -14,11 +14,23 @@ import { maskCEP, maskCPF } from '../utils/masks';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.role) {
+      router.replace(
+        session.user.role === "personal" ? "/PersonalPage" : "/HomePage"
+      );
+    }
+  }, [status, session, router]);
 
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   const [userType, setUserType] = useState<'atleta' | 'personal'>('atleta');
   const [isVerifyingCref, setIsVerifyingCref] = useState<boolean>(false);
@@ -105,6 +117,14 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
     return setError("As senhas não coincidem.");
   }
 
+  if (!isLogin && !termsAccepted) {
+    return setError("Você precisa aceitar os Termos de Uso.");
+  }
+
+  if (!isLogin && !privacyAccepted) {
+    return setError("Você precisa aceitar a Política de Privacidade.");
+  }
+
   if (!isLogin && userType === 'personal' && !crefVerified) {
     return setError("Valide o CREF antes de continuar.");
   }
@@ -136,7 +156,7 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, userType })
+        body: JSON.stringify({ ...formData, userType, termsAccepted, privacyAccepted })
       });
 
       if (!res.ok) {
@@ -162,6 +182,14 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
   const selectClass = "w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all appearance-none cursor-pointer";
   const textareaClass = "w-full px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-800/50 text-white focus:border-orange-500 outline-none transition-all resize-none";
   const sectionTitleClass = "md:col-span-2 text-xs font-black text-orange-500 uppercase tracking-widest pt-2 pb-1 border-b border-zinc-800 flex items-center gap-2";
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-t-orange-600 border-zinc-800 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 sm:p-8 selection:bg-orange-500 selection:text-white relative overflow-hidden">
@@ -434,14 +462,51 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
                     )}
 
                     {(userType === 'atleta' || (userType === 'personal' && crefVerified)) && (
-                      <motion.button
-                        disabled={isLoading}
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
-                        className="md:col-span-2 w-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic mt-4 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
-                      >
-                        {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-black" /> : "Finalizar Cadastro"}
-                      </motion.button>
+                      <>
+                        <div className="md:col-span-2 space-y-3 pt-2 border-t border-zinc-800">
+                          <p className={sectionTitleClass}>Privacidade</p>
+                          <label className="flex items-start gap-3 cursor-pointer text-left">
+                            <input
+                              type="checkbox"
+                              checked={termsAccepted}
+                              onChange={(e) => setTermsAccepted(e.target.checked)}
+                              className="mt-1 rounded border-zinc-600 accent-orange-500"
+                              required
+                            />
+                            <span className="text-xs text-zinc-400 leading-relaxed">
+                              Aceito os{' '}
+                              <a href="/TermsPage" target="_blank" className="text-orange-500 underline hover:text-orange-400">
+                                Termos de Uso
+                              </a>{' '}
+                              e autorizo o tratamento dos meus dados conforme a{' '}
+                              <a href="/PrivacyPage" target="_blank" className="text-orange-500 underline hover:text-orange-400">
+                                Política de Privacidade
+                              </a>{' '}
+                              (LGPD). <span className="text-red-500">*</span>
+                            </span>
+                          </label>
+                          <label className="flex items-start gap-3 cursor-pointer text-left">
+                            <input
+                              type="checkbox"
+                              checked={privacyAccepted}
+                              onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                              className="mt-1 rounded border-zinc-600 accent-orange-500"
+                              required
+                            />
+                            <span className="text-xs text-zinc-400 leading-relaxed">
+                              Desejo receber comunicações e dicas de treino por e-mail.
+                            </span>
+                          </label>
+                        </div>
+                        <motion.button
+                          disabled={isLoading}
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          className="md:col-span-2 w-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic mt-4 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
+                        >
+                          {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-black" /> : "Finalizar Cadastro"}
+                        </motion.button>
+                      </>
                     )}
                   </form>
                 </motion.div>

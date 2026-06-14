@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { AuthGuard } from '../components/auth/AuthGuard';
 import {
   Flame, Clock, Trophy, MapPin, Activity,
   ChevronRight, Loader2, Sparkles, Calendar, Zap, History, Dumbbell, Wind, Bike,
@@ -139,6 +140,7 @@ export default function HomePage() {
   }, [stats]);
 
   return (
+    <AuthGuard>
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 relative overflow-hidden antialiased font-sans">
       <div className="fixed top-[-10%] right-[-5%] w-96 h-96 bg-orange-600/10 rounded-full blur-[140px] pointer-events-none" />
       <div className="fixed bottom-[-10%] left-[-5%] w-80 h-80 bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
@@ -426,6 +428,7 @@ export default function HomePage() {
         </div>
       )}
     </div>
+    </AuthGuard>
   );
 }
 

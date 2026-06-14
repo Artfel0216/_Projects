@@ -8,6 +8,7 @@ import {
   Dumbbell, Heart
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { AuthGuard } from '../components/auth/AuthGuard';
 
 export default function StatsPage() {
   const router = useRouter();
@@ -26,6 +27,7 @@ export default function StatsPage() {
   ];
 
   return (
+    <AuthGuard>
     <div className="min-h-screen bg-zinc-950 text-white pb-32 font-sans selection:bg-orange-500/30">
       
       <header className="sticky top-0 z-50 bg-zinc-950/60 backdrop-blur-xl border-b border-white/5 px-6 py-5 flex items-center justify-between">
@@ -95,5 +97,6 @@ export default function StatsPage() {
       </main>
 
     </div>
+    </AuthGuard>
   );
 }

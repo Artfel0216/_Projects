@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { AuthGuard } from '../components/auth/AuthGuard';
 
 export default function ProPage() {
   const router = useRouter();
@@ -60,6 +61,7 @@ export default function ProPage() {
   ];
 
   return (
+    <AuthGuard>
     <div className="min-h-screen bg-zinc-950 text-white pb-20 font-sans selection:bg-orange-500/30">
       
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
@@ -167,5 +169,6 @@ export default function ProPage() {
       </main>
 
     </div>
+    </AuthGuard>
   );
 }

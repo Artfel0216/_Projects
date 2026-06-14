@@ -2,18 +2,17 @@ import "./globals.css";
 import { SessionProviderWrapper } from "./components/providers/SessionProviderWrapper";
 import { AppShell } from "./components/ui/AppShell";
 import { PwaSync } from "./components/PwaSync";
+import { ConsentBanner } from "./components/lgpd/ConsentBanner";
 
 export const metadata = {
   title: "WEGYM",
   description: "Plataforma de treinos inteligente — academia, cardio e performance",
   manifest: "/manifest.json",
-  themeColor: "#ea580c",
   appleWebApp: {
     capable: true,
     title: "WEGYM",
     statusBarStyle: "black-translucent",
   },
-  viewport: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no",
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
@@ -24,6 +23,15 @@ export const metadata = {
     { rel: "icon", url: "/icon-192.svg" },
     { rel: "apple-touch-icon", url: "/icon-192.svg" },
   ],
+};
+
+export const viewport = {
+  themeColor: "#ea580c",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -49,6 +57,7 @@ export default function RootLayout({
         <SessionProviderWrapper>
           <AppShell>{children}</AppShell>
         </SessionProviderWrapper>
+        <ConsentBanner />
         <PwaSync />
       </body>
     </html>
