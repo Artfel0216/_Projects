@@ -810,7 +810,7 @@ function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone
 
         <Link
           href="/PrivacyPage"
-          className="block w-full rounded-4xl border border-white/5 bg-zinc-950/60 hover:border-white/10 p-4 sm:p-5 flex items-center gap-4 text-left transition-colors"
+          className="w-full rounded-4xl border border-white/5 bg-zinc-950/60 hover:border-white/10 p-4 sm:p-5 flex items-center gap-4 text-left transition-colors"
         >
           <div className="w-12 h-12 rounded-2xl bg-orange-600/20 text-orange-400 flex items-center justify-center shrink-0">
             <Info size={20} />
