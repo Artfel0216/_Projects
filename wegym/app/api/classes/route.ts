@@ -1,23 +1,39 @@
-import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { authenticate, handleError, json, cache } from '@/lib/api-utils';
 
-export const runtime = 'edge';
-export const revalidate = 60;
-
-const CLASSES = [
-  { id: '1', day: 'Seg', date: '21/04', time: '07:00', studentId: 's1', type: 'Hipertrofia', status: 'confirmed' },
-  { id: '2', day: 'Ter', date: '22/04', time: '18:00', studentId: 's1', type: 'Powerlifting', status: 'pending' }
-];
+export const runtime = 'nodejs';
 
 export async function GET() {
-  return NextResponse.json(
-    CLASSES,
-    {
-      status: 200,
-      headers: {
-        'Cache-Control': 'public, max-age=0, s-maxage=60, stale-while-revalidate=120',
-        'CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
-        'Vercel-CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'
-      }
-    }
-  );
+  try {
+    const session = await authenticate();
+    const userRole = (session.user as { role?: string }).role;
+    const userId = session.user.id;
+
+    const cacheKey = `classes:${userId}:${userRole}`;
+
+    const classes = await cache.getOrSet(
+      cacheKey,
+      () =>
+        prisma.weeklyClass.findMany({
+          where: userRole === 'personal'
+            ? { athlete: { personal: { userId } } }
+            : { athlete: { userId } },
+          orderBy: { date: 'asc' },
+          select: {
+            id: true,
+            day: true,
+            date: true,
+            time: true,
+            type: true,
+            status: true,
+            athlete: { select: { id: true, name: true } },
+          },
+        }),
+      30,
+    );
+
+    return json(classes, 200, 30);
+  } catch (error) {
+    return handleError(error);
+  }
 }

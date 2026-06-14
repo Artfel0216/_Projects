@@ -1,10 +1,12 @@
+// Rate limiting is handled globally in proxy.ts.
+// This file is kept as a shared import for per-route overrides if needed,
+// but all general API rate limiting is done at the proxy level.
+
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 
 const url = process.env.UPSTASH_REDIS_REST_URL;
 const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-type LimitResult = { success: boolean };
 
 const redis = url && token ? new Redis({ url, token }) : null;
 
@@ -19,7 +21,7 @@ const upstashLimiter = redis
 let warnedUnreachable = false;
 
 export const ratelimit = {
-  async limit(identifier: string): Promise<LimitResult> {
+  async limit(identifier: string): Promise<{ success: boolean }> {
     if (!upstashLimiter) return { success: true };
     try {
       const res = await upstashLimiter.limit(identifier);

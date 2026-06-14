@@ -13,12 +13,6 @@ export const metadata = {
     title: "WEGYM",
     statusBarStyle: "black-translucent",
   },
-  other: {
-    "mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-status-bar-style": "black-translucent",
-    "msapplication-tap-highlight": "no",
-  },
   icons: [
     { rel: "icon", url: "/icon-192.svg" },
     { rel: "apple-touch-icon", url: "/icon-192.svg" },
@@ -34,11 +28,7 @@ export const viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
       <head>
@@ -52,6 +42,7 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/icon-192.svg" />
         <link rel="apple-touch-icon" href="/icon-192.svg" />
         <meta name="apple-mobile-web-app-title" content="WEGYM" />
+        <link rel="preconnect" href="https://ui-avatars.com" />
       </head>
       <body className="overscroll-none touch-callout-none select-none">
         <SessionProviderWrapper>

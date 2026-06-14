@@ -1,51 +1,26 @@
-import { MercadoPagoConfig, Payment } from 'mercadopago';
-import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { authenticate, handleError } from '@/lib/api-utils';
+import { paymentService } from '@/lib/services/payment.service';
+import { paymentSchema } from '@/lib/validation';
+import { ValidationError } from '@/lib/errors';
 
-const mpToken = process.env.MP_ACCESS_TOKEN;
-if (!mpToken) {
-  throw new Error("MP_ACCESS_TOKEN não definido no .env");
-}
+export const runtime = 'nodejs';
 
-const client = new MercadoPagoConfig({
-  accessToken: mpToken,
-  options: { timeout: 5000 }
-});
-
-const paymentInstance = new Payment(client);
+export const maxDuration = 15;
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
-    }
+    await authenticate();
 
     const body = await request.json();
-    const { transaction_amount, token, installments, payment_method_id, issuer_id, payer } = body;
-
-    if (!transaction_amount || !token || !installments || !payment_method_id || !payer?.email) {
-      return NextResponse.json({ error: 'Dados de pagamento incompletos' }, { status: 422 });
+    const parsed = paymentSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new ValidationError('Dados de pagamento incompletos', parsed.error.issues);
     }
 
-    const { status, id } = await paymentInstance.create({
-      body: {
-        transaction_amount,
-        token,
-        description: 'Plano Wegym Pro',
-        installments: Number(installments),
-        payment_method_id,
-        issuer_id,
-        payer: { email: payer.email }
-      }
-    });
+    const result = await paymentService.process(parsed.data);
 
-    return NextResponse.json({ status, id }, { status: 200 });
-
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Erro no pagamento';
-    console.error("Erro no pagamento:", message);
-    return NextResponse.json({ error: message }, { status: 400 });
+    return Response.json(result);
+  } catch (error) {
+    return handleError(error);
   }
 }

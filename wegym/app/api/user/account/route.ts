@@ -1,34 +1,19 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { userService } from '@/lib/services/user.service';
+import { authenticate, handleError, cache } from '@/lib/api-utils';
+
+export const runtime = 'nodejs';
 
 export async function DELETE() {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
-  }
-
   try {
-    const userId = session.user.id;
+    const session = await authenticate();
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        email: `${userId}@deleted.wegym`,
-        passwordHash: '',
-        role: 'atleta',
-        termsAcceptedAt: null,
-        privacyAcceptedAt: null,
-        dataConsentAt: null,
-        markedForDeletionAt: null,
-        anonymizedAt: new Date(),
-      },
-    });
+    await cache.del(`profile:${session.user.id}`);
+    await cache.delPattern(`classes:${session.user.id}:*`);
 
-    return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: 'Erro ao excluir conta' }, { status: 500 });
+    const result = await userService.deleteAccount(session.user.id);
+    return NextResponse.json(result);
+  } catch (error) {
+    return handleError(error);
   }
 }

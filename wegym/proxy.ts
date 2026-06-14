@@ -3,31 +3,36 @@ import type { NextRequest } from 'next/server';
 
 const PUBLIC_ROUTES = new Set(['/', '/LoginPage', '/RegisterPage']);
 
+const SESSION_COOKIES = [
+  'next-auth.session-token',
+  '__Secure-next-auth.session-token',
+  'authjs.session-token',
+  '__Secure-authjs.session-token',
+];
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Skip for static and API - pass through immediately
   if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
-    pathname === '/favicon.ico' ||
-    pathname.includes('.')
+    pathname.startsWith('/api/') ||
+    pathname === '/favicon.ico'
   ) {
     return NextResponse.next();
   }
 
-  const isAuthenticated =
-    request.cookies.has('next-auth.session-token') ||
-    request.cookies.has('__Secure-next-auth.session-token') ||
-    request.cookies.has('authjs.session-token') ||
-    request.cookies.has('__Secure-authjs.session-token');
+  // Page authentication
+  const hasSession = SESSION_COOKIES.some(name => request.cookies.has(name));
+  const isPublic = PUBLIC_ROUTES.has(pathname);
 
-  const isPublicRoute = PUBLIC_ROUTES.has(pathname);
-
-  if (!isAuthenticated && !isPublicRoute) {
-    return NextResponse.redirect(new URL('/LoginPage', request.url));
+  if (!hasSession && !isPublic) {
+    const loginUrl = new URL('/LoginPage', request.url);
+    loginUrl.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  if (isAuthenticated && isPublicRoute && pathname !== '/') {
+  if (hasSession && isPublic && pathname !== '/') {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -35,5 +40,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/:path*'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.json).*)'],
 };
