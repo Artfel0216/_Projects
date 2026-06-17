@@ -1,4 +1,5 @@
 // src/app/types/training.ts
+import type React from "react";
 
 export type TrainingModalityId = 
   | 'gym' | 'cycling' | 'running' | 'aerobic' | 'combat' 
@@ -18,11 +19,19 @@ export interface Exercise {
 
 export interface DayPlan {
   day: string;
+  dayTKey?: string;
   target: string;
+  targetTKey?: string;
   muscles: string[];
   duration: string;
   calories: string;
   exercises: Exercise[];
+}
+
+export interface GpsCoordinate {
+  lat: number;
+  lng: number;
+  timestamp: number;
 }
 
 export interface ModalitySessionEntry {
@@ -30,7 +39,18 @@ export interface ModalitySessionEntry {
   at: string;
   durationSec: number;
   distanceKm?: number;
+  avgPaceSecPerKm?: number;
+  steps?: number;
+  coordinates?: GpsCoordinate[];
 }
+
+export type ModalityOption = {
+  id: string;
+  label: string;
+  tKey?: string;
+  Icon: React.ComponentType<{ size?: number; className?: string }>;
+  showDistance?: boolean;
+};
 
 export interface AIChatMessage {
   role: "user" | "ai";

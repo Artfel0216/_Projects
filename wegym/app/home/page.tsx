@@ -15,6 +15,7 @@ import {
 } from '@/utils/home-stats';
 import { formatDurationHMS } from '@/utils/training-helpers';
 import { HomeStats } from '@/types/home';
+import { useTranslations } from '@/lib/i18n/hook';
 
 type ProfileLite = {
   name: string;
@@ -24,45 +25,46 @@ type ProfileLite = {
 };
 
 const EXPERIENCE_LABEL: Record<string, string> = {
-  iniciante: 'Iniciante',
-  intermediario: 'Intermediário',
-  avancado: 'Avançado',
+  iniciante: 'experience.iniciante',
+  intermediario: 'experience.intermediario',
+  avancado: 'experience.avancado',
 };
 
 type ModalityOption = {
   id: string;
+  tKey: string;
   label: string;
   Icon: React.ComponentType<{ size?: number; className?: string }>;
 };
-
-const MODALITY_OPTIONS: ModalityOption[] = [
-  { id: 'gym', label: 'Academia', Icon: Dumbbell },
-  { id: 'running', label: 'Corrida', Icon: Activity },
-  { id: 'cycling', label: 'Ciclismo', Icon: Bike },
-  { id: 'aerobic', label: 'Aeróbico', Icon: Wind },
-];
 
 const QUICK_MODALITY_IDS = ['gym', 'running', 'cycling', 'aerobic'] as const;
 
 // Key used to persist sessions in localStorage
 const MODALITY_STORAGE_KEY = 'wegym:modality_sessions';
 
-const STAT_FORMATTERS = {
-  hours: (sec: number) => {
-    if (sec <= 0) return '0h';
-    const h = Math.floor(sec / 3600);
-    const m = Math.round((sec % 3600) / 60);
-    if (h === 0) return `${m} min`;
-    return m === 0 ? `${h}h` : `${h}h ${m}m`;
-  },
-  km: (km: number) => (km > 0 ? `${km.toFixed(1)} km` : '—'),
-};
-
 export default function HomePage() {
   const router = useRouter();
   const [stats, setStats] = useState<HomeStats | null>(null);
   const [profile, setProfile] = useState<ProfileLite | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const { t } = useTranslations();
+  const modalityOptions: ModalityOption[] = [
+    { id: 'gym', tKey: 'modality.gym', label: 'Musculação', Icon: Dumbbell },
+    { id: 'running', tKey: 'modality.running', label: 'Corrida', Icon: Activity },
+    { id: 'cycling', tKey: 'modality.cycling', label: 'Ciclismo', Icon: Bike },
+    { id: 'aerobic', tKey: 'modality.aerobic', label: 'Aeróbico', Icon: Wind },
+  ];
+
+  const STAT_FORMATTERS = {
+    hours: (sec: number) => {
+      if (sec <= 0) return t('home.zeroHours');
+      const h = Math.floor(sec / 3600);
+      const m = Math.round((sec % 3600) / 60);
+      if (h === 0) return `${m} ${t('common.minAbbr')}`;
+      return m === 0 ? `${h}${t('common.hourAbbr')}` : `${h}${t('common.hourAbbr')} ${m}${t('common.minAbbr')}`;
+    },
+    km: (km: number) => (km > 0 ? `${km.toFixed(1)} ${t('common.kmUnit')}` : t('common.dash')),
+  };
 
   useEffect(() => {
     router.prefetch('/training');
@@ -89,13 +91,13 @@ export default function HomePage() {
         }
         if (!res.ok) return;
         const data = await res.json();
-        const name = data.athlete?.name ?? data.personal?.name ?? 'Atleta';
+        const name = data.athlete?.name ?? data.personal?.name ?? t('common.athlete');
         const expRaw = data.athlete?.experienceLevel ?? '';
         setProfile({
           name,
           role: data.role,
           avatar: data.avatarPlaceholder,
-          experienceLabel: EXPERIENCE_LABEL[expRaw] ?? '',
+          experienceLabel: EXPERIENCE_LABEL[expRaw] ? t(EXPERIENCE_LABEL[expRaw]) : '',
         });
       } catch {
         // ignore aborts / network errors – page still works with mock stats
@@ -107,22 +109,22 @@ export default function HomePage() {
   }, [router]);
 
   const firstName = useMemo(
-    () => (profile?.name ? profile.name.split(' ')[0] : 'Atleta'),
+    () => (profile?.name ? profile.name.split(' ')[0] : t('common.athlete')),
     [profile?.name],
   );
 
   const greeting = useMemo(() => {
     const h = new Date().getHours();
-    if (h < 6) return 'Boa madrugada';
-    if (h < 12) return 'Bom dia';
-    if (h < 19) return 'Boa tarde';
-    return 'Boa noite';
+    if (h < 6) return t('greeting.earlyMorning');
+    if (h < 12) return t('greeting.morning');
+    if (h < 19) return t('greeting.afternoon');
+    return t('greeting.night');
   }, []);
 
   const quickModalities = useMemo(
     () =>
-      QUICK_MODALITY_IDS.map((id) => MODALITY_OPTIONS.find((m) => m.id === id))
-        .filter((m): m is (typeof MODALITY_OPTIONS)[number] => !!m),
+      QUICK_MODALITY_IDS.map((id) => modalityOptions.find((m) => m.id === id))
+        .filter((m): m is (typeof modalityOptions)[number] => !!m),
     [],
   );
 
@@ -159,7 +161,7 @@ export default function HomePage() {
               {greeting}
             </span>
             <h1 className="text-base sm:text-lg font-black italic uppercase tracking-tighter text-white truncate leading-tight">
-              {loadingProfile ? '...' : firstName}
+              {loadingProfile ? t('common.loading') : firstName}
             </h1>
           </div>
         </div>
@@ -170,7 +172,7 @@ export default function HomePage() {
         >
           <Zap size={14} className="text-white" />
           <span className="text-[10px] sm:text-[11px] font-black uppercase italic text-white">
-            Treinar
+            {t('home.train')}
           </span>
         </button>
       </header>
@@ -178,30 +180,30 @@ export default function HomePage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 space-y-8 relative z-10">
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <StatCard
-            label="Sessões totais"
-            value={stats ? String(stats.totalSessions) : '—'}
-            sub={stats && stats.weekSessions > 0 ? `+${stats.weekSessions} esta semana` : 'Comece a treinar'}
+            label={t('home.totalSessions')}
+            value={stats ? String(stats.totalSessions) : t('common.dash')}
+            sub={stats && stats.weekSessions > 0 ? `+${stats.weekSessions} ${t('home.thisWeek')}` : t('home.startTraining')}
             icon={Activity}
             accent="orange"
           />
           <StatCard
-            label="Tempo treinado"
-            value={stats ? STAT_FORMATTERS.hours(stats.totalSec) : '—'}
-            sub={stats && stats.weekSec > 0 ? `${STAT_FORMATTERS.hours(stats.weekSec)} na semana` : 'Tempo registrado'}
+            label={t('home.totalTime')}
+            value={stats ? STAT_FORMATTERS.hours(stats.totalSec) : t('common.dash')}
+            sub={stats && stats.weekSec > 0 ? `${STAT_FORMATTERS.hours(stats.weekSec)} ${t('home.inTheWeek')}` : t('home.registeredTime')}
             icon={Clock}
             accent="blue"
           />
           <StatCard
-            label="Distância total"
-            value={stats ? STAT_FORMATTERS.km(stats.totalKm) : '—'}
-            sub="Corrida, ciclismo, etc."
+            label={t('home.totalDistance')}
+            value={stats ? STAT_FORMATTERS.km(stats.totalKm) : t('common.dash')}
+            sub={t('home.distanceSubtitle')}
             icon={MapPin}
             accent="emerald"
           />
           <StatCard
-            label="Dias ativos"
-            value={stats ? String(stats.activeDays) : '—'}
-            sub={stats && stats.activeDays > 0 ? 'Constância é tudo' : 'Comece hoje'}
+            label={t('home.activeDays')}
+            value={stats ? String(stats.activeDays) : t('common.dash')}
+            sub={stats && stats.activeDays > 0 ? t('home.consistency') : t('home.startToday')}
             icon={Flame}
             accent="rose"
           />
@@ -212,10 +214,10 @@ export default function HomePage() {
             <div className="flex items-start justify-between gap-4 mb-6">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-1">
-                  Esportes mais praticados
+                  {t('home.topSports')}
                 </p>
                 <h2 className="text-lg sm:text-xl font-black italic uppercase tracking-tighter text-white leading-tight">
-                  Seu ranking pessoal
+                  {t('home.personalRanking')}
                 </h2>
               </div>
               <Trophy size={20} className="text-orange-500 opacity-50 shrink-0" />
@@ -224,15 +226,15 @@ export default function HomePage() {
             {topModalitiesWithRatio.length === 0 ? (
               <EmptyState
                 icon={Sparkles}
-                title="Nenhum esporte registrado ainda"
-                description="Inicie uma sessão na aba Treinos e seus esportes mais praticados aparecem aqui."
-                actionLabel="Ir para treinos"
+                title={t('home.noSports')}
+                description={t('home.noSportsDescription')}
+                actionLabel={t('home.goToTraining')}
                 onAction={() => router.push('/training')}
               />
             ) : (
               <div className="space-y-4">
                 {topModalitiesWithRatio.map((m, idx) => {
-                  const meta = MODALITY_OPTIONS.find((opt) => opt.id === m.id);
+                  const meta = modalityOptions.find((opt) => opt.id === m.id);
                   const Icon = meta?.Icon ?? Activity;
                   return (
                     <button
@@ -247,15 +249,15 @@ export default function HomePage() {
                         </div>
                         <div className="flex-1 min-w-0 flex items-baseline justify-between gap-2">
                           <span className="font-black italic uppercase text-sm text-white truncate">
-                            {m.label}
+                            {t(`modality.${m.id}`)}
                           </span>
                           <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 shrink-0">
-                            {m.count} {m.count === 1 ? 'sessão' : 'sessões'}
+                            {m.count} {m.count === 1 ? t('home.sessionSingular') : t('home.sessionPlural')}
                           </span>
                         </div>
                         {idx === 0 && (
                           <span className="text-[8px] font-black uppercase tracking-widest text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-full border border-orange-500/20">
-                            Top
+                            {t('home.top')}
                           </span>
                         )}
                       </div>
@@ -278,15 +280,15 @@ export default function HomePage() {
             <div className="relative z-10 space-y-5">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/70 mb-2">
-                  Esporte favorito
+                  {t('home.favoriteSport')}
                 </p>
                 {stats?.favoriteModality ? (
                   <h3 className="text-3xl sm:text-4xl font-black italic uppercase tracking-tighter text-white leading-none">
-                    {stats.favoriteModality.label}
+                    {t(`modality.${stats.favoriteModality.id}`)}
                   </h3>
                 ) : (
                   <h3 className="text-xl font-black italic uppercase tracking-tighter text-white/80 leading-tight">
-                    Descubra o seu
+                    {t('home.discoverYours')}
                   </h3>
                 )}
               </div>
@@ -295,7 +297,7 @@ export default function HomePage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-widest text-white/60">
-                      Sessões
+                      {t('home.sessions')}
                     </p>
                     <p className="text-xl font-black italic text-white">
                       {stats.favoriteModality.count}
@@ -303,7 +305,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-widest text-white/60">
-                      Tempo
+                      {t('home.time')}
                     </p>
                     <p className="text-xl font-black italic text-white">
                       {STAT_FORMATTERS.hours(stats.favoriteModality.totalSec)}
@@ -312,7 +314,7 @@ export default function HomePage() {
                 </div>
               ) : (
                 <p className="text-xs text-white/80 leading-relaxed font-medium">
-                  Treine em diferentes modalidades e descubra qual mais combina com você.
+                  {t('home.favoriteSportDescription')}
                 </p>
               )}
 
@@ -323,7 +325,7 @@ export default function HomePage() {
                 }
                 className="bg-white text-orange-600 px-4 py-2.5 rounded-xl font-black uppercase italic text-[10px] flex items-center gap-2 hover:scale-105 transition-transform shadow-xl cursor-pointer"
               >
-                Treinar agora
+                {t('home.trainNow')}
                 <ChevronRight size={14} />
               </button>
             </div>
@@ -334,10 +336,10 @@ export default function HomePage() {
         <section>
           <div className="flex items-baseline justify-between mb-4">
             <h2 className="text-lg sm:text-xl font-black italic uppercase tracking-tighter text-white">
-              Início rápido
+              {t('home.quickStart')}
             </h2>
             <span className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
-              Escolha uma modalidade
+              {t('home.chooseModality')}
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -355,10 +357,10 @@ export default function HomePage() {
                   </div>
                   <div className="text-left">
                     <p className="text-xs font-black italic uppercase tracking-tighter text-white leading-tight">
-                      {m.label}
+                      {t(m.tKey ?? m.label)}
                     </p>
                     <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mt-1">
-                      Iniciar
+                      {t('home.start')}
                     </p>
                   </div>
                 </button>
@@ -371,10 +373,10 @@ export default function HomePage() {
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-1">
-                Atividade recente
+                {t('home.recentActivity')}
               </p>
               <h2 className="text-lg sm:text-xl font-black italic uppercase tracking-tighter text-white leading-tight">
-                Últimas sessões
+                {t('home.recentSessions')}
               </h2>
             </div>
             <History size={20} className="text-orange-500 opacity-50 shrink-0" />
@@ -383,13 +385,13 @@ export default function HomePage() {
           {!stats || stats.recentSessions.length === 0 ? (
             <EmptyState
               icon={Calendar}
-              title="Sem sessões registradas ainda"
-              description="Quando você finalizar uma sessão de treino na aba Treinos, ela aparece aqui."
+              title={t('home.noSessions')}
+              description={t('home.noSessionsDescription')}
             />
           ) : (
             <ul className="divide-y divide-white/5">
               {stats.recentSessions.map((s) => {
-                const meta = MODALITY_OPTIONS.find((opt) => opt.id === s.modalityId);
+                const meta = modalityOptions.find((opt) => opt.id === s.modalityId);
                 const Icon = meta?.Icon ?? Activity;
 
                 return (
@@ -399,18 +401,18 @@ export default function HomePage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-black italic uppercase text-white truncate">
-                        {s.modalityLabel}
+{t(`modality.${s.modalityId}`)}
                       </p>
                       <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">
-                        {formatRelative(s.at)} · {formatDurationHMS(s.durationSec)}
-                        {s.distanceKm != null ? ` · ${s.distanceKm} km` : ''}
+                        {formatRelative(s.at, t)} · {formatDurationHMS(s.durationSec)}
+                        {s.distanceKm != null ? ` · ${s.distanceKm}${t('common.kmUnit')}` : ''}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => goModality(s.modalityId)}
                       className="text-zinc-600 hover:text-orange-500 transition-colors shrink-0 cursor-pointer"
-                      aria-label={`Repetir ${s.modalityLabel}`}
+                      aria-label={`${t('home.repeat')} ${t(`modality.${s.modalityId}`)}`}
                     >
                       <ChevronRight size={16} />
                     </button>

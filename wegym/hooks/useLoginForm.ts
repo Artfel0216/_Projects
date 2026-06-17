@@ -67,7 +67,7 @@ export function useLoginForm() {
       if (crefRegex.test(formData.cref)) {
         setCrefVerified(true);
       } else {
-        setError("CREF inválido ou inativo. Formato esperado: 000000-G/UF");
+        setError("errors.invalidCref");
         setCrefVerified(false);
       }
     }, 1000);
@@ -78,11 +78,11 @@ export function useLoginForm() {
     setError(null);
 
     if (!isLogin && formData.password !== formData.confirmPassword) {
-      return setError("As senhas não coincidem.");
+      return setError("errors.passwordMismatch");
     }
 
     if (!isLogin && userType === 'personal' && !crefVerified) {
-      return setError("Valide o CREF antes de continuar.");
+      return setError("errors.crefRequired");
     }
 
     setIsLoading(true);
@@ -113,7 +113,7 @@ export function useLoginForm() {
 
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error || "Erro no cadastro.");
+          setError(data.error || "errors.registrationFailed");
           setIsLoading(false);
           return;
         }
@@ -124,7 +124,7 @@ export function useLoginForm() {
         setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
       }
     } catch {
-      setError("Falha de conexão.");
+      setError("errors.connectionFailed");
       setIsLoading(false);
     }
   }, [isLogin, formData, userType, crefVerified, router]);

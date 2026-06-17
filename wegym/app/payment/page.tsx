@@ -4,6 +4,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { ChevronLeft, ShieldCheck, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { useTranslations } from '@/lib/i18n/hook';
 
 const CardPayment = dynamic(
   () => import('@mercadopago/sdk-react').then((mod) => mod.CardPayment),
@@ -15,6 +16,7 @@ const CardPayment = dynamic(
 
 export default function PaymentPage() {
   const router = useRouter();
+  const { t } = useTranslations();
   const [isClient, setIsClient] = useState(false);
   const [mpInitialized, setMpInitialized] = useState(false);
 
@@ -62,8 +64,8 @@ export default function PaymentPage() {
           <ChevronLeft size={20} />
         </button>
         <div className="flex flex-col items-center">
-          <h1 className="font-black italic uppercase tracking-tighter text-lg leading-none">Checkout</h1>
-          <span className="text-[8px] text-zinc-500 uppercase tracking-[0.3em] mt-1 font-bold">Wegym Elite</span>
+          <h1 className="font-black italic uppercase tracking-tighter text-lg leading-none">{t('payment.title')}</h1>
+          <span className="text-[8px] text-zinc-500 uppercase tracking-[0.3em] mt-1 font-bold">{t('payment.subtitle')}</span>
         </div>
         <ShieldCheck size={22} className="text-orange-500" />
       </header>
@@ -71,12 +73,12 @@ export default function PaymentPage() {
       <main className="max-w-md mx-auto">
         <div className="mb-6 p-6 bg-linear-to-br from-zinc-900 to-zinc-950 border border-white/5 rounded-[35px] flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Plano Selecionado</p>
-            <h2 className="text-xl font-black italic uppercase leading-none">Wegym Pro</h2>
+            <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">{t('payment.selectedPlan')}</p>
+            <h2 className="text-xl font-black italic uppercase leading-none">{t('payment.planName')}</h2>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-black italic">R$ 100</p>
-            <p className="text-[8px] text-zinc-500 font-bold uppercase">Pagamento único</p>
+            <p className="text-2xl font-black italic">{t('payment.amount')}</p>
+            <p className="text-[8px] text-zinc-500 font-bold uppercase">{t('payment.singlePayment')}</p>
           </div>
         </div>
 
@@ -92,9 +94,9 @@ export default function PaymentPage() {
               <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
               <div>
                 <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] italic">
-                  Configurando Gateway...
+                  {t('payment.configuring')}
                 </p>
-                <p className="text-[8px] text-zinc-700 font-bold uppercase mt-1">Ambiente Criptografado de Ponta a Ponta</p>
+                <p className="text-[8px] text-zinc-700 font-bold uppercase mt-1">{t('payment.encrypted')}</p>
               </div>
             </div>
           )}
@@ -102,7 +104,7 @@ export default function PaymentPage() {
         
         <div className="mt-8 flex flex-col items-center gap-2">
           <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest opacity-50">
-            Powered by Mercado Pago
+            {t('payment.poweredBy')}
           </p>
           <div className="flex gap-2 opacity-20 grayscale">
             <div className="w-8 h-5 bg-zinc-800 rounded-sm" />

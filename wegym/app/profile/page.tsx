@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "@/lib/i18n/hook";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { AuthGuard } from "@/components/auth/AuthGuard";
@@ -39,9 +40,9 @@ import { BluetoothManager, type HRData, type DeviceInfo, type ConnectionState } 
 import { usePWAInstall } from "@/hooks/use-pwa-install";
 
 const EXPERIENCE_LABEL: Record<string, string> = {
-  iniciante: "Iniciante",
-  intermediario: "IntermediÃ¡rio",
-  avancado: "AvanÃ§ado",
+  iniciante: "experienceLevel.beginner",
+  intermediario: "experienceLevel.intermediate",
+  avancado: "experienceLevel.advanced",
 };
 
 type ApiProfile = {
@@ -82,7 +83,7 @@ type ToastTone = "success" | "info";
 
 function formatMemberSince(iso: string) {
   try {
-    return new Date(iso).toLocaleDateString("pt-BR", {
+    return new Date(iso).toLocaleDateString(undefined, {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -92,7 +93,7 @@ function formatMemberSince(iso: string) {
   }
 }
 
-function mapApiToLocal(data: ApiProfile): LocalUser {
+function mapApiToLocal(data: ApiProfile, t: (key: string) => string): LocalUser {
   const since = formatMemberSince(data.createdAt);
   if (data.role === "atleta" && data.athlete) {
     const a = data.athlete;
@@ -105,7 +106,7 @@ function mapApiToLocal(data: ApiProfile): LocalUser {
       email: data.email,
       role: "atleta",
       memberSinceLabel: since,
-      experienceLabel: EXPERIENCE_LABEL[a.experienceLevel] ?? a.experienceLevel,
+      experienceLabel: (EXPERIENCE_LABEL[a.experienceLevel] && t(EXPERIENCE_LABEL[a.experienceLevel])) || a.experienceLevel,
       cityState: `${a.city} Â· ${a.state}`,
       cref: "",
     };
@@ -121,14 +122,14 @@ function mapApiToLocal(data: ApiProfile): LocalUser {
       email: data.email,
       role: "personal",
       memberSinceLabel: since,
-      experienceLabel: "Personal trainer",
+      experienceLabel: t('profile.rolePersonal'),
       cityState: "",
       cref: p.cref,
     };
   }
   return {
     userId: data.id,
-    nome: "UsuÃ¡rio",
+    nome: t('profile.defaultName'),
     foto: data.avatarPlaceholder,
     pesoKg: 0,
     alturaCm: 0,
@@ -141,14 +142,15 @@ function mapApiToLocal(data: ApiProfile): LocalUser {
   };
 }
 
-function imcCategory(imc: number): { label: string; tone: string } {
-  if (imc < 18.5) return { label: "Abaixo do peso", tone: "text-blue-400" };
-  if (imc < 25) return { label: "SaudÃ¡vel", tone: "text-emerald-400" };
-  if (imc < 30) return { label: "Sobrepeso", tone: "text-amber-400" };
-  return { label: "Obesidade", tone: "text-rose-400" };
+function imcCategory(imc: number, t: (key: string) => string): { label: string; tone: string } {
+  if (imc < 18.5) return { label: t('profile.imcUnderweight'), tone: "text-blue-400" };
+  if (imc < 25) return { label: t('profile.imcHealthy'), tone: "text-emerald-400" };
+  if (imc < 30) return { label: t('profile.imcOverweight'), tone: "text-amber-400" };
+  return { label: t('profile.imcObese'), tone: "text-rose-400" };
 }
 
 export default function ProfilePage() {
+  const { t } = useTranslations();
   const router = useRouter();
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -190,15 +192,15 @@ export default function ProfilePage() {
       }
       if (!res.ok) {
         const j = (await res.json().catch(() => ({}))) as { error?: string };
-        setLoadError(j.error || "NÃ£o foi possÃ­vel carregar o perfil.");
+        setLoadError(j.error || t('profile.loadError'));
         setLoadState("error");
         return;
       }
       const data = (await res.json()) as ApiProfile;
-      setUserData(mapApiToLocal(data));
+      setUserData(mapApiToLocal(data, t));
       setLoadState("ready");
     } catch {
-      setLoadError("Falha de conexÃ£o. Verifique sua internet.");
+      setLoadError(t('profile.connectionError'));
       setLoadState("error");
     }
   }, [router]);
@@ -222,9 +224,9 @@ export default function ProfilePage() {
       });
       if (res.ok) {
         const data = (await res.json()) as ApiProfile;
-        setUserData(mapApiToLocal(data));
+        setUserData(mapApiToLocal(data, t));
       } else {
-        triggerToast("NÃ£o foi possÃ­vel salvar.", "info");
+        triggerToast(t('profile.saveError'), "info");
       }
     },
     [userData, triggerToast],
@@ -253,16 +255,16 @@ export default function ProfilePage() {
       if (trimmed && trimmed !== userData.nome) {
         setUserData({ ...userData, nome: trimmed });
         await persistField({ name: trimmed });
-        triggerToast("Nome atualizado");
+        triggerToast(t('profile.nameUpdated'));
       }
     } else if (editingField === "weight") {
       const n = parseFloat(trimmed.replace(",", "."));
       if (Number.isFinite(n) && n > 20 && n < 400 && n !== userData.pesoKg) {
         setUserData({ ...userData, pesoKg: n });
         await persistField({ weightKg: n });
-        triggerToast("Peso atualizado");
+        triggerToast(t('profile.weightUpdated'));
       } else if (trimmed && (!Number.isFinite(n) || n <= 20 || n >= 400)) {
-        triggerToast("Use um peso entre 20 e 400 kg.", "info");
+        triggerToast(t('profile.weightRangeError'), "info");
       }
     } else if (editingField === "height") {
       const n = parseFloat(trimmed.replace(",", "."));
@@ -270,9 +272,9 @@ export default function ProfilePage() {
       if (Number.isFinite(cm) && cm > 60 && cm < 250 && cm !== userData.alturaCm) {
         setUserData({ ...userData, alturaCm: cm });
         await persistField({ heightCm: cm });
-        triggerToast("Altura atualizada");
+        triggerToast(t('profile.heightUpdated'));
       } else if (trimmed && (!Number.isFinite(cm) || cm <= 60 || cm >= 250)) {
-        triggerToast("Use uma altura entre 60 e 250 cm.", "info");
+        triggerToast(t('profile.heightRangeError'), "info");
       }
     }
     setEditingField(null);
@@ -293,7 +295,7 @@ export default function ProfilePage() {
       btRef.current.disconnect();
       setBleDevice(null);
       setLastHR(null);
-      triggerToast("Desconectado");
+      triggerToast(t('profile.disconnected'));
       return;
     }
 
@@ -310,10 +312,10 @@ export default function ProfilePage() {
           setIsSyncing(false);
         }
         if (state === "connected") {
-          triggerToast("Smartwatch conectado!");
+          triggerToast(t('profile.smartwatchConnected'));
         }
         if (state === "unsupported") {
-          triggerToast("Bluetooth nÃ£o suportado neste dispositivo", "info");
+          triggerToast(t('profile.bluetoothUnsupported'), "info");
         }
       },
       onDevice: (device: DeviceInfo) => {
@@ -322,7 +324,7 @@ export default function ProfilePage() {
       onError: (error: string) => {
         triggerToast(error, "info");
       },
-    });
+    }, t);
 
     btRef.current = manager;
     manager.scan();
@@ -341,7 +343,7 @@ export default function ProfilePage() {
           onClick={() => void loadProfile()}
           className="px-6 py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black uppercase italic text-xs tracking-wider cursor-pointer transition-colors"
         >
-          Tentar de novo
+          {t('profile.retry')}
         </button>
     </div>
     </AuthGuard>
@@ -366,7 +368,7 @@ export default function ProfilePage() {
         <div className="flex items-center gap-3 min-w-0">
           <UserIcon size={22} className="text-orange-500 shrink-0" />
           <h1 className="text-lg sm:text-xl font-black italic uppercase tracking-tighter text-white truncate">
-            Meu perfil
+            {t('profile.title')}
           </h1>
         </div>
       </header>
@@ -381,7 +383,7 @@ export default function ProfilePage() {
           onStartEdit={() => startEdit("name")}
           onCommit={commitEdit}
           onCancel={cancelEdit}
-          onAvatarChange={() => triggerToast("Em breve: foto personalizada", "info")}
+          onAvatarChange={() => triggerToast(t('profile.avatarSoon'), "info")}
         />
 
         {isAtleta ? (
@@ -480,6 +482,7 @@ function IdentityCard({
   onCancel,
   onAvatarChange,
 }: IdentityCardProps) {
+  const { t } = useTranslations();
   return (
     <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
@@ -489,7 +492,7 @@ function IdentityCard({
           </div>
           <label
             className="absolute -bottom-1.5 -right-1.5 bg-orange-600 hover:bg-orange-700 p-2 rounded-2xl border-4 border-zinc-950 text-white cursor-pointer transition-colors"
-            aria-label="Alterar foto"
+            aria-label={t('profile.changePhoto')}
           >
             <Camera size={14} />
             <input type="file" accept="image/*" className="hidden" onChange={onAvatarChange} />
@@ -498,7 +501,7 @@ function IdentityCard({
 
         <div className="flex-1 min-w-0 w-full text-center sm:text-left">
           <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-1.5">
-            Identidade
+            {t('profile.identity')}
           </p>
 
           {editing ? (
@@ -507,7 +510,7 @@ function IdentityCard({
               onChange={setDraft}
               onSave={onCommit}
               onCancel={onCancel}
-              placeholder="Seu nome"
+              placeholder={t('profile.namePlaceholder')}
               maxLength={64}
               size="lg"
             />
@@ -516,7 +519,7 @@ function IdentityCard({
               type="button"
               onClick={onStartEdit}
               className="group inline-flex items-center gap-2 mx-auto sm:mx-0 cursor-pointer text-left"
-              aria-label="Editar nome"
+              aria-label={t('common.edit')}
             >
               <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white leading-tight">
                 {userData.nome}
@@ -534,13 +537,13 @@ function IdentityCard({
           </p>
           <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-1 flex items-center gap-2 justify-center sm:justify-start">
             <Calendar size={11} className="text-zinc-600 shrink-0" />
-            Membro desde {userData.memberSinceLabel}
+            {t('profile.memberSince')} {userData.memberSinceLabel}
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2 justify-center sm:justify-start">
             <Pill
               icon={ShieldCheck}
-              label={isAtleta ? "Atleta" : "Personal trainer"}
+              label={isAtleta ? t('profile.roleAthlete') : t('profile.rolePersonal')}
               accent="orange"
             />
             {userData.experienceLabel && isAtleta && (
@@ -578,15 +581,16 @@ function PhysicalDataSection({
   onCommit,
   onCancel,
 }: PhysicalDataSectionProps) {
-  const imcInfo = imc != null ? imcCategory(imc) : null;
+  const { t } = useTranslations();
+  const imcInfo = imc != null ? imcCategory(imc, t) : null;
 
   return (
     <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
-      <SectionHeader eyebrow="Dados fÃ­sicos" title="Suas medidas" icon={Activity} />
+      <SectionHeader eyebrow={t('profile.physicalData')} title={t('profile.yourMeasurements')} icon={Activity} />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
         <EditableMetric
-          label="Peso"
+          label={t('profile.weight')}
           unit="kg"
           icon={Weight}
           accentClass="text-orange-500"
@@ -596,11 +600,11 @@ function PhysicalDataSection({
           onStartEdit={() => onStartEdit("weight")}
           onCommit={onCommit}
           onCancel={onCancel}
-          display={pesoKg > 0 ? pesoKg.toFixed(1) : "â€”"}
+          display={pesoKg > 0 ? pesoKg.toFixed(1) : "Ã¢â‚¬\u201d"}
           step="0.1"
         />
         <EditableMetric
-          label="Altura"
+          label={t('profile.height')}
           unit="cm"
           icon={Ruler}
           accentClass="text-blue-400"
@@ -610,12 +614,12 @@ function PhysicalDataSection({
           onStartEdit={() => onStartEdit("height")}
           onCommit={onCommit}
           onCancel={onCancel}
-          display={alturaCm > 0 ? String(alturaCm) : "â€”"}
+          display={alturaCm > 0 ? String(alturaCm) : "Ã¢â‚¬\u201d"}
           step="1"
         />
         <MetricCard
-          label="IMC"
-          unit={imcInfo?.label ?? "Calculado"}
+          label={t('profile.imc')}
+          unit={imcInfo?.label ?? t('profile.calculated')}
           unitClass={imcInfo?.tone ?? "text-zinc-600"}
           icon={Heart}
           accentClass="text-emerald-400"
@@ -624,22 +628,22 @@ function PhysicalDataSection({
       </div>
 
       <p className="mt-4 text-[10px] text-zinc-600 font-medium leading-relaxed">
-        Toque em peso ou altura para atualizar. O IMC Ã© recalculado automaticamente e serve apenas
-        como referÃªncia.
+        {t('profile.imcHint')}
       </p>
     </section>
   );
 }
 function CredentialSection({ cref }: { cref: string }) {
+  const { t } = useTranslations();
   return (
     <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
-      <SectionHeader eyebrow="Credencial" title="Registro profissional" icon={IdCard} />
+      <SectionHeader eyebrow={t('profile.credential')} title={t('profile.professionalRegistry')} icon={IdCard} />
       <div className="mt-5 bg-zinc-950/60 border border-white/5 rounded-4xl p-5 flex items-center gap-4">
         <div className="w-12 h-12 rounded-2xl bg-orange-600/15 text-orange-500 flex items-center justify-center shrink-0">
           <IdCard size={22} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">CREF</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">{t('profile.cref')}</p>
           <p className="text-lg font-black italic uppercase text-white tracking-tight truncate">
             {cref || "â€”"}
           </p>
@@ -660,9 +664,10 @@ interface AccountSectionProps {
 }
 
 function AccountSection({ isPro, isSyncing, onUpgrade }: AccountSectionProps) {
+  const { t } = useTranslations();
   return (
     <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
-      <SectionHeader eyebrow="Conta" title="Seu plano" icon={Settings} />
+      <SectionHeader eyebrow={t('profile.account')} title={t('profile.yourPlan')} icon={Settings} />
 
       <div className="mt-6 space-y-3">
         <PlanRow isPro={isPro} onUpgrade={onUpgrade} />
@@ -672,6 +677,7 @@ function AccountSection({ isPro, isSyncing, onUpgrade }: AccountSectionProps) {
 }
 
 function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone?: "success" | "info") => void }) {
+  const { t } = useTranslations();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteText, setDeleteText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -683,7 +689,7 @@ function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone
       const res = await fetch("/api/user/export", { credentials: "include" });
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
-        triggerToast(err.error || "Erro ao exportar dados.", "info");
+        triggerToast(err.error || t('profile.exportError'), "info");
         return;
       }
       const blob = await res.blob();
@@ -695,9 +701,9 @@ function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      triggerToast("Dados exportados com sucesso!");
+      triggerToast(t('profile.exportSuccess'));
     } catch {
-      triggerToast("Falha ao exportar dados.", "info");
+      triggerToast(t('profile.exportFailed'), "info");
     } finally {
       setIsExporting(false);
     }
@@ -709,14 +715,14 @@ function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone
     try {
       const res = await fetch("/api/user/account", { method: "DELETE", credentials: "include" });
       if (res.ok) {
-        triggerToast("Conta exclu\u00edda com sucesso.");
+        triggerToast(t('profile.accountDeleted'));
         window.location.href = "/";
       } else {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
-        triggerToast(err.error || "Erro ao excluir conta.", "info");
+        triggerToast(err.error || t('profile.deleteError'), "info");
       }
     } catch {
-      triggerToast("Falha ao excluir conta.", "info");
+      triggerToast(t('profile.deleteFailed'), "info");
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -726,7 +732,7 @@ function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone
 
   return (
     <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
-      <SectionHeader eyebrow="LGPD" title="Dados pessoais" icon={ShieldCheck} />
+      <SectionHeader eyebrow={t('profile.lgpd')} title={t('profile.personalData')} icon={ShieldCheck} />
 
       <div className="mt-6 space-y-3">
         <button
@@ -739,12 +745,12 @@ function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone
             {isExporting ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">Portabilidade</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">{t('profile.portability')}</p>
             <p className="text-sm font-black italic uppercase text-white tracking-tight truncate">
-              {isExporting ? "Exportando\u2026" : "Exportar meus dados"}
+              {isExporting ? t('common.loading') : t('profile.exportData')}
             </p>
             <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
-              Baixe todos os seus dados pessoais (formato JSON)
+              {t('profile.exportDescription')}
             </p>
           </div>
           <Download size={16} className="text-zinc-500 shrink-0" />
@@ -760,12 +766,12 @@ function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone
               <X size={20} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">Exclus\u00e3o</p>
+              <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">{t('profile.deletion')}</p>
               <p className="text-sm font-black italic uppercase text-white tracking-tight truncate">
-                Excluir minha conta
+                {t('profile.deleteAccount')}
               </p>
               <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
-                Seus dados ser\u00e3o anonimizados permanentemente
+                {t('profile.deleteDescription')}
               </p>
             </div>
             <ChevronRight size={16} className="text-zinc-500 shrink-0" />
@@ -773,18 +779,16 @@ function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone
         ) : (
           <div className="bg-rose-600/10 border border-rose-500/30 rounded-4xl p-5 space-y-4">
             <p className="text-xs text-zinc-300 leading-relaxed">
-              Esta a\u00e7\u00e3o <strong className="text-rose-400">anonimizar\u00e1 permanentemente</strong> todos os seus dados
-              pessoais. Seus treinos registrados ser\u00e3o mantidos mas desvinculados da sua identidade.
-              Esta opera\u00e7\u00e3o n\u00e3o pode ser desfeita.
+              {t('profile.deleteWarning')}
             </p>
             <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-400">
-              Digite <span className="text-rose-400">EXCLUIR</span> para confirmar
+              {t('profile.type')} <span className="text-rose-400">{t('profile.typeConfirm')}</span> {t('profile.toConfirm')}
             </label>
             <input
               type="text"
               value={deleteText}
               onChange={(e) => setDeleteText(e.target.value)}
-              placeholder="EXCLUIR"
+              placeholder={t('profile.typeConfirm')}
               className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-rose-500 outline-none uppercase tracking-widest font-bold"
             />
             <div className="flex gap-3">
@@ -794,7 +798,7 @@ function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone
                 disabled={isDeleting}
                 className="flex-1 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-black uppercase italic cursor-pointer transition-colors disabled:opacity-50"
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -802,7 +806,7 @@ function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone
                 disabled={deleteText !== "EXCLUIR" || isDeleting}
                 className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:bg-zinc-700 text-white text-xs font-black uppercase italic cursor-pointer transition-colors disabled:cursor-not-allowed"
               >
-                {isDeleting ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Confirmar exclus\u00e3o"}
+                {isDeleting ? <Loader2 size={16} className="animate-spin mx-auto" /> : t('profile.confirmDeletion')}
               </button>
             </div>
           </div>
@@ -816,12 +820,12 @@ function DataPrivacySection({ triggerToast }: { triggerToast: (msg: string, tone
             <Info size={20} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">LGPD</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">{t('profile.lgpd')}</p>
             <p className="text-sm font-black italic uppercase text-white tracking-tight truncate">
-              Pol\u00edtica de Privacidade
+              {t('profile.privacyPolicy')}
             </p>
             <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
-              Saiba como tratamos seus dados pessoais
+              {t('profile.privacyDescription')}
             </p>
           </div>
           <ChevronRight size={16} className="text-zinc-500 shrink-0" />
@@ -844,13 +848,14 @@ function DevicesSection({
   onSync: () => void;
   isSyncing: boolean;
 }) {
+  const { t } = useTranslations();
   const stateLabel: Record<ConnectionState, string> = {
-    idle: "Conectar smartwatch",
-    scanning: "Buscando dispositivosâ€¦",
-    connecting: "Conectandoâ€¦",
-    connected: "Desconectar",
-    disconnected: "ConexÃ£o perdida",
-    unsupported: "NÃ£o suportado",
+    idle: t('profile.connectSmartwatch'),
+    scanning: t('profile.scanning'),
+    connecting: t('profile.connecting'),
+    connected: t('profile.disconnect'),
+    disconnected: t('profile.connectionLost'),
+    unsupported: t('profile.unsupported'),
   };
 
   const isBusy = bleState === "scanning" || bleState === "connecting" || isSyncing;
@@ -858,7 +863,7 @@ function DevicesSection({
 
   return (
     <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
-      <SectionHeader eyebrow="Dispositivos" title="Smartwatch & sensores" icon={Watch} />
+      <SectionHeader eyebrow={t('profile.devices')} title={t('profile.smartwatchSensors')} icon={Watch} />
 
       <div className="mt-6 space-y-3">
         <button
@@ -884,7 +889,7 @@ function DevicesSection({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
-              Bluetooth LE
+              {t('profile.bluetoothLE')}
             </p>
             <p className="text-sm font-black italic uppercase text-white tracking-tight truncate">
               {isConnected && bleDevice
@@ -893,16 +898,16 @@ function DevicesSection({
             </p>
             {isConnected && lastHR && (
               <p className="text-[10px] text-emerald-400 mt-0.5 font-bold">
-                {lastHR.bpm} BPM Â· {bleDevice?.battery != null ? `${bleDevice.battery}%` : "Conectado"}
+                {lastHR.bpm} BPM Â· {bleDevice?.battery != null ? `${bleDevice.battery}%` : t('profile.connected')}
               </p>
             )}
             {!isConnected && (
               <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
                 {bleState === "unsupported"
-                  ? "Bluetooth nÃ£o disponÃ­vel"
+                  ? t('bluetooth.unsupported')
                   : isBusy
-                    ? "Aguardando dispositivosâ€¦"
-                    : "RelÃ³gios, monitores cardÃ­acos e sensores"}
+                    ? t('profile.waitingForDevices')
+                    : t('profile.compatibleDescription')}
               </p>
             )}
           </div>
@@ -918,23 +923,23 @@ function DevicesSection({
 
         <div className="bg-zinc-950/60 border border-white/5 rounded-3xl p-4">
           <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-2">
-            Dispositivos compatÃ­veis
+            {t('profile.compatibleDevices')}
           </p>
           <div className="flex flex-wrap gap-2">
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase italic tracking-wider text-zinc-300">
-              <HeartPulse size={10} className="text-rose-400" /> Apple Watch
+              <HeartPulse size={10} className="text-rose-400" /> {t('profile.appleWatch')}
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase italic tracking-wider text-zinc-300">
-              <HeartPulse size={10} className="text-emerald-400" /> Google Fit
+              <HeartPulse size={10} className="text-emerald-400" /> {t('profile.googleFit')}
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase italic tracking-wider text-zinc-300">
-              <HeartPulse size={10} className="text-blue-400" /> Garmin
+              <HeartPulse size={10} className="text-blue-400" /> {t('profile.garmin')}
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase italic tracking-wider text-zinc-300">
-              <HeartPulse size={10} className="text-orange-400" /> Polar
+              <HeartPulse size={10} className="text-orange-400" /> {t('profile.polar')}
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase italic tracking-wider text-zinc-300">
-              <Battery size={10} className="text-purple-400" /> HR Band
+              <Battery size={10} className="text-purple-400" /> {t('profile.hrBand')}
             </span>
           </div>
         </div>
@@ -952,11 +957,12 @@ function PwaSection({
   isStandalone: boolean;
   onInstall: () => void;
 }) {
+  const { t } = useTranslations();
   if (isStandalone) return null;
 
   return (
     <section className="bg-zinc-900/40 border border-white/5 rounded-4xl p-6 sm:p-8">
-      <SectionHeader eyebrow="App" title="Instalar no celular" icon={SmartphoneIcon} />
+      <SectionHeader eyebrow={t('profile.app')} title={t('profile.installOnPhone')} icon={SmartphoneIcon} />
 
       <div className="mt-5">
         {isInstallable ? (
@@ -970,10 +976,10 @@ function PwaSection({
             </div>
             <div className="flex-1">
               <p className="text-sm font-black italic uppercase text-white tracking-tight">
-                Instalar WEGYM
+                {t('profile.installWegym')}
               </p>
               <p className="text-[10px] text-zinc-400 mt-0.5">
-                Adicione Ã  tela inicial para acesso rÃ¡pido
+                {t('profile.installDescription')}
               </p>
             </div>
             <Download size={16} className="text-orange-400 shrink-0" />
@@ -985,10 +991,10 @@ function PwaSection({
             </div>
             <div className="flex-1">
               <p className="text-sm font-black italic uppercase text-white tracking-tight">
-                DisponÃ­vel como app
+                {t('profile.availableAsApp')}
               </p>
               <p className="text-[10px] text-zinc-500 mt-0.5">
-                No Chrome/Safari: menu &ldquo;Adicionar Ã  tela inicial&rdquo;
+                {t('profile.installInstructions')}
               </p>
             </div>
           </div>
@@ -999,6 +1005,7 @@ function PwaSection({
 }
 
 function PlanRow({ isPro, onUpgrade }: { isPro: boolean; onUpgrade: () => void }) {
+  const { t } = useTranslations();
   return (
     <div
       className={`rounded-4xl border p-4 sm:p-5 flex items-center gap-4 transition-colors ${
@@ -1015,14 +1022,14 @@ function PlanRow({ isPro, onUpgrade }: { isPro: boolean; onUpgrade: () => void }
         <Crown size={20} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">Plano</p>
+        <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">{t('profile.planLabel')}</p>
         <p className="text-sm font-black italic uppercase text-white tracking-tight truncate">
-          {isPro ? "Wegym Pro" : "Gratuito"}
+          {isPro ? t('profile.wegymPro') : t('profile.free')}
         </p>
         <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
           {isPro
-            ? "Acesso completo a treinos com IA e anÃ¡lise biomÃ©trica."
-            : "FaÃ§a upgrade para treinos com IA e anÃ¡lise avanÃ§ada."}
+            ? t('profile.proDescription')
+            : t('profile.freeDescription')}
         </p>
       </div>
       {!isPro && (
@@ -1031,7 +1038,7 @@ function PlanRow({ isPro, onUpgrade }: { isPro: boolean; onUpgrade: () => void }
           onClick={onUpgrade}
           className="shrink-0 bg-orange-600 hover:bg-orange-700 text-white px-3 sm:px-4 py-2.5 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase italic tracking-wider cursor-pointer transition-colors"
         >
-          Conhecer Pro
+          {t('profile.learnPro')}
           <ChevronRight size={14} />
         </button>
       )}
@@ -1040,6 +1047,7 @@ function PlanRow({ isPro, onUpgrade }: { isPro: boolean; onUpgrade: () => void }
 }
 
 function SyncRow({ isSyncing, onSync }: { isSyncing: boolean; onSync: () => void }) {
+  const { t } = useTranslations();
   return (
     <button
       type="button"
@@ -1056,12 +1064,12 @@ function SyncRow({ isSyncing, onSync }: { isSyncing: boolean; onSync: () => void
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
-          Dispositivos
+          {t('profile.devices')}
         </p>
         <p className="text-sm font-black italic uppercase text-white tracking-tight truncate">
-          {isSyncing ? "Sincronizandoâ€¦" : "Sincronizar agora"}
+          {isSyncing ? t('profile.syncing') : t('profile.syncNow')}
         </p>
-        <p className="text-[10px] text-zinc-500 mt-0.5 truncate">Apple Health Â· Google Fit</p>
+        <p className="text-[10px] text-zinc-500 mt-0.5 truncate">{t('profile.healthPlatforms')}</p>
       </div>
       <ChevronRight size={16} className="text-zinc-600 shrink-0" />
     </button>
@@ -1136,6 +1144,7 @@ function InlineEditor({
   step,
   suffix,
 }: InlineEditorProps) {
+  const { t } = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -1186,7 +1195,7 @@ function InlineEditor({
           e.preventDefault();
           onSave();
         }}
-        aria-label="Salvar"
+        aria-label={t('common.save')}
         className="p-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white cursor-pointer shrink-0 transition-colors"
       >
         <CheckCircle2 size={16} />
@@ -1197,7 +1206,7 @@ function InlineEditor({
           e.preventDefault();
           onCancel();
         }}
-        aria-label="Cancelar"
+        aria-label={t('common.cancel')}
         className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 cursor-pointer shrink-0 transition-colors"
       >
         <X size={16} />
@@ -1235,6 +1244,7 @@ function EditableMetric({
   display,
   step,
 }: EditableMetricProps) {
+  const { t } = useTranslations();
   return (
     <div className="bg-zinc-950/60 border border-white/5 rounded-3xl p-5 flex flex-col gap-3 hover:border-white/10 transition-colors">
       <div className="flex items-center justify-between gap-2">
@@ -1248,7 +1258,7 @@ function EditableMetric({
           <button
             type="button"
             onClick={onStartEdit}
-            aria-label={`Editar ${label}`}
+            aria-label={`${t('common.edit')} ${label}`}
             className="p-1.5 rounded-lg text-zinc-600 hover:text-orange-500 hover:bg-white/5 cursor-pointer transition-colors"
           >
             <Pencil size={12} />
@@ -1271,7 +1281,7 @@ function EditableMetric({
           type="button"
           onClick={onStartEdit}
           className="text-left cursor-pointer"
-          aria-label={`Editar ${label}`}
+          aria-label={`${t('common.edit')} ${label}`}
         >
           <p className="text-3xl font-black italic text-white leading-none">
             {display}

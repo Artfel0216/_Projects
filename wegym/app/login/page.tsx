@@ -9,6 +9,7 @@ import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { EXPERIENCE_OPTIONS } from '@/constants/options';
 import { LeftPanel } from '@/components/ui/LeftPanel';
 import { maskCEP, maskCPF } from '@/utils/masks';
+import { useTranslations } from '@/lib/i18n/hook';
 
 
 
@@ -35,6 +36,8 @@ export default function LoginPage() {
   const [userType, setUserType] = useState<'atleta' | 'personal'>('atleta');
   const [isVerifyingCref, setIsVerifyingCref] = useState<boolean>(false);
   const [crefVerified, setCrefVerified] = useState<boolean>(false);
+
+  const { t } = useTranslations();
 
   const [formData, setFormData] = useState({
     name: '', email: '', cpf: '', cep: '', city: '', state: '', password: '', confirmPassword: '',
@@ -97,12 +100,12 @@ const verifyCref = useCallback(async () => {
     if (data.valid) {
       setCrefVerified(true);
     } else {
-      const msg = data.errors?.[0] || "CREF inválido. Verifique o formato e tente novamente.";
+      const msg = data.errors?.[0] || t('errors.invalidCref');
       setError(msg);
       setCrefVerified(false);
     }
   } catch {
-    setError("Falha ao validar CREF. Verifique sua conexão.");
+    setError(t('errors.crefValidationFailed'));
     setCrefVerified(false);
   } finally {
     setIsVerifyingCref(false);
@@ -114,19 +117,19 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
   setError(null);
 
   if (!isLogin && formData.password !== formData.confirmPassword) {
-    return setError("As senhas não coincidem.");
+    return setError(t('errors.passwordMismatch'));
   }
 
   if (!isLogin && !termsAccepted) {
-    return setError("Você precisa aceitar os Termos de Uso.");
+    return setError(t('errors.termsRequired'));
   }
 
   if (!isLogin && !privacyAccepted) {
-    return setError("Você precisa aceitar a Política de Privacidade.");
+    return setError(t('errors.privacyRequired'));
   }
 
   if (!isLogin && userType === 'personal' && !crefVerified) {
-    return setError("Valide o CREF antes de continuar.");
+    return setError(t('errors.crefRequired'));
   }
 
   setIsLoading(true);
@@ -161,7 +164,7 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Erro no cadastro.");
+        setError(data.error || t('errors.registrationFailed'));
         setIsLoading(false);
         return;
       }
@@ -172,7 +175,7 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
       setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
     }
   } catch {
-    setError("Falha de conexão.");
+    setError(t('errors.connectionFailed'));
     setIsLoading(false);
   }
 }, [isLogin, formData, userType, crefVerified, router]);
@@ -203,17 +206,17 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
             <AnimatePresence mode="wait">
               {isLogin ? (
                 <motion.div key="login" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
-                  <h3 className="text-4xl font-black text-white mb-2 italic">LOGIN</h3>
-                  <p className="text-zinc-500 mb-8 font-medium">Pronto para o treino de hoje?</p>
+                  <h3 className="text-4xl font-black text-white mb-2 italic">{t('login.title')}</h3>
+                  <p className="text-zinc-500 mb-8 font-medium">{t('login.subtitle')}</p>
                   <form className="space-y-4" onSubmit={handleAuth}>
                     <div className="space-y-1">
-                      <label className={labelClass}><Mail className="w-3 h-3" /> E-mail <span className="text-red-500">*</span></label>
-                      <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="seu@email.com" className={inputClass} required />
+                      <label className={labelClass}><Mail className="w-3 h-3" /> {t('login.emailLabel')} <span className="text-red-500">*</span></label>
+                      <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder={t('login.emailPlaceholder')} className={inputClass} required />
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between items-center px-1">
-                        <label className={labelClass}><Lock className="w-3 h-3" /> Senha <span className="text-red-500">*</span></label>
-                        <button type="button" className="text-xs font-bold text-orange-500 hover:text-orange-400 cursor-pointer">Esqueci minha senha</button>
+                        <label className={labelClass}><Lock className="w-3 h-3" /> {t('login.passwordLabel')} <span className="text-red-500">*</span></label>
+                        <button type="button" className="text-xs font-bold text-orange-500 hover:text-orange-400 cursor-pointer">{t('login.forgotPassword')}</button>
                       </div>
                       <div className="relative">
                         <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
@@ -223,14 +226,14 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
                       </div>
                     </div>
                     <motion.button disabled={isLoading} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic tracking-tighter flex items-center justify-center cursor-pointer disabled:cursor-not-allowed">
-                      {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Entrar no Wegym"}
+                      {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : t('login.signIn')}
                     </motion.button>
                   </form>
                 </motion.div>
               ) : (
                 <motion.div key="signup" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-                  <h3 className="text-4xl font-black text-white mb-2 italic uppercase">Cadastro</h3>
-                  <p className="text-zinc-500 mb-6 font-medium">Preencha seus dados para criar sua conta.</p>
+                  <h3 className="text-4xl font-black text-white mb-2 italic uppercase">{t('register.title')}</h3>
+                  <p className="text-zinc-500 mb-6 font-medium">{t('register.subtitle')}</p>
 
                   <div className="grid grid-cols-2 gap-4 mb-8">
                     <button
@@ -242,7 +245,7 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
                           : 'border-zinc-800 bg-zinc-800/50 text-zinc-400 hover:border-zinc-600'
                       }`}
                     >
-                      <Dumbbell className="w-4 h-4" /> Atleta
+                      <Dumbbell className="w-4 h-4" /> {t('register.userTypeAthlete')}
                     </button>
                     <button
                       type="button"
@@ -253,7 +256,7 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
                           : 'border-zinc-800 bg-zinc-800/50 text-zinc-400 hover:border-zinc-600'
                       }`}
                     >
-                      <IdCard className="w-4 h-4" /> Personal
+                      <IdCard className="w-4 h-4" /> {t('register.userTypePersonal')}
                     </button>
                   </div>
 
@@ -261,74 +264,74 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
                     
                     {userType === 'atleta' && (
                       <>
-                        <p className={sectionTitleClass}><User className="w-3.5 h-3.5" /> Dados Pessoais</p>
+                        <p className={sectionTitleClass}><User className="w-3.5 h-3.5" /> {t('register.personalData')}</p>
 
                         <div className="space-y-1 md:col-span-2">
-                          <label className={labelClass}><User className="w-3 h-3" /> Nome Completo <span className="text-red-500">*</span></label>
-                          <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="Nome Completo" className={inputClass} required />
+                          <label className={labelClass}><User className="w-3 h-3" /> {t('register.fullName')} <span className="text-red-500">*</span></label>
+                          <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder={t('register.fullName')} className={inputClass} required />
                         </div>
 
                         <div className="space-y-1">
-                          <label className={labelClass}><IdCard className="w-3 h-3" /> CPF <span className="text-red-500">*</span></label>
-                          <input type="text" name="cpf" value={formData.cpf} onChange={handleInputChange} placeholder="000.000.000-00" className={inputClass} required />
+                          <label className={labelClass}><IdCard className="w-3 h-3" /> {t('register.cpf')} <span className="text-red-500">*</span></label>
+                          <input type="text" name="cpf" value={formData.cpf} onChange={handleInputChange} placeholder={t('register.cpfPlaceholder')} className={inputClass} required />
                         </div>
 
                         <div className="space-y-1">
-                          <label className={labelClass}><Mail className="w-3 h-3" /> E-mail <span className="text-red-500">*</span></label>
-                          <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="seu@email.com" className={inputClass} required />
+                          <label className={labelClass}><Mail className="w-3 h-3" /> {t('register.emailLabel')} <span className="text-red-500">*</span></label>
+                          <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder={t('login.emailPlaceholder')} className={inputClass} required />
                         </div>
 
                         <div className="space-y-1">
                           <div className="flex justify-between items-center px-1">
-                            <label className={labelClass}><MapPin className="w-3 h-3" /> CEP <span className="text-red-500">*</span></label>
-                            <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-orange-500 flex items-center hover:underline uppercase italic cursor-pointer">Não sei meu CEP <ExternalLink className="w-2 h-2 ml-1" /></a>
+                            <label className={labelClass}><MapPin className="w-3 h-3" /> {t('register.zipCode')} <span className="text-red-500">*</span></label>
+                            <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-orange-500 flex items-center hover:underline uppercase italic cursor-pointer">{t('register.dontKnowZip')} <ExternalLink className="w-2 h-2 ml-1" /></a>
                           </div>
-                          <input type="text" name="cep" value={formData.cep} onChange={handleInputChange} placeholder="00000-000" className={inputClass} required />
+                          <input type="text" name="cep" value={formData.cep} onChange={handleInputChange} placeholder={t('register.zipPlaceholder')} className={inputClass} required />
                         </div>
 
                         <div className="space-y-1 grid grid-cols-3 gap-2">
                           <div className="col-span-2">
-                            <label className={labelClass}>Cidade <span className="text-red-500">*</span></label>
-                            <input type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder="Cidade" className={inputClass} required />
+                            <label className={labelClass}>{t('register.city')} <span className="text-red-500">*</span></label>
+                            <input type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder={t('register.city')} className={inputClass} required />
                           </div>
                           <div>
-                            <label className={labelClass}>UF <span className="text-red-500">*</span></label>
-                            <input type="text" name="state" value={formData.state} onChange={handleInputChange} placeholder="UF" className={inputClass + " text-center"} maxLength={2} required />
+                            <label className={labelClass}>{t('register.state')} <span className="text-red-500">*</span></label>
+                            <input type="text" name="state" value={formData.state} onChange={handleInputChange} placeholder={t('register.state')} className={inputClass + " text-center"} maxLength={2} required />
                           </div>
                         </div>
 
-                        <p className={sectionTitleClass}><Activity className="w-3.5 h-3.5" /> Informações Físicas</p>
+                        <p className={sectionTitleClass}><Activity className="w-3.5 h-3.5" /> {t('register.physicalInfo')}</p>
 
                         <div className="space-y-1">
-                          <label className={labelClass}>Idade <span className="text-red-500">*</span></label>
-                          <input type="number" name="age" value={formData.age} onChange={handleInputChange} placeholder="Ex: 25" min={10} max={100} className={inputClass} required />
+                          <label className={labelClass}>{t('register.age')} <span className="text-red-500">*</span></label>
+                          <input type="number" name="age" value={formData.age} onChange={handleInputChange} placeholder={t('register.agePlaceholder')} min={10} max={100} className={inputClass} required />
                         </div>
 
                         <div className="space-y-1">
-                          <label className={labelClass}>Sexo <span className="text-red-500">*</span></label>
+                          <label className={labelClass}>{t('register.gender')} <span className="text-red-500">*</span></label>
                           <div className="relative">
-                            <select name="sex" value={formData.sex} onChange={handleInputChange} className={selectClass} aria-label="Sexo" required>
-                              <option value="" disabled>Selecione...</option>
-                              <option value="masculino">Masculino</option>
-                              <option value="feminino">Feminino</option>
-                              <option value="outro">Outro / Prefiro não informar</option>
+                            <select name="sex" value={formData.sex} onChange={handleInputChange} className={selectClass} aria-label={t('register.gender')} required>
+                              <option value="" disabled>{t('register.selectDefault')}</option>
+                              <option value="masculino">{t('register.genderMale')}</option>
+                              <option value="feminino">{t('register.genderFemale')}</option>
+                              <option value="outro">{t('register.genderOther')}</option>
                             </select>
                             <ChevronDown className="w-4 h-4 text-zinc-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                           </div>
                         </div>
 
                         <div className="space-y-1">
-                          <label className={labelClass}>Altura (cm) <span className="text-red-500">*</span></label>
-                          <input type="number" name="height" value={formData.height} onChange={handleInputChange} placeholder="Ex: 175" min={100} max={250} className={inputClass} required />
+                          <label className={labelClass}>{t('register.height')} <span className="text-red-500">*</span></label>
+                          <input type="number" name="height" value={formData.height} onChange={handleInputChange} placeholder={t('register.heightPlaceholder')} min={100} max={250} className={inputClass} required />
                         </div>
 
                         <div className="space-y-1">
-                          <label className={labelClass}>Peso (kg) <span className="text-red-500">*</span></label>
-                          <input type="number" name="weight" value={formData.weight} onChange={handleInputChange} placeholder="Ex: 70" min={30} max={300} className={inputClass} required />
+                          <label className={labelClass}>{t('register.weight')} <span className="text-red-500">*</span></label>
+                          <input type="number" name="weight" value={formData.weight} onChange={handleInputChange} placeholder={t('register.weightPlaceholder')} min={30} max={300} className={inputClass} required />
                         </div>
 
                         <div className="space-y-1 md:col-span-2">
-                          <label className={labelClass}><Dumbbell className="w-3 h-3" /> Nível de Experiência <span className="text-red-500">*</span></label>
+                          <label className={labelClass}><Dumbbell className="w-3 h-3" /> {t('register.experienceLevel')} <span className="text-red-500">*</span></label>
                           <div className="grid grid-cols-3 gap-2">
                             {EXPERIENCE_OPTIONS.map(opt => (
                               <button
@@ -348,40 +351,40 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
                           </div>
                         </div>
 
-                        <p className={sectionTitleClass}><Heart className="w-3.5 h-3.5" /> Saúde</p>
+                        <p className={sectionTitleClass}><Heart className="w-3.5 h-3.5" /> {t('register.health')}</p>
 
                         <div className="space-y-1 md:col-span-2">
-                          <label className={labelClass}>Possui alguma lesão?</label>
+                          <label className={labelClass}>{t('register.injury')}</label>
                           <textarea
                             name="injury"
                             value={formData.injury}
                             onChange={handleInputChange}
-                            placeholder="Descreva suas lesões, se houver. Ex: lesão no ombro direito, tendinite..."
+                            placeholder={t('register.injuryPlaceholder')}
                             rows={2}
                             className={textareaClass}
                           />
                         </div>
 
                         <div className="space-y-1 md:col-span-2">
-                          <label className={labelClass}>Problemas de saúde?</label>
+                          <label className={labelClass}>{t('register.healthIssues')}</label>
                           <textarea
                             name="healthIssues"
                             value={formData.healthIssues}
                             onChange={handleInputChange}
-                            placeholder="Ex: problema no joelho, hérnia de disco, hipertensão..."
+                            placeholder={t('register.healthIssuesPlaceholder')}
                             rows={2}
                             className={textareaClass}
                           />
                         </div>
 
                         <div className="space-y-1 md:col-span-2">
-                          <label className={labelClass}>Faz uso de medicamentos?</label>
+                          <label className={labelClass}>{t('register.medications')}</label>
                           <input
                             type="text"
                             name="medications"
                             value={formData.medications}
                             onChange={handleInputChange}
-                            placeholder="Ex: losartana, metformina, antiinflamatório..."
+                            placeholder={t('register.medicationsPlaceholder')}
                             className={inputClass}
                           />
                         </div>
@@ -393,16 +396,16 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
                         {!crefVerified ? (
                           <div className="space-y-4 bg-zinc-800/20 p-6 rounded-2xl border border-zinc-800">
                             <p className="text-zinc-400 text-sm mb-2 font-medium">
-                              Para atuar como Personal Trainer no WEGYM, é obrigatório validar seu registro no Conselho Regional de Educação Física.
+                              {t('register.crefDescription')}
                             </p>
                             <div className="space-y-1">
-                              <label className={labelClass}><IdCard className="w-3 h-3" /> Número do CREF <span className="text-red-500">*</span></label>
+                              <label className={labelClass}><IdCard className="w-3 h-3" /> {t('register.crefNumber')} <span className="text-red-500">*</span></label>
                               <input 
                                 type="text" 
                                 name="cref" 
                                 value={formData.cref} 
                                 onChange={handleInputChange} 
-                                placeholder="Ex: 123456-G/SP" 
+                                placeholder={t('register.crefPlaceholder')} 
                                 className={inputClass} 
                                 required 
                               />
@@ -413,26 +416,26 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
                               disabled={isVerifyingCref || formData.cref.length < 5}
                               className="w-full bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 border border-zinc-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
                             >
-                              {isVerifyingCref ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verificar e Validar CREF"}
+                              {isVerifyingCref ? <Loader2 className="w-5 h-5 animate-spin" /> : t('register.verifyCref')}
                             </motion.button>
                           </div>
                         ) : (
                           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                             <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded-xl flex items-center gap-3">
                               <CheckCircle2 className="w-5 h-5 shrink-0" />
-                              <span className="text-sm font-bold">CREF verificado com sucesso! Finalize seu cadastro abaixo.</span>
+                              <span className="text-sm font-bold">{t('register.crefVerified')}</span>
                             </div>
                             
-                            <p className={sectionTitleClass}><User className="w-3.5 h-3.5" /> Dados Pessoais do Personal</p>
+                            <p className={sectionTitleClass}><User className="w-3.5 h-3.5" /> {t('register.personalDataTitle')}</p>
                             
                             <div className="space-y-1">
-                              <label className={labelClass}><User className="w-3 h-3" /> Nome Completo <span className="text-red-500">*</span></label>
-                              <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="Nome Completo" className={inputClass} required />
+                              <label className={labelClass}><User className="w-3 h-3" /> {t('register.fullName')} <span className="text-red-500">*</span></label>
+                              <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder={t('register.fullName')} className={inputClass} required />
                             </div>
 
                             <div className="space-y-1">
-                              <label className={labelClass}><Mail className="w-3 h-3" /> E-mail <span className="text-red-500">*</span></label>
-                              <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="seu@email.com" className={inputClass} required />
+<label className={labelClass}><Mail className="w-3 h-3" /> {t('login.emailLabel')} <span className="text-red-500">*</span></label>
+                              <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder={t('login.emailPlaceholder')} className={inputClass} required />
                             </div>
                           </motion.div>
                         )}
@@ -441,15 +444,15 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
 
                     {(userType === 'atleta' || (userType === 'personal' && crefVerified)) && (
                       <>
-                        <p className={sectionTitleClass}><Lock className="w-3.5 h-3.5" /> Segurança</p>
+                        <p className={sectionTitleClass}><Lock className="w-3.5 h-3.5" /> {t('register.security')}</p>
 
                         <div className="space-y-1">
-                          <label className={labelClass}><Lock className="w-3 h-3" /> Senha <span className="text-red-500">*</span></label>
+                        <label className={labelClass}><Lock className="w-3 h-3" /> {t('login.passwordLabel')} <span className="text-red-500">*</span></label>
                           <input type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
                         </div>
 
                         <div className="space-y-1">
-                          <label className={labelClass}><Lock className="w-3 h-3" /> Confirmar Senha <span className="text-red-500">*</span></label>
+                          <label className={labelClass}><Lock className="w-3 h-3" /> {t('register.confirmPassword')} <span className="text-red-500">*</span></label>
                           <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} placeholder="••••••••" className={inputClass} required />
                         </div>
                       </>
@@ -464,7 +467,7 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
                     {(userType === 'atleta' || (userType === 'personal' && crefVerified)) && (
                       <>
                         <div className="md:col-span-2 space-y-3 pt-2 border-t border-zinc-800">
-                          <p className={sectionTitleClass}>Privacidade</p>
+                          <p className={sectionTitleClass}>{t('register.privacy')}</p>
                           <label className="flex items-start gap-3 cursor-pointer text-left">
                             <input
                               type="checkbox"
@@ -476,11 +479,11 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
                             <span className="text-xs text-zinc-400 leading-relaxed">
                               Aceito os{' '}
                               <a href="/TermsPage" target="_blank" className="text-orange-500 underline hover:text-orange-400">
-                                Termos de Uso
+{t('register.termsOfUse')}
                               </a>{' '}
                               e autorizo o tratamento dos meus dados conforme a{' '}
                               <a href="/privacy" target="_blank" className="text-orange-500 underline hover:text-orange-400">
-                                Política de Privacidade
+{t('register.privacyPolicy')}
                               </a>{' '}
                               (LGPD). <span className="text-red-500">*</span>
                             </span>
@@ -494,7 +497,7 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
                               required
                             />
                             <span className="text-xs text-zinc-400 leading-relaxed">
-                              Desejo receber comunicações e dicas de treino por e-mail.
+{t('register.emailConsent')}
                             </span>
                           </label>
                         </div>
@@ -504,7 +507,7 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
                           whileTap={{ scale: 0.99 }}
                           className="md:col-span-2 w-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 text-black font-black py-4 rounded-xl shadow-lg uppercase italic mt-4 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
                         >
-                          {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-black" /> : "Finalizar Cadastro"}
+                          {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-black" /> : t('register.submit')}
                         </motion.button>
                       </>
                     )}
@@ -515,8 +518,8 @@ const handleAuth = useCallback(async (e: React.FormEvent) => {
 
             <div className="mt-8 text-center">
               <button onClick={() => { setIsLogin(!isLogin); setError(null); setCrefVerified(false); }} className="text-zinc-400 text-sm font-medium hover:text-white transition-colors cursor-pointer">
-                {isLogin ? "Não tem conta? " : "Já é membro? "}
-                <span className="text-orange-500 font-bold underline decoration-zinc-800 italic cursor-pointer">{isLogin ? "CRIAR PERFIL" : "FAZER LOGIN"}</span>
+                {isLogin ? t('register.noAccount') : t('register.alreadyMember')}
+                <span className="text-orange-500 font-bold underline decoration-zinc-800 italic cursor-pointer">{isLogin ? t('register.createProfile') : t('login.doLogin')}</span>
               </button>
             </div>
           </div>

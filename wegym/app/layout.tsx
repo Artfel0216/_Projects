@@ -1,8 +1,10 @@
 import "./globals.css";
+import "leaflet/dist/leaflet.css";
 import { SessionProviderWrapper } from "@/components/providers/SessionProviderWrapper";
 import { AppShell } from "@/components/ui/AppShell";
 import { PwaSync } from "@/components/PwaSync";
 import { ConsentBanner } from "@/components/lgpd/ConsentBanner";
+import { I18nWrapper } from "@/components/i18n/I18nWrapper";
 
 export const metadata = {
   title: "WEGYM",
@@ -45,11 +47,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://ui-avatars.com" />
       </head>
       <body className="overscroll-none touch-callout-none select-none">
-        <SessionProviderWrapper>
-          <AppShell>{children}</AppShell>
-        </SessionProviderWrapper>
-        <ConsentBanner />
-        <PwaSync />
+        <I18nWrapper>
+          <SessionProviderWrapper>
+            <AppShell>{children}</AppShell>
+          </SessionProviderWrapper>
+          <ConsentBanner />
+          <PwaSync />
+        </I18nWrapper>
       </body>
     </html>
   );

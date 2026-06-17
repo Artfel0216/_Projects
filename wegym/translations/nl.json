@@ -1,0 +1,74 @@
+{
+  "app": {
+    "title": "WEGYM",
+    "description": "Slim trainingsplatform \u2014 sportschool, cardio en prestatie"
+  },
+  "common": {
+    "brandName": "WEGYM",
+    "loading": "Laden...",
+    "save": "Opslaan",
+    "edit": "Bewerken",
+    "cancel": "Annuleren",
+    "select": "Selecteer",
+    "athlete": "Atleet",
+    "hourAbbr": "u",
+    "minAbbr": "min",
+    "kmUnit": " km",
+    "dash": " \u2014"
+  },
+  "sidebar": {
+    "home": "Home",
+    "modalities": "Activiteiten",
+    "stats": "Statistieken",
+    "pro": "Wegym Pro",
+    "profile": "Mijn Profiel",
+    "privacy": "Privacy",
+    "logout": "Uitloggen",
+    "agenda": "Agenda",
+    "myStudents": "Mijn Leerlingen",
+    "addStudent": "Leerling toevoegen",
+    "openMenu": "Menu openen",
+    "closeMenu": "Menu sluiten"
+  },
+  "login": {
+    "title": "INLOGGEN",
+    "subtitle": "Klaar voor de training van vandaag?",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Wachtwoord",
+    "signIn": "Inloggen op Wegym",
+    "noAccount": "Nog geen account? "
+  },
+  "register": {
+    "title": "Registreren",
+    "submit": "Registratie voltooien",
+    "alreadyMember": "Al lid? "
+  },
+  "greeting": {
+    "morning": "Goedemorgen",
+    "afternoon": "Goedemiddag",
+    "evening": "Goedenavond",
+    "earlyMorning": "Goedemorgen"
+  },
+  "modality": {
+    "gym": "Sportschool",
+    "running": "Hardlopen",
+    "cycling": "Fietsen",
+    "aerobic": "Cardio",
+    "combat": "Vechtsport",
+    "swimming": "Zwemmen",
+    "walking": "Wandelen",
+    "crossfit": "Cross Training",
+    "yoga": "Yoga & Pilates",
+    "hiking": "Wandelen",
+    "basketball": "Basketbal",
+    "soccer": "Voetbal",
+    "tennis": "Tennis",
+    "climbing": "Klimmen",
+    "skate": "Skate",
+    "functional": "Functioneel",
+    "hiit": "HIIT",
+    "dance": "Dans",
+    "rowing": "Roeien",
+    "other": "Anders"
+  }
+}

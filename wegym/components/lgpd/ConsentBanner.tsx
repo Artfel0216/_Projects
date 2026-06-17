@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { useTranslations } from '@/lib/i18n/hook';
 
 const LGPD_CONSENT_KEY = 'wegym_lgpd_consent';
 
 export function ConsentBanner() {
+  const { t } = useTranslations();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -33,18 +35,18 @@ export function ConsentBanner() {
           <div className="max-w-4xl mx-auto bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex-1 space-y-2">
               <p className="text-sm font-black uppercase italic text-white">
-                🛡️ Privacidade e Cookies
+                {t('consent.title')}
               </p>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Utilizamos cookies essenciais para garantir o funcionamento da plataforma e tratamos seus dados conforme a{' '}
-                <strong className="text-orange-500">LGPD</strong>.
-                Ao continuar, você concorda com nossa{' '}
+                {t('consent.description')}{' '}
+                <strong className="text-orange-500">{t('consent.lgpd')}</strong>.
+                {' '}{t('consent.privacyPolicy')}{' '}
                 <Link
                   href="/privacy"
                   className="text-orange-500 underline hover:text-orange-400"
                   onClick={() => localStorage.setItem(LGPD_CONSENT_KEY, new Date().toISOString())}
                 >
-                  Política de Privacidade
+                  {t('consent.privacyPolicy')}
                 </Link>.
               </p>
             </div>
@@ -54,14 +56,14 @@ export function ConsentBanner() {
                 className="text-xs text-zinc-400 hover:text-white underline underline-offset-2 transition-colors"
                 onClick={() => localStorage.setItem(LGPD_CONSENT_KEY, new Date().toISOString())}
               >
-                Saiba mais
+                {t('consent.learnMore')}
               </Link>
               <button
                 type="button"
                 onClick={accept}
                 className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-black uppercase italic rounded-xl transition-colors cursor-pointer"
               >
-                Aceitar
+                {t('consent.accept')}
               </button>
             </div>
           </div>

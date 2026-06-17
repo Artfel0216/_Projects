@@ -1,0 +1,74 @@
+{
+  "app": {
+    "title": "WEGYM",
+    "description": "Plateforme d\u2019entra\u00eenement intelligente \u2014 gym, cardio et performance"
+  },
+  "common": {
+    "brandName": "WEGYM",
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "edit": "Modifier",
+    "cancel": "Annuler",
+    "select": "S\u00e9lectionner",
+    "athlete": "Athl\u00e8te",
+    "hourAbbr": "h",
+    "minAbbr": "min",
+    "kmUnit": " km",
+    "dash": " \u2014"
+  },
+  "sidebar": {
+    "home": "Accueil",
+    "modalities": "Activit\u00e9s",
+    "stats": "Statistiques",
+    "pro": "Wegym Pro",
+    "profile": "Mon Profil",
+    "privacy": "Confidentialit\u00e9",
+    "logout": "D\u00e9connexion",
+    "agenda": "Agenda",
+    "myStudents": "Mes \u00c9l\u00e8ves",
+    "addStudent": "Ajouter un \u00e9l\u00e8ve",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu"
+  },
+  "login": {
+    "title": "CONNEXION",
+    "subtitle": "Pr\u00eat pour l\u2019entra\u00eenement du jour ?",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Mot de passe",
+    "signIn": "Se connecter \u00e0 Wegym",
+    "noAccount": "Pas encore de compte ? "
+  },
+  "register": {
+    "title": "Inscription",
+    "submit": "Terminer l\u2019inscription",
+    "alreadyMember": "D\u00e9j\u00e0 membre ? "
+  },
+  "greeting": {
+    "morning": "Bonjour",
+    "afternoon": "Bon apr\u00e8s-midi",
+    "evening": "Bonsoir",
+    "earlyMorning": "Bonjour"
+  },
+  "modality": {
+    "gym": "Musculation",
+    "running": "Course",
+    "cycling": "Cyclisme",
+    "aerobic": "Cardio",
+    "combat": "Combat",
+    "swimming": "Natation",
+    "walking": "Marche",
+    "crossfit": "Cross Training",
+    "yoga": "Yoga & Pilates",
+    "hiking": "Randonn\u00e9e",
+    "basketball": "Basket-ball",
+    "soccer": "Football",
+    "tennis": "Tennis",
+    "climbing": "Escalade",
+    "skate": "Skate",
+    "functional": "Fonctionnel",
+    "hiit": "HIIT",
+    "dance": "Danse",
+    "rowing": "Aviron",
+    "other": "Autres"
+  }
+}

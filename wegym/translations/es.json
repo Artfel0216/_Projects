@@ -1,0 +1,74 @@
+{
+  "app": {
+    "title": "WEGYM",
+    "description": "Plataforma de entrenamiento inteligente — gimnasio, cardio y rendimiento"
+  },
+  "common": {
+    "brandName": "WEGYM",
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "edit": "Editar",
+    "cancel": "Cancelar",
+    "select": "Seleccionar",
+    "athlete": "Atleta",
+    "hourAbbr": "h",
+    "minAbbr": "min",
+    "kmUnit": " km",
+    "dash": " —"
+  },
+  "sidebar": {
+    "home": "Inicio",
+    "modalities": "Modalidades",
+    "stats": "Estad\u00edsticas",
+    "pro": "Wegym Pro",
+    "profile": "Mi Perfil",
+    "privacy": "Privacidad",
+    "logout": "Cerrar Sesi\u00f3n",
+    "agenda": "Agenda",
+    "myStudents": "Mis Alumnos",
+    "addStudent": "Agregar Alumno",
+    "openMenu": "Abrir men\u00fa lateral",
+    "closeMenu": "Cerrar men\u00fa"
+  },
+  "login": {
+    "title": "INICIAR SESI\u00d3N",
+    "subtitle": "\u00bfListo para el entrenamiento de hoy?",
+    "emailLabel": "Correo electr\u00f3nico",
+    "passwordLabel": "Contrase\u00f1a",
+    "signIn": "Iniciar sesi\u00f3n en Wegym",
+    "noAccount": "\u00bfNo tienes cuenta? "
+  },
+  "register": {
+    "title": "Registro",
+    "submit": "Completar Registro",
+    "alreadyMember": "\u00bfYa eres miembro? "
+  },
+  "greeting": {
+    "morning": "Buenos d\u00edas",
+    "afternoon": "Buenas tardes",
+    "evening": "Buenas noches",
+    "earlyMorning": "Buenos d\u00edas"
+  },
+  "modality": {
+    "gym": "Gimnasio",
+    "running": "Correr",
+    "cycling": "Ciclismo",
+    "aerobic": "Cardio",
+    "combat": "Combate",
+    "swimming": "Nataci\u00f3n",
+    "walking": "Caminata",
+    "crossfit": "Cross Training",
+    "yoga": "Yoga & Pilates",
+    "hiking": "Senderismo",
+    "basketball": "Baloncesto",
+    "soccer": "F\u00fatbol",
+    "tennis": "Tenis",
+    "climbing": "Escalada",
+    "skate": "Skate",
+    "functional": "Funcional",
+    "hiit": "HIIT",
+    "dance": "Baile",
+    "rowing": "Remo",
+    "other": "Otros"
+  }
+}

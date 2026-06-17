@@ -24,6 +24,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { MODALITY_OPTIONS } from "@/constants/modalities";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useTranslations } from '@/lib/i18n/hook'
 
 const STORAGE_KEY = "wegym-sidebar-collapsed";
 
@@ -214,6 +216,8 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
     await signOut({ callbackUrl: "/" });
   };
 
+  const { t } = useTranslations()
+
   return (
     <aside
       className={`flex flex-col h-full bg-zinc-950/95 border-r border-white/5 backdrop-blur-xl ${widthClass} transition-[width] duration-200 ease-out`}
@@ -231,7 +235,7 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
               <Dumbbell className="text-white w-5 h-5" />
             </div>
             <span className="text-base font-black italic tracking-tighter text-white truncate">
-              WEGYM
+              {t('common.brandName')}
             </span>
           </div>
         ) : (
@@ -244,7 +248,7 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fechar menu"
+            aria-label={t('sidebar.closeMenu')}
             className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-zinc-300 cursor-pointer shrink-0"
           >
             <X size={18} />
@@ -253,8 +257,8 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
           <button
             type="button"
             onClick={() => setCollapsed(!effectiveCollapsed)}
-            aria-label={effectiveCollapsed ? "Expandir menu" : "Recolher menu"}
-            title={effectiveCollapsed ? "Expandir menu" : "Recolher menu"}
+            aria-label={effectiveCollapsed ? t('sidebar.expandMenu') : t('sidebar.collapseMenu')}
+            title={effectiveCollapsed ? t('sidebar.expandMenu') : t('sidebar.collapseMenu')}
             className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-zinc-300 cursor-pointer shrink-0"
           >
             {effectiveCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
@@ -269,21 +273,21 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
           <>
             <NavItem
               icon={CalendarDays}
-              label="Agenda"
+              label={t('sidebar.agenda')}
               showLabels={showLabels}
               active={isOnPersonalHome}
               onClick={() => handleNavigate("/personal?view=home")}
             />
             <NavItem
               icon={Users}
-              label="Meus Alunos"
+              label={t('sidebar.myStudents')}
               showLabels={showLabels}
               active={isOnPersonalStudents}
               onClick={() => handleNavigate("/personal?view=students")}
             />
             <NavItem
               icon={UserPlus}
-              label="Adicionar Aluno"
+              label={t('sidebar.addStudent')}
               showLabels={showLabels}
               active={isOnPersonalCreate}
               onClick={() => handleNavigate("/personal?view=create")}
@@ -293,7 +297,7 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
           <>
             <NavItem
               icon={Home}
-              label="Início"
+              label={t('sidebar.home')}
               showLabels={showLabels}
               active={isOnHome}
               onClick={() => handleNavigate("/home")}
@@ -310,7 +314,7 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
               onFocus={mobile ? undefined : openModalities}
               aria-haspopup="menu"
               aria-expanded={modalitiesOpen}
-              title={!showLabels ? "Modalidades" : undefined}
+              title={!showLabels ? t('sidebar.modalities') : undefined}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left cursor-pointer ${
                 isOnTraining
                   ? "bg-orange-600/20 text-white border border-orange-500/30"
@@ -326,7 +330,7 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
               {showLabels && (
                 <>
                   <span className="text-[11px] font-black uppercase italic truncate flex-1">
-                    Modalidades
+                    {t('sidebar.modalities')}
                   </span>
                   <ChevronRight
                     size={14}
@@ -361,7 +365,7 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
                         }`}
                       />
                       <span className="text-[10px] font-black uppercase italic truncate">
-                        {m.label}
+                        {t(m.tKey)}
                       </span>
                     </button>
                   );
@@ -371,7 +375,7 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
 
             <NavItem
               icon={BarChart3}
-              label="Estatísticas"
+              label={t('sidebar.stats')}
               showLabels={showLabels}
               active={isOnStats}
               onClick={() => handleNavigate("/stats")}
@@ -385,21 +389,21 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
 
             <NavItem
               icon={Crown}
-              label="Wegym Pro"
+              label={t('sidebar.pro')}
               showLabels={showLabels}
               active={isOnPro}
               onClick={() => handleNavigate("/pro")}
             />
             <NavItem
               icon={User}
-              label="Meu Perfil"
+              label={t('sidebar.profile')}
               showLabels={showLabels}
               active={isOnProfile}
               onClick={handleGoProfile}
             />
             <NavItem
               icon={ShieldCheck}
-              label="Privacidade"
+              label={t('sidebar.privacy')}
               showLabels={showLabels}
               active={isOnPrivacy}
               onClick={() => handleNavigate("/privacy")}
@@ -419,11 +423,12 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
         onMouseLeave={scheduleClose}
       />
 
-      <div className="border-t border-white/5 p-2">
+      <div className="border-t border-white/5 p-2 space-y-1">
+        <LanguageSwitcher showLabels={showLabels} />
         <button
           type="button"
           onClick={handleLogout}
-          title={!showLabels ? "Sair da Conta" : undefined}
+          title={!showLabels ? t('sidebar.logout') : undefined}
           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-300 hover:bg-red-500/10 hover:text-red-400 transition-colors text-left cursor-pointer border border-transparent ${
             showLabels ? "" : "justify-center"
           }`}
@@ -431,7 +436,7 @@ export function Sidebar({ mobile = false, onClose }: SidebarProps) {
           <LogOut size={18} className="shrink-0 text-red-400/80" />
           {showLabels && (
             <span className="text-[11px] font-black uppercase italic truncate">
-              Sair da Conta
+              {t('sidebar.logout')}
             </span>
           )}
         </button>
@@ -514,6 +519,7 @@ function ModalitiesFlyout({
   onMouseEnter,
   onMouseLeave,
 }: ModalitiesFlyoutProps) {
+  const { t } = useTranslations();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -540,10 +546,10 @@ function ModalitiesFlyout({
           }}
           className="w-90 bg-zinc-950/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/40 p-3 flex flex-col overflow-y-auto"
           role="menu"
-          aria-label="Modalidades de treino"
+          aria-label={t('sidebar.modalitiesLabel')}
         >
           <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 px-2 mb-2">
-            Modalidades
+{t('sidebar.modalities')}
           </p>
           <div className="grid grid-cols-2 gap-1">
             {MODALITY_OPTIONS.map((m) => {
@@ -569,8 +575,8 @@ function ModalitiesFlyout({
                         : "text-zinc-500 group-hover:text-zinc-200"
                     }`}
                   />
-                  <span className="text-[10px] font-black uppercase italic truncate">
-                    {m.label}
+                    <span className="text-[10px] font-black uppercase italic truncate">
+                    {t(m.tKey)}
                   </span>
                 </button>
               );
@@ -584,11 +590,12 @@ function ModalitiesFlyout({
 }
 
 export function SidebarMobileTrigger({ onOpen }: { onOpen: () => void }) {
+  const { t } = useTranslations()
   return (
     <button
       type="button"
       onClick={onOpen}
-      aria-label="Abrir menu lateral"
+      aria-label={t('sidebar.openMenu')}
       className="lg:hidden fixed top-3 left-3 z-40 w-10 h-10 rounded-xl bg-zinc-900/80 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-200 shadow-lg cursor-pointer"
     >
       <Menu size={18} />
@@ -603,6 +610,7 @@ export function SidebarMobileDrawer({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslations()
   return (
     <AnimatePresence>
       {open && (
@@ -615,7 +623,7 @@ export function SidebarMobileDrawer({
             role="button"
             tabIndex={0}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClose(); } }}
-            aria-label="Fechar menu"
+            aria-label={t('sidebar.closeMenu')}
             className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
           />
           <motion.div

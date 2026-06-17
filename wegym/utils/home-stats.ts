@@ -112,17 +112,17 @@ export function readSessionsFromStorage(storageKey: string): SessionsByModality 
   }
 }
 
-export function formatRelative(iso: string): string {
+export function formatRelative(iso: string, t: (key: string, fallback?: string) => string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
   const diffMs = Date.now() - d.getTime();
   const diffMin = Math.round(diffMs / 60000);
-  if (diffMin < 1) return 'agora';
-  if (diffMin < 60) return `há ${diffMin} min`;
+  if (diffMin < 1) return t('time.justNow');
+  if (diffMin < 60) return t('time.minutesAgo').replace('{min}', String(diffMin));
   const diffH = Math.round(diffMin / 60);
-  if (diffH < 24) return `há ${diffH}h`;
+  if (diffH < 24) return t('time.hoursAgo').replace('{h}', String(diffH));
   const diffD = Math.round(diffH / 24);
-  if (diffD === 1) return 'ontem';
-  if (diffD < 7) return `há ${diffD} dias`;
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  if (diffD === 1) return t('time.yesterday');
+  if (diffD < 7) return t('time.daysAgo').replace('{d}', String(diffD));
+  return d.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' });
 }

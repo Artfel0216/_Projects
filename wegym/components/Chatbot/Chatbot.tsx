@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Dumbbell, Sparkles, Trophy, ChevronRight, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from '@/lib/i18n/hook';
 
 interface Exercise {
   name: string;
@@ -12,6 +13,7 @@ interface Exercise {
 }
 
 export default function Chatbot() {
+  const { t } = useTranslations();
   const [message, setMessage] = useState("");
   const [level, setLevel] = useState("Iniciante");
   const [loading, setLoading] = useState(false);
@@ -64,10 +66,10 @@ export default function Chatbot() {
             <Dumbbell size={22} className="text-black" />
           </div>
           <div>
-            <h2 className="font-bold text-white text-lg tracking-tight">COACH <span className="text-orange-500">GEMINI</span></h2>
+            <h2 className="font-bold text-white text-lg tracking-tight">{t('chatbot.title')}</h2>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">Sistema Ativo</span>
+              <span className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">{t('chatbot.systemActive')}</span>
             </div>
           </div>
         </div>
@@ -78,9 +80,9 @@ export default function Chatbot() {
             value={level}
             onChange={(e) => setLevel(e.target.value)}
           >
-            <option value="Iniciante">INICIANTE</option>
-            <option value="Intermediário">INTERMEDIÁRIO</option>
-            <option value="Avançado">AVANÇADO</option>
+            <option value="Iniciante">{t('chatbot.beginner')}</option>
+            <option value="Intermediário">{t('chatbot.intermediate')}</option>
+            <option value="Avançado">{t('chatbot.advanced')}</option>
           </select>
         </div>
       </div>
@@ -95,8 +97,8 @@ export default function Chatbot() {
               className="text-center py-10"
             >
               <Sparkles className="mx-auto text-orange-500 mb-4" size={40} />
-              <h3 className="text-white font-semibold italic text-xl">Pronto para o próximo nível?</h3>
-              <p className="text-gray-500 text-sm mt-2">Peça um treino específico ou dicas de performance.</p>
+              <h3 className="text-white font-semibold italic text-xl">{t('chatbot.emptyTitle')}</h3>
+              <p className="text-gray-500 text-sm mt-2">{t('chatbot.emptyDescription')}</p>
             </motion.div>
           )}
 
@@ -153,10 +155,10 @@ export default function Chatbot() {
                     >
                       <div>
                         <p className="text-orange-500 font-bold text-sm uppercase tracking-wide">{ex.name}</p>
-                        <p className="text-[10px] text-gray-500 font-bold mt-1 uppercase">Carga: {ex.load}</p>
+                        <p className="text-[10px] text-gray-500 font-bold mt-1 uppercase">{t('chatbot.load')} {ex.load}</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-white font-black text-lg">{ex.sets}<span className="text-orange-500 text-xs mx-1 font-normal uppercase">x</span>{ex.reps}</div>
+                        <div className="text-white font-black text-lg">{ex.sets}<span className="text-orange-500 text-xs mx-1 font-normal uppercase">{t('chatbot.times')}</span>{ex.reps}</div>
                       </div>
                     </motion.div>
                   ))}
@@ -173,7 +175,7 @@ export default function Chatbot() {
           <input
             type="text"
             className="flex-1 bg-transparent text-white text-sm px-4 py-2 outline-none placeholder:text-gray-600"
-            placeholder="Digite seu objetivo aqui..."
+            placeholder={t('chatbot.inputPlaceholder')}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -187,7 +189,7 @@ export default function Chatbot() {
             <Send size={18} strokeWidth={3} />
           </motion.button>
         </div>
-        <p className="text-[9px] text-gray-600 mt-3 text-center uppercase tracking-[0.2em]">Powered by Gemini 1.5 Flash • High Performance AI</p>
+        <p className="text-[9px] text-gray-600 mt-3 text-center uppercase tracking-[0.2em]">{t('chatbot.footer')}</p>
       </div>
 
     </div>

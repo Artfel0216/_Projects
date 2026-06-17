@@ -1,0 +1,74 @@
+{
+  "app": {
+    "title": "WEGYM",
+    "description": "Intelligente Trainingsplattform \u2014 Fitnessstudio, Cardio und Leistung"
+  },
+  "common": {
+    "brandName": "WEGYM",
+    "loading": "L\u00e4dt...",
+    "save": "Speichern",
+    "edit": "Bearbeiten",
+    "cancel": "Abbrechen",
+    "select": "Ausw\u00e4hlen",
+    "athlete": "Athlet",
+    "hourAbbr": "h",
+    "minAbbr": "min",
+    "kmUnit": " km",
+    "dash": " \u2014"
+  },
+  "sidebar": {
+    "home": "Start",
+    "modalities": "Aktivit\u00e4ten",
+    "stats": "Statistiken",
+    "pro": "Wegym Pro",
+    "profile": "Mein Profil",
+    "privacy": "Datenschutz",
+    "logout": "Abmelden",
+    "agenda": "Termine",
+    "myStudents": "Meine Sch\u00fcler",
+    "addStudent": "Sch\u00fcler hinzuf\u00fcgen",
+    "openMenu": "Men\u00fc \u00f6ffnen",
+    "closeMenu": "Men\u00fc schlie\u00dfen"
+  },
+  "login": {
+    "title": "ANMELDEN",
+    "subtitle": "Bereit f\u00fcr das heutige Training?",
+    "emailLabel": "E-Mail",
+    "passwordLabel": "Passwort",
+    "signIn": "Bei Wegym anmelden",
+    "noAccount": "Noch kein Konto? "
+  },
+  "register": {
+    "title": "Registrierung",
+    "submit": "Registrierung abschlie\u00dfen",
+    "alreadyMember": "Bereits Mitglied? "
+  },
+  "greeting": {
+    "morning": "Guten Morgen",
+    "afternoon": "Guten Nachmittag",
+    "evening": "Guten Abend",
+    "earlyMorning": "Guten Morgen"
+  },
+  "modality": {
+    "gym": "Fitnessstudio",
+    "running": "Laufen",
+    "cycling": "Radfahren",
+    "aerobic": "Cardio",
+    "combat": "Kampfsport",
+    "swimming": "Schwimmen",
+    "walking": "Spazierengehen",
+    "crossfit": "Cross Training",
+    "yoga": "Yoga & Pilates",
+    "hiking": "Wandern",
+    "basketball": "Basketball",
+    "soccer": "Fu\u00dfball",
+    "tennis": "Tennis",
+    "climbing": "Klettern",
+    "skate": "Skateboard",
+    "functional": "Funktionell",
+    "hiit": "HIIT",
+    "dance": "Tanzen",
+    "rowing": "Rudern",
+    "other": "Andere"
+  }
+}

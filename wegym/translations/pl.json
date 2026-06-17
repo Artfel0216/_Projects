@@ -1,0 +1,74 @@
+{
+  "app": {
+    "title": "WEGYM",
+    "description": "Inteligentna platforma treningowa \u2014 si\u0142ownia, cardio i wydajno\u015b\u0107"
+  },
+  "common": {
+    "brandName": "WEGYM",
+    "loading": "\u0141adowanie...",
+    "save": "Zapisz",
+    "edit": "Edytuj",
+    "cancel": "Anuluj",
+    "select": "Wybierz",
+    "athlete": "Sportowiec",
+    "hourAbbr": "h",
+    "minAbbr": "min",
+    "kmUnit": " km",
+    "dash": " \u2014"
+  },
+  "sidebar": {
+    "home": "Strona G\u0142\u00f3wna",
+    "modalities": "Aktywno\u015bci",
+    "stats": "Statystyki",
+    "pro": "Wegym Pro",
+    "profile": "M\u00f3j Profil",
+    "privacy": "Prywatno\u015b\u0107",
+    "logout": "Wyloguj",
+    "agenda": "Harmonogram",
+    "myStudents": "Moi Uczniowie",
+    "addStudent": "Dodaj ucznia",
+    "openMenu": "Otw\u00f3rz menu",
+    "closeMenu": "Zamknij menu"
+  },
+  "login": {
+    "title": "ZALOGUJ SI\u0118",
+    "subtitle": "Gotowy na dzisiejszy trening?",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Has\u0142o",
+    "signIn": "Zaloguj si\u0119 do Wegym",
+    "noAccount": "Nie masz konta? "
+  },
+  "register": {
+    "title": "Rejestracja",
+    "submit": "Zako\u0144cz rejestracj\u0119",
+    "alreadyMember": "Ju\u017c jeste\u015b cz\u0142onkiem? "
+  },
+  "greeting": {
+    "morning": "Dzie\u0144 dobry",
+    "afternoon": "Dzie\u0144 dobry",
+    "evening": "Dobry wiecz\u00f3r",
+    "earlyMorning": "Dzie\u0144 dobry"
+  },
+  "modality": {
+    "gym": "Si\u0142ownia",
+    "running": "Bieganie",
+    "cycling": "Jazda na rowerze",
+    "aerobic": "Cardio",
+    "combat": "Walka",
+    "swimming": "P\u0142ywanie",
+    "walking": "Chodzenie",
+    "crossfit": "Cross Training",
+    "yoga": "Joga & Pilates",
+    "hiking": "W\u0119dr\u00f3wki",
+    "basketball": "Koszyk\u00f3wka",
+    "soccer": "Pi\u0142ka no\u017cna",
+    "tennis": "Tenis",
+    "climbing": "Wspinaczka",
+    "skate": "Skate",
+    "functional": "Funkcjonalny",
+    "hiit": "HIIT",
+    "dance": "Taniec",
+    "rowing": "Wio\u015blarstwo",
+    "other": "Inne"
+  }
+}

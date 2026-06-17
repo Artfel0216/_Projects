@@ -4,6 +4,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { useTranslations } from '@/lib/i18n/hook';
 import {
   Users, Calendar, TrendingUp, CalendarDays, Plus, Award,
   ChevronRight, Target, Dumbbell, Send, X, Bot, Trash2,
@@ -42,6 +43,7 @@ const createEmptyStudentForm = () => ({
 
 
 export default function PersonalDashboard() {
+  const { t } = useTranslations();
   const searchParams = useSearchParams();
   const [activeMobileTab, setActiveMobileTab] = useState<'home' | 'students' | 'create'>('home');
 
@@ -460,8 +462,8 @@ const handleChat = async () => {
             <Award className="text-white w-5 h-5" />
           </div>
           <div>
-            <span className="text-xl font-black italic tracking-tighter text-white block leading-none">PRO COACH</span>
-            <span className="text-[9px] font-bold text-orange-500 uppercase tracking-[0.2em]">Personal Panel</span>
+            <span className="text-xl font-black italic tracking-tighter text-white block leading-none">{t('personal.proCoach')}</span>
+            <span className="text-[9px] font-bold text-orange-500 uppercase tracking-[0.2em]">{t('personal.personalPanel')}</span>
           </div>
         </button>
         <div className="flex items-center space-x-4">
@@ -474,7 +476,7 @@ const handleChat = async () => {
             className="bg-orange-600 hover:bg-orange-700 p-2.5 rounded-xl transition-all flex items-center gap-2 group cursor-pointer"
           >
             <Plus size={20} className="text-white group-hover:rotate-90 transition-transform" />
-            <span className="text-[10px] font-black uppercase italic pr-1 hidden md:block text-white">ADICIONAR NOVO ALUNO</span>
+            <span className="text-[10px] font-black uppercase italic pr-1 hidden md:block text-white">{t('personal.addNewStudent')}</span>
           </button>
         </div>
       </header>
@@ -482,40 +484,40 @@ const handleChat = async () => {
       <main className="max-w-6xl mx-auto px-4 pt-8">
         {showNewStudentForm && (
           <div className="mb-8 bg-zinc-900/50 rounded-4xl border border-orange-500/20 p-6">
-            <h2 className="text-lg font-black italic uppercase text-white mb-4">Cadastro completo de aluno</h2>
+            <h2 className="text-lg font-black italic uppercase text-white mb-4">{t('personal.studentRegistration')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Field label="Nome completo" required><input required value={safeNewStudent.name} onChange={(e) => setNewStudent({ ...safeNewStudent, name: e.target.value })} placeholder="Nome completo" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="CPF" required><input required value={safeNewStudent.cpf} onChange={(e) => setNewStudent({ ...safeNewStudent, cpf: e.target.value })} placeholder="000.000.000-00" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Email"><input value={safeNewStudent.email} onChange={(e) => setNewStudent({ ...safeNewStudent, email: e.target.value })} placeholder="Email" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Telefone / WhatsApp" required><input required value={safeNewStudent.phone} onChange={(e) => setNewStudent({ ...safeNewStudent, phone: e.target.value })} placeholder="Telefone / WhatsApp" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Data de nascimento" required><input required type="date" value={safeNewStudent.birthDate} onChange={(e) => setNewStudent({ ...safeNewStudent, birthDate: e.target.value })} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white scheme-light" /></Field>
-              <Field label="Gênero" required>
+              <Field label={t('personal.fullName')} required><input required value={safeNewStudent.name} onChange={(e) => setNewStudent({ ...safeNewStudent, name: e.target.value })} placeholder={t('personal.fullName')} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.cpf')} required><input required value={safeNewStudent.cpf} onChange={(e) => setNewStudent({ ...safeNewStudent, cpf: e.target.value })} placeholder="000.000.000-00" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.email')}><input value={safeNewStudent.email} onChange={(e) => setNewStudent({ ...safeNewStudent, email: e.target.value })} placeholder={t('personal.email')} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.phone')} required><input required value={safeNewStudent.phone} onChange={(e) => setNewStudent({ ...safeNewStudent, phone: e.target.value })} placeholder={t('personal.phone')} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.birthDate')} required><input required type="date" value={safeNewStudent.birthDate} onChange={(e) => setNewStudent({ ...safeNewStudent, birthDate: e.target.value })} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white scheme-light" /></Field>
+              <Field label={t('personal.gender')} required>
                 <select required value={safeNewStudent.gender} onChange={(e) => setNewStudent({ ...safeNewStudent, gender: e.target.value })} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white">
-                  <option value="">Selecione</option>
-                  {GENDER_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                  <option value="">{t('common.select')}</option>
+                  {GENDER_OPTIONS.map((option) => <option key={option.value} value={option.value}>{t(option.tKey ?? option.label)}</option>)}
                 </select>
               </Field>
-              <Field label="Contato de emergência"><input value={safeNewStudent.emergencyContact} onChange={(e) => setNewStudent({ ...safeNewStudent, emergencyContact: e.target.value })} placeholder="Contato de emergência" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Objetivo principal" required><input required value={safeNewStudent.objective} onChange={(e) => setNewStudent({ ...safeNewStudent, objective: e.target.value })} placeholder="Objetivo principal" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Nível de experiência" required>
+              <Field label={t('personal.emergencyContact')}><input value={safeNewStudent.emergencyContact} onChange={(e) => setNewStudent({ ...safeNewStudent, emergencyContact: e.target.value })} placeholder={t('personal.emergencyContact')} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.mainObjective')} required><input required value={safeNewStudent.objective} onChange={(e) => setNewStudent({ ...safeNewStudent, objective: e.target.value })} placeholder={t('personal.mainObjective')} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.experienceLevel')} required>
                 <select required value={safeNewStudent.experience} onChange={(e) => setNewStudent({ ...safeNewStudent, experience: e.target.value })} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white">
-                  <option value="">Selecione</option>
-                  {EXPERIENCE_LEVELS.map((option) => <option key={option} value={option}>{option}</option>)}
+                  <option value="">{t('common.select')}</option>
+                  {EXPERIENCE_LEVELS.map((option) => <option key={option.value} value={option.value}>{t(option.tKey ?? option.label)}</option>)}
                 </select>
               </Field>
-              <Field label="Dias disponíveis" required>
+              <Field label={t('personal.availableDays')} required>
                 <select
                   required
-                  value={safeNewStudent.availableDays.startsWith(OTHER_DAYS_PREFIX) ? 'Outros' : safeNewStudent.availableDays}
-                  onChange={(e) => setNewStudent({ ...safeNewStudent, availableDays: e.target.value === 'Outros' ? OTHER_DAYS_PREFIX : e.target.value })}
+                  value={safeNewStudent.availableDays.startsWith(OTHER_DAYS_PREFIX) ? 'other' : safeNewStudent.availableDays}
+                  onChange={(e) => setNewStudent({ ...safeNewStudent, availableDays: e.target.value === 'other' ? OTHER_DAYS_PREFIX : e.target.value })}
                   className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white"
                 >
-                  <option value="">Selecione</option>
-                  {AVAILABLE_DAYS_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                  <option value="">{t('common.select')}</option>
+                  {AVAILABLE_DAYS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{t(option.tKey ?? option.label)}</option>)}
                 </select>
               </Field>
               {safeNewStudent.availableDays.startsWith(OTHER_DAYS_PREFIX) && (
-                <Field label="Informe os dias disponíveis" required className="md:col-span-3">
+                <Field label={t('personal.customDays')} required className="md:col-span-3">
                   <input
                     required
                     value={safeNewStudent.availableDays.replace(OTHER_DAYS_PREFIX, '')}
@@ -525,27 +527,27 @@ const handleChat = async () => {
                   />
                 </Field>
               )}
-              <Field label="Altura (m)"><input value={safeNewStudent.height} onChange={(e) => setNewStudent({ ...safeNewStudent, height: e.target.value })} placeholder="Altura (m)" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Peso (kg)"><input value={safeNewStudent.weight} onChange={(e) => setNewStudent({ ...safeNewStudent, weight: e.target.value })} placeholder="Peso (kg)" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="% Gordura corporal"><input value={safeNewStudent.bodyFat} onChange={(e) => setNewStudent({ ...safeNewStudent, bodyFat: e.target.value })} placeholder="% Gordura corporal" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Restrições médicas" className="md:col-span-2"><input value={safeNewStudent.restrictions} onChange={(e) => setNewStudent({ ...safeNewStudent, restrictions: e.target.value })} placeholder="Restrições médicas" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Lesões / histórico ortopédico"><input value={safeNewStudent.injuries} onChange={(e) => setNewStudent({ ...safeNewStudent, injuries: e.target.value })} placeholder="Lesões / histórico ortopédico" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Medicamentos em uso"><input value={safeNewStudent.medications} onChange={(e) => setNewStudent({ ...safeNewStudent, medications: e.target.value })} placeholder="Medicamentos em uso" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Plano"><input value={safeNewStudent.plan} onChange={(e) => setNewStudent({ ...safeNewStudent, plan: e.target.value })} placeholder="Basic, Premium..." className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
-              <Field label="Observações gerais" className="md:col-span-3"><textarea value={safeNewStudent.observations} onChange={(e) => setNewStudent({ ...safeNewStudent, observations: e.target.value })} placeholder="Rotina, preferências e observações" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white min-h-24 resize-none" /></Field>
+              <Field label={t('personal.height')}><input value={safeNewStudent.height} onChange={(e) => setNewStudent({ ...safeNewStudent, height: e.target.value })} placeholder={t('personal.height')} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.weight')}><input value={safeNewStudent.weight} onChange={(e) => setNewStudent({ ...safeNewStudent, weight: e.target.value })} placeholder={t('personal.weight')} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.bodyFat')}><input value={safeNewStudent.bodyFat} onChange={(e) => setNewStudent({ ...safeNewStudent, bodyFat: e.target.value })} placeholder={t('personal.bodyFat')} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.medicalRestrictions')} className="md:col-span-2"><input value={safeNewStudent.restrictions} onChange={(e) => setNewStudent({ ...safeNewStudent, restrictions: e.target.value })} placeholder={t('personal.medicalRestrictions')} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.injuries')}><input value={safeNewStudent.injuries} onChange={(e) => setNewStudent({ ...safeNewStudent, injuries: e.target.value })} placeholder={t('personal.injuries')} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.medications')}><input value={safeNewStudent.medications} onChange={(e) => setNewStudent({ ...safeNewStudent, medications: e.target.value })} placeholder={t('personal.medications')} className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.plan')}><input value={safeNewStudent.plan} onChange={(e) => setNewStudent({ ...safeNewStudent, plan: e.target.value })} placeholder="Basic, Premium..." className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white" /></Field>
+              <Field label={t('personal.generalNotes')} className="md:col-span-3"><textarea value={safeNewStudent.observations} onChange={(e) => setNewStudent({ ...safeNewStudent, observations: e.target.value })} placeholder="Rotina, preferências e observações" className="bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white min-h-24 resize-none" /></Field>
             </div>
             <div className="mt-4 flex gap-2">
-              <button               onClick={createStudent} className="btn-primary">Salvar aluno</button>
-              <button onClick={() => setShowNewStudentForm(false)} className="bg-white/10 hover:bg-white/20 rounded-xl px-4 py-2 text-[11px] font-black uppercase italic cursor-pointer">Cancelar</button>
+              <button               onClick={createStudent} className="btn-primary">{t('personal.saveStudent')}</button>
+              <button onClick={() => setShowNewStudentForm(false)} className="bg-white/10 hover:bg-white/20 rounded-xl px-4 py-2 text-[11px] font-black uppercase italic cursor-pointer">{t('common.cancel')}</button>
             </div>
           </div>
         )}
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard title="Alunos Ativos" value="24" icon={Users} trend="12" />
-          <StatCard title="Aulas p/ Semana" value="38" icon={CalendarDays} />
-          <StatCard title="Faturamento Mês" value="R$ 8.450" icon={TrendingUp} trend="5" />
-          <StatCard title="Taxa de Retenção" value="94%" icon={Target} />
+          <StatCard title={t('personal.activeStudents')} value="24" icon={Users} trend="12" />
+          <StatCard title={t('personal.classesPerWeek')} value="38" icon={CalendarDays} />
+          <StatCard title={t('personal.monthlyRevenue')} value="R$ 8.450" icon={TrendingUp} trend="5" />
+          <StatCard title={t('personal.retentionRate')} value="94%" icon={Target} />
         </div>
 
         <div className={`grid grid-cols-1 gap-8 ${activeMobileTab === 'students' && !selectedStudent ? '' : 'lg:grid-cols-3'}`}>
@@ -555,14 +557,14 @@ const handleChat = async () => {
                 <motion.div key="students-list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                     <div>
-                      <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-1">Painel do personal</p>
+                      <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-1">{t('personal.dashboardTitle')}</p>
                       <h2 className="text-2xl sm:text-3xl font-black italic uppercase text-white tracking-tighter leading-tight">
-                        Meus Alunos
+                        {t('personal.myStudents')}
                       </h2>
                       <p className="text-[11px] text-zinc-500 font-medium mt-1">
                         {students.length === 0
-                          ? 'Nenhum aluno cadastrado ainda.'
-                          : `${students.length} ${students.length === 1 ? 'aluno' : 'alunos'} no total${studentsSearch ? ` · ${filteredStudents.length} no filtro` : ''}`}
+                          ? t('personal.noStudents')
+                          : `${students.length} ${students.length === 1 ? t('personal.studentSingular') : t('personal.studentPlural')} no total${studentsSearch ? ` · ${filteredStudents.length} no filtro` : ''}`}
                       </p>
                     </div>
                     <button
@@ -576,7 +578,7 @@ const handleChat = async () => {
                       className="self-stretch sm:self-auto bg-orange-600 hover:bg-orange-700 px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase italic text-white cursor-pointer transition-colors"
                     >
                       <UserPlus size={14} />
-                      Adicionar aluno
+                      {t('personal.addStudent')}
                     </button>
                   </div>
 
@@ -586,7 +588,7 @@ const handleChat = async () => {
                       type="search"
                       value={studentsSearch}
                       onChange={(e) => setStudentsSearch(e.target.value)}
-                      placeholder="Buscar por nome, objetivo, nível ou plano…"
+                      placeholder={t('personal.searchPlaceholder')}
                       className="w-full bg-zinc-900/60 border border-white/5 rounded-2xl pl-10 pr-4 py-3 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-orange-500/40 transition-colors"
                     />
                   </div>
@@ -597,10 +599,10 @@ const handleChat = async () => {
                         <Users size={22} className="text-zinc-500" />
                       </div>
                       <p className="text-sm font-black italic uppercase text-white tracking-tight">
-                        Nenhum aluno por aqui
+                        {t('personal.noStudentsHere')}
                       </p>
                       <p className="text-[11px] text-zinc-500 mt-1 max-w-xs mx-auto font-medium leading-relaxed">
-                        Comece cadastrando seu primeiro aluno e organize a rotina de treinos dele.
+                        {t('personal.noStudentsDescription')}
                       </p>
                       <button
                         type="button"
@@ -613,23 +615,23 @@ const handleChat = async () => {
                         className="mt-5 bg-orange-600 hover:bg-orange-700 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase italic text-white cursor-pointer transition-colors inline-flex items-center gap-2"
                       >
                         <UserPlus size={14} />
-                        Cadastrar primeiro aluno
+                        {t('personal.registerFirstStudent')}
                       </button>
                     </div>
                   ) : filteredStudents.length === 0 ? (
                     <div className="text-center py-12 px-6 bg-zinc-900/30 rounded-4xl border border-white/5">
                       <p className="text-sm font-black italic uppercase text-white tracking-tight">
-                        Nenhum aluno encontrado
+                        {t('personal.noStudentsFound')}
                       </p>
                       <p className="text-[11px] text-zinc-500 mt-1 font-medium">
-                        Tente outro termo na busca.
+                        {t('personal.tryDifferentSearch')}
                       </p>
                       <button
                         type="button"
                         onClick={() => setStudentsSearch('')}
                         className="mt-4 text-[10px] font-black uppercase italic text-orange-500 hover:text-orange-400 cursor-pointer"
                       >
-                        Limpar busca
+                        {t('personal.clearSearch')}
                       </button>
                     </div>
                   ) : (
@@ -657,7 +659,7 @@ const handleChat = async () => {
                                   {student.name}
                                 </p>
                                 <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest truncate">
-                                  {student.lastTraining || 'Sem registro'}
+                                  {student.lastTraining || t('personal.noRecord')}
                                 </p>
                               </div>
                               <ChevronRight size={16} className="text-zinc-600 group-hover:text-orange-500 transition-colors shrink-0" />
@@ -690,7 +692,7 @@ const handleChat = async () => {
                 </motion.div>
               ) : !selectedStudent ? (
                 <motion.div key="agenda" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                  <h2 className="text-2xl font-black italic uppercase text-white tracking-tighter">Cronograma Semanal</h2>
+                  <h2 className="text-2xl font-black italic uppercase text-white tracking-tighter">{t('personal.weeklySchedule')}</h2>
                   <div className="space-y-3">
                     {weeklyClasses.map((item) => {
                       const student = students.find((s) => s.id === item.studentId);
@@ -720,37 +722,37 @@ const handleChat = async () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                    <Field label="Nome completo" required><input required value={selectedStudent.name ?? ''} onChange={(e) => updateSelectedStudentField('name', e.target.value)} placeholder="Nome completo" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="CPF" required><input required value={selectedStudent.cpf ?? ''} onChange={(e) => updateSelectedStudentField('cpf', e.target.value)} placeholder="000.000.000-00" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Email"><input value={selectedStudent.email ?? ''} onChange={(e) => updateSelectedStudentField('email', e.target.value)} placeholder="Email" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Telefone" required><input required value={selectedStudent.phone ?? ''} onChange={(e) => updateSelectedStudentField('phone', e.target.value)} placeholder="Telefone" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Data de nascimento" required><input required type="date" value={selectedStudent.birthDate ?? ''} onChange={(e) => updateSelectedStudentField('birthDate', e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none scheme-light" /></Field>
-                    <Field label="Gênero" required>
+                    <Field label={t('personal.fullName')} required><input required value={selectedStudent.name ?? ''} onChange={(e) => updateSelectedStudentField('name', e.target.value)} placeholder={t('personal.fullName')} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.cpf')} required><input required value={selectedStudent.cpf ?? ''} onChange={(e) => updateSelectedStudentField('cpf', e.target.value)} placeholder="000.000.000-00" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.email')}><input value={selectedStudent.email ?? ''} onChange={(e) => updateSelectedStudentField('email', e.target.value)} placeholder={t('personal.email')} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.phone')} required><input required value={selectedStudent.phone ?? ''} onChange={(e) => updateSelectedStudentField('phone', e.target.value)} placeholder={t('personal.phone')} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.birthDate')} required><input required type="date" value={selectedStudent.birthDate ?? ''} onChange={(e) => updateSelectedStudentField('birthDate', e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none scheme-light" /></Field>
+                    <Field label={t('personal.gender')} required>
                       <select required value={selectedStudent.gender ?? ''} onChange={(e) => updateSelectedStudentField('gender', e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none">
-                        <option value="">Selecione</option>
-                        {GENDER_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                        <option value="">{t('common.select')}</option>
+                  {GENDER_OPTIONS.map((option) => <option key={option.value} value={option.value}>{t(option.tKey ?? option.label)}</option>)}
                       </select>
                     </Field>
-                    <Field label="Objetivo" required><input required value={selectedStudent.objective ?? ''} onChange={(e) => updateSelectedStudentField('objective', e.target.value)} placeholder="Objetivo" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Experiência de treino" required>
+                    <Field label={t('personal.mainObjective')} required><input required value={selectedStudent.objective ?? ''} onChange={(e) => updateSelectedStudentField('objective', e.target.value)} placeholder={t('personal.mainObjective')} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.experienceLevel')} required>
                       <select required value={selectedStudent.experience ?? ''} onChange={(e) => updateSelectedStudentField('experience', e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none">
-                        <option value="">Selecione</option>
-                        {EXPERIENCE_LEVELS.map((option) => <option key={option} value={option}>{option}</option>)}
+                        <option value="">{t('common.select')}</option>
+                        {EXPERIENCE_LEVELS.map((option) => <option key={option.value} value={option.value}>{t(option.tKey ?? option.label)}</option>)}
                       </select>
                     </Field>
-                    <Field label="Dias disponíveis" required>
+                    <Field label={t('personal.availableDays')} required>
                       <select
                         required
-                        value={(selectedStudent.availableDays ?? '').startsWith(OTHER_DAYS_PREFIX) ? 'Outros' : (selectedStudent.availableDays ?? '')}
-                        onChange={(e) => updateSelectedStudentField('availableDays', e.target.value === 'Outros' ? OTHER_DAYS_PREFIX : e.target.value)}
+                        value={(selectedStudent.availableDays ?? '').startsWith(OTHER_DAYS_PREFIX) ? 'other' : (selectedStudent.availableDays ?? '')}
+                        onChange={(e) => updateSelectedStudentField('availableDays', e.target.value === 'other' ? OTHER_DAYS_PREFIX : e.target.value)}
                         className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none"
                       >
-                        <option value="">Selecione</option>
-                        {AVAILABLE_DAYS_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                        <option value="">{t('common.select')}</option>
+                        {AVAILABLE_DAYS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{t(option.tKey ?? option.label)}</option>)}
                       </select>
                     </Field>
                     {(selectedStudent.availableDays ?? '').startsWith(OTHER_DAYS_PREFIX) && (
-                      <Field label="Informe os dias disponíveis" required className="md:col-span-2">
+                      <Field label={t('personal.customDays')} required className="md:col-span-2">
                         <input
                           required
                           value={(selectedStudent.availableDays ?? '').replace(OTHER_DAYS_PREFIX, '')}
@@ -760,65 +762,65 @@ const handleChat = async () => {
                         />
                       </Field>
                     )}
-                    <Field label="Altura (m)"><input value={selectedStudent.height ?? ''} onChange={(e) => updateSelectedStudentField('height', e.target.value)} placeholder="Altura (m)" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Peso (kg)"><input value={selectedStudent.weight ?? ''} onChange={(e) => updateSelectedStudentField('weight', e.target.value)} placeholder="Peso (kg)" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="% Gordura corporal"><input value={selectedStudent.bodyFat ?? ''} onChange={(e) => updateSelectedStudentField('bodyFat', e.target.value)} placeholder="% Gordura corporal" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Restrições médicas"><input value={selectedStudent.restrictions ?? ''} onChange={(e) => updateSelectedStudentField('restrictions', e.target.value)} placeholder="Restrições médicas" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Lesões"><input value={selectedStudent.injuries ?? ''} onChange={(e) => updateSelectedStudentField('injuries', e.target.value)} placeholder="Lesões" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Medicações"><input value={selectedStudent.medications ?? ''} onChange={(e) => updateSelectedStudentField('medications', e.target.value)} placeholder="Medicações" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Observações do aluno" className="md:col-span-2"><textarea value={selectedStudent.observations ?? ''} onChange={(e) => updateSelectedStudentField('observations', e.target.value)} placeholder="Observações do aluno" className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none min-h-24 resize-none" /></Field>
+                    <Field label={t('personal.height')}><input value={selectedStudent.height ?? ''} onChange={(e) => updateSelectedStudentField('height', e.target.value)} placeholder={t('personal.height')} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.weight')}><input value={selectedStudent.weight ?? ''} onChange={(e) => updateSelectedStudentField('weight', e.target.value)} placeholder={t('personal.weight')} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.bodyFat')}><input value={selectedStudent.bodyFat ?? ''} onChange={(e) => updateSelectedStudentField('bodyFat', e.target.value)} placeholder={t('personal.bodyFat')} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.medicalRestrictions')}><input value={selectedStudent.restrictions ?? ''} onChange={(e) => updateSelectedStudentField('restrictions', e.target.value)} placeholder={t('personal.medicalRestrictions')} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.injuries')}><input value={selectedStudent.injuries ?? ''} onChange={(e) => updateSelectedStudentField('injuries', e.target.value)} placeholder={t('personal.injuries')} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.medications')}><input value={selectedStudent.medications ?? ''} onChange={(e) => updateSelectedStudentField('medications', e.target.value)} placeholder={t('personal.medications')} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.generalNotes')} className="md:col-span-2"><textarea value={selectedStudent.observations ?? ''} onChange={(e) => updateSelectedStudentField('observations', e.target.value)} placeholder={t('personal.generalNotes')} className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none min-h-24 resize-none" /></Field>
                   </div>
 
                   <div className="flex gap-2 mb-6">
-                    <button onClick={() => setShowExerciseForm((prev) => !prev)} className="btn-primary">+ ADICIONAR EXERCÍCIOS</button>
-                    <button onClick={deleteSelectedStudent} className="btn-primary bg-red-600/90 hover:bg-red-600">Excluir aluno</button>
+                    <button onClick={() => setShowExerciseForm((prev) => !prev)} className="btn-primary">{t('personal.addExercises')}</button>
+                    <button onClick={deleteSelectedStudent} className="btn-primary bg-red-600/90 hover:bg-red-600">{t('personal.deleteStudent')}</button>
                   </div>
 
                   {showExerciseForm && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mb-8 p-6 bg-zinc-950/50 rounded-3xl border border-orange-500/20 grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <Field label="Dia da semana" required>
+                      <Field label={t('personal.weekDay')} required>
                         <select required value={exerciseToAdd.day} onChange={e => setExerciseToAdd({ ...exerciseToAdd, day: e.target.value })} className="bg-zinc-900 border border-white/5 rounded-xl px-4 py-2 text-xs text-white outline-none">
-                          {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
+                          {DAYS.map((day) => <option key={day.value} value={day.value}>{t(day.tKey ?? day.label)}</option>)}
                         </select>
                       </Field>
-                      <Field label="Exercício" required>
-                        <input required value={exerciseToAdd.name} onChange={e => setExerciseToAdd({ ...exerciseToAdd, name: e.target.value })} placeholder="Exercício" className="bg-zinc-900 border border-white/5 rounded-xl px-4 py-2 text-xs text-white focus:border-orange-500 outline-none" />
+                      <Field label={t('personal.exercise')} required>
+                        <input required value={exerciseToAdd.name} onChange={e => setExerciseToAdd({ ...exerciseToAdd, name: e.target.value })} placeholder={t('personal.exercise')} className="bg-zinc-900 border border-white/5 rounded-xl px-4 py-2 text-xs text-white focus:border-orange-500 outline-none" />
                       </Field>
-                      <Field label="Séries" required>
-                        <input required value={exerciseToAdd.sets} onChange={e => setExerciseToAdd({ ...exerciseToAdd, sets: e.target.value })} placeholder="Séries" className="bg-zinc-900 border border-white/5 rounded-xl px-4 py-2 text-xs text-white focus:border-orange-500 outline-none" />
+                      <Field label={t('personal.sets')} required>
+                        <input required value={exerciseToAdd.sets} onChange={e => setExerciseToAdd({ ...exerciseToAdd, sets: e.target.value })} placeholder={t('personal.sets')} className="bg-zinc-900 border border-white/5 rounded-xl px-4 py-2 text-xs text-white focus:border-orange-500 outline-none" />
                       </Field>
-                      <Field label="Repetições" required>
-                        <input required value={exerciseToAdd.reps} onChange={e => setExerciseToAdd({ ...exerciseToAdd, reps: e.target.value })} placeholder="Repetições" className="bg-zinc-900 border border-white/5 rounded-xl px-4 py-2 text-xs text-white focus:border-orange-500 outline-none" />
+                      <Field label={t('personal.reps')} required>
+                        <input required value={exerciseToAdd.reps} onChange={e => setExerciseToAdd({ ...exerciseToAdd, reps: e.target.value })} placeholder={t('personal.reps')} className="bg-zinc-900 border border-white/5 rounded-xl px-4 py-2 text-xs text-white focus:border-orange-500 outline-none" />
                       </Field>
-                      <Field label="Carga" className="md:col-span-1">
-                        <input value={exerciseToAdd.load} onChange={e => setExerciseToAdd({ ...exerciseToAdd, load: e.target.value })} placeholder="Carga" className="bg-zinc-900 border border-white/5 rounded-xl px-4 py-2 text-xs text-white focus:border-orange-500 outline-none" />
+                      <Field label={t('personal.load')} className="md:col-span-1">
+                        <input value={exerciseToAdd.load} onChange={e => setExerciseToAdd({ ...exerciseToAdd, load: e.target.value })} placeholder={t('personal.load')} className="bg-zinc-900 border border-white/5 rounded-xl px-4 py-2 text-xs text-white focus:border-orange-500 outline-none" />
                       </Field>
                       <div className="md:col-span-3 flex items-end">
                         <button onClick={addExerciseToSelectedStudent} className="w-full bg-orange-600 text-white font-black italic uppercase text-[10px] rounded-xl hover:bg-orange-700 transition-all flex items-center justify-center gap-2 py-2 cursor-pointer">
-                          <Plus size={14} /> Adicionar
+                          <Plus size={14} /> {t('training.add')}
                         </button>
                       </div>
                     </motion.div>
                   )}
 
-                  <h3 className="text-white font-black italic uppercase text-sm mb-4">Ficha completa - treinos por dia</h3>
+                  <h3 className="text-white font-black italic uppercase text-sm mb-4">{t('personal.fullSheet')}</h3>
                   <div className="space-y-4 mb-8">
                     {DAYS.map((day) => (
-                      <div key={day} className="bg-zinc-950/50 rounded-2xl border border-white/5 p-4">
-                        <p className="text-orange-500 font-black uppercase text-xs mb-3">{day}</p>
+                      <div key={day.value} className="bg-zinc-950/50 rounded-2xl border border-white/5 p-4">
+                        <p className="text-orange-500 font-black uppercase text-xs mb-3">{t(day.tKey ?? day.label)}</p>
                         <div className="space-y-2">
-                          {(selectedStudent.weeklyPlan[day] ?? []).length === 0 && (
-                            <p className="text-[11px] text-zinc-500">Sem exercícios cadastrados.</p>
+                          {(selectedStudent.weeklyPlan[day.value] ?? []).length === 0 && (
+                            <p className="text-[11px] text-zinc-500">{t('personal.noExercises')}</p>
                           )}
-                          {(selectedStudent.weeklyPlan[day] ?? []).map((ex, idx) => (
-                            <div key={`${day}-${idx}`} className="flex items-center justify-between p-3 bg-zinc-900/50 rounded-xl border border-white/5">
+                          {(selectedStudent.weeklyPlan[day.value] ?? []).map((ex, idx) => (
+                            <div key={`${day.value}-${idx}`} className="flex items-center justify-between p-3 bg-zinc-900/50 rounded-xl border border-white/5">
                               <div>
                                 <p className="font-black italic uppercase text-white text-xs">{ex.name}</p>
-                                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{ex.sets} séries x {ex.reps}</p>
+                                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{ex.sets} {t('chatbot.times')} {ex.reps}</p>
                               </div>
                               <div className="flex items-center gap-3">
                                 <span className="bg-zinc-900 px-3 py-1 rounded-lg text-orange-500 font-black italic text-[10px] border border-white/5">{ex.load || '0kg'}</span>
-                                <button onClick={() => removeExercise(day, idx)} className="text-zinc-600 hover:text-red-500 transition-colors cursor-pointer"><Trash2 size={16} /></button>
+                                <button onClick={() => removeExercise(day.value, idx)} className="text-zinc-600 hover:text-red-500 transition-colors cursor-pointer"><Trash2 size={16} /></button>
                               </div>
                             </div>
                           ))}
@@ -827,18 +829,18 @@ const handleChat = async () => {
                     ))}
                   </div>
 
-                  <h3 className="text-white font-black italic uppercase text-sm mb-3">Histórico de evolução</h3>
+                  <h3 className="text-white font-black italic uppercase text-sm mb-3">{t('personal.evolutionHistory')}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-3">
-                    <Field label="Data" required><input required type="date" value={historyInput.date} onChange={(e) => setHistoryInput({ ...historyInput, date: e.target.value })} className="bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Peso" required><input required value={historyInput.weight} onChange={(e) => setHistoryInput({ ...historyInput, weight: e.target.value })} placeholder="Peso" className="bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Ganho de massa"><input value={historyInput.muscleMass} onChange={(e) => setHistoryInput({ ...historyInput, muscleMass: e.target.value })} placeholder="Ganho de massa" className="bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none" /></Field>
-                    <Field label="Perda de gordura"><input value={historyInput.bodyFat} onChange={(e) => setHistoryInput({ ...historyInput, bodyFat: e.target.value })} placeholder="Perda de gordura" className="bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.date')} required><input required type="date" value={historyInput.date} onChange={(e) => setHistoryInput({ ...historyInput, date: e.target.value })} className="bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.weight')} required><input required value={historyInput.weight} onChange={(e) => setHistoryInput({ ...historyInput, weight: e.target.value })} placeholder={t('personal.weight')} className="bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.muscleGain')}><input value={historyInput.muscleMass} onChange={(e) => setHistoryInput({ ...historyInput, muscleMass: e.target.value })} placeholder={t('personal.muscleGain')} className="bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none" /></Field>
+                    <Field label={t('personal.fatLoss')}><input value={historyInput.bodyFat} onChange={(e) => setHistoryInput({ ...historyInput, bodyFat: e.target.value })} placeholder={t('personal.fatLoss')} className="bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none" /></Field>
                     <div className="flex items-end">
-                      <button onClick={addHistoryEntry} className="w-full bg-orange-600 hover:bg-orange-700 rounded-xl px-4 py-2 text-[10px] font-black uppercase italic cursor-pointer">Adicionar histórico</button>
+                      <button onClick={addHistoryEntry} className="w-full bg-orange-600 hover:bg-orange-700 rounded-xl px-4 py-2 text-[10px] font-black uppercase italic cursor-pointer">{t('personal.addHistory')}</button>
                     </div>
                   </div>
-                  <Field label="Observação da evolução" className="mb-4">
-                    <textarea value={historyInput.note} onChange={(e) => setHistoryInput({ ...historyInput, note: e.target.value })} placeholder="Observação da evolução" className="w-full bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none min-h-20 resize-none" />
+                  <Field label={t('personal.evolutionNote')} className="mb-4">
+                    <textarea value={historyInput.note} onChange={(e) => setHistoryInput({ ...historyInput, note: e.target.value })} placeholder={t('personal.evolutionNote')} className="w-full bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none min-h-20 resize-none" />
                   </Field>
                   <div className="space-y-2">
                     {selectedStudent.progressHistory.map((entry, idx) => (
@@ -862,9 +864,9 @@ const handleChat = async () => {
           <aside className="space-y-6">
             <div className="bg-orange-600 rounded-[28px] sm:rounded-[40px] p-5 sm:p-8 relative overflow-hidden shadow-2xl shadow-orange-600/20">
               <div className="relative z-10">
-                <h3 className="text-white font-black italic uppercase text-xl sm:text-2xl leading-tight mb-3 sm:mb-4">Otimização<br />por IA</h3>
+                <h3 className="text-white font-black italic uppercase text-xl sm:text-2xl leading-tight mb-3 sm:mb-4">{t('personal.aiOptimization')}</h3>
                 <button onClick={() => setIsChatOpen(true)} className="bg-white text-orange-600 px-5 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-black uppercase italic text-[10px] sm:text-xs flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform shadow-xl cursor-pointer">
-                  Falar com Copilot <Bot size={16} />
+                  {t('personal.talkToCopilot')} <Bot size={16} />
                 </button>
               </div>
               <Bot size={120} className="sm:hidden absolute -right-8 -bottom-8 text-white/10 -rotate-12" />
@@ -872,7 +874,7 @@ const handleChat = async () => {
             </div>
 
             <div className="card-base p-6">
-              <h3 className="text-white font-black italic uppercase text-sm mb-4">Meus Alunos</h3>
+              <h3 className="text-white font-black italic uppercase text-sm mb-4">{t('personal.myStudents')}</h3>
               <div className="space-y-5">
                 {students.map((student) => (
                   <div key={student.id} className="flex flex-col gap-2 cursor-pointer hover:translate-x-1 transition-transform" onClick={() => openStudentProfile(student.id)}>
@@ -899,7 +901,7 @@ const handleChat = async () => {
         {isChatOpen && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="fixed bottom-24 right-6 w-95 h-125 bg-zinc-900 border border-white/10 rounded-3xl shadow-2xl flex flex-col z-100 overflow-hidden backdrop-blur-xl">
             <div className="p-4 bg-orange-600 flex justify-between items-center">
-              <div className="flex items-center gap-2 text-white"><Bot size={20} /><span className="font-black italic uppercase text-xs">Gemini Copilot</span></div>
+              <div className="flex items-center gap-2 text-white"><Bot size={20} /><span className="font-black italic uppercase text-xs">{t('personal.geminiCopilot')}</span></div>
               <button type="button" onClick={() => setIsChatOpen(false)} className="text-white/80 cursor-pointer"><X size={20} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -910,7 +912,7 @@ const handleChat = async () => {
               ))}
             </div>
             <div className="p-4 border-t border-white/5 flex gap-2">
-              <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleChat()} placeholder="Gere o treino do Carlos..." className="flex-1 bg-zinc-900 rounded-xl px-4 text-xs text-white outline-none" />
+              <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleChat()} placeholder={t('personal.chatPlaceholder')} className="flex-1 bg-zinc-900 rounded-xl px-4 text-xs text-white outline-none" />
               <button onClick={handleChat} disabled={loading} className="bg-orange-600 p-2.5 rounded-xl text-white cursor-pointer disabled:cursor-not-allowed"><Send size={18} /></button>
             </div>
           </motion.div>

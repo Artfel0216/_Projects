@@ -4,9 +4,11 @@ import { useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Lock, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { useTranslations } from '@/lib/i18n/hook';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const { t } = useTranslations();
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
 
@@ -21,12 +23,12 @@ export default function ResetPasswordPage() {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError('As senhas não coincidem.');
+      setError(t('resetPassword.passwordMismatch'));
       return;
     }
 
     if (password.length < 6) {
-      setError('Senha deve ter no mínimo 6 caracteres.');
+      setError(t('resetPassword.minLength'));
       return;
     }
 
@@ -41,13 +43,13 @@ export default function ResetPasswordPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError((data as { error?: string }).error || 'Erro ao redefinir senha.');
+        setError((data as { error?: string }).error || t('resetPassword.error'));
         return;
       }
 
       setSuccess(true);
     } catch {
-      setError('Falha de conexão.');
+      setError(t('resetPassword.connectionError'));
     } finally {
       setIsLoading(false);
     }
@@ -58,10 +60,10 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
         <div className="bg-zinc-900/50 backdrop-blur-2xl rounded-3xl p-8 max-w-md w-full border border-zinc-800 text-center">
           <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-black text-white mb-2">Link inválido</h1>
-          <p className="text-zinc-400 text-sm mb-6">Este link de redefinição é inválido ou expirou.</p>
+          <h1 className="text-2xl font-black text-white mb-2">{t('resetPassword.invalidLink')}</h1>
+          <p className="text-zinc-400 text-sm mb-6">{t('resetPassword.linkExpired')}</p>
           <button onClick={() => router.push('/login')} className="text-orange-500 font-bold underline hover:text-orange-400 cursor-pointer">
-            Voltar ao login
+            {t('resetPassword.backToLogin')}
           </button>
         </div>
       </div>
@@ -73,10 +75,10 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
         <div className="bg-zinc-900/50 backdrop-blur-2xl rounded-3xl p-8 max-w-md w-full border border-zinc-800 text-center">
           <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-black text-white mb-2">Senha redefinida!</h1>
-          <p className="text-zinc-400 text-sm mb-6">Sua senha foi alterada com sucesso.</p>
+          <h1 className="text-2xl font-black text-white mb-2">{t('resetPassword.successTitle')}</h1>
+          <p className="text-zinc-400 text-sm mb-6">{t('resetPassword.successMessage')}</p>
           <button onClick={() => router.push('/login')} className="bg-orange-600 hover:bg-orange-700 text-white font-black px-6 py-3 rounded-xl cursor-pointer transition-colors">
-            Fazer login
+            {t('resetPassword.doLogin')}
           </button>
         </div>
       </div>
@@ -89,12 +91,12 @@ export default function ResetPasswordPage() {
         <div className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Lock className="text-white w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-black text-white text-center mb-2">Redefinir senha</h1>
-        <p className="text-zinc-400 text-sm text-center mb-6">Digite sua nova senha.</p>
+        <h1 className="text-2xl font-black text-white text-center mb-2">{t('resetPassword.title')}</h1>
+        <p className="text-zinc-400 text-sm text-center mb-6">{t('resetPassword.instructions')}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-zinc-400 uppercase ml-1">Nova senha</label>
+            <label className="text-xs font-bold text-zinc-400 uppercase ml-1">{t('resetPassword.newPassword')}</label>
             <input
               type="password"
               value={password}
@@ -105,7 +107,7 @@ export default function ResetPasswordPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-zinc-400 uppercase ml-1">Confirmar senha</label>
+            <label className="text-xs font-bold text-zinc-400 uppercase ml-1">{t('resetPassword.confirmPassword')}</label>
             <input
               type="password"
               value={confirmPassword}
@@ -129,13 +131,13 @@ export default function ResetPasswordPage() {
             whileTap={{ scale: 0.99 }}
             className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-zinc-700 text-white font-black py-4 rounded-xl flex items-center justify-center cursor-pointer disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Redefinir senha'}
+            {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : t('resetPassword.title')}
           </motion.button>
         </form>
 
         <div className="mt-6 text-center">
           <button onClick={() => router.push('/login')} className="text-zinc-400 text-sm hover:text-white transition-colors cursor-pointer">
-            Voltar ao login
+            {t('resetPassword.backToLogin')}
           </button>
         </div>
       </motion.div>

@@ -1,0 +1,47 @@
+{
+  "app": {
+    "title": "WEGYM",
+    "description": "\u30b9\u30de\u30fc\u30c8\u30c8\u30ec\u30fc\u30cb\u30f3\u30b0\u30d7\u30e9\u30c3\u30c8\u30d5\u30a9\u30fc\u30e0 \u2014 \u30b8\u30e0\u3001\u6709\u9178\u7d20\u3001\u30d1\u30d5\u30a9\u30fc\u30de\u30f3\u30b9"
+  },
+  "common": {
+    "brandName": "WEGYM",
+    "loading": "\u8aad\u307f\u8fbc\u307f\u4e2d...",
+    "save": "\u4fdd\u5b58",
+    "edit": "\u7de8\u96c6",
+    "cancel": "\u30ad\u30e3\u30f3\u30bb\u30eb",
+    "select": "\u9078\u629e",
+    "athlete": "\u30a2\u30b9\u30ea\u30fc\u30c8",
+    "hourAbbr": "\u6642\u9593",
+    "minAbbr": "\u5206",
+    "kmUnit": " km",
+    "dash": " \u2014"
+  },
+  "sidebar": {
+    "home": "\u30db\u30fc\u30e0",
+    "modalities": "\u7a2e\u76ee",
+    "stats": "\u7d71\u8a08",
+    "pro": "Wegym Pro",
+    "profile": "\u30de\u30a4\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb",
+    "privacy": "\u30d7\u30e9\u30a4\u30d0\u30b7\u30fc",
+    "logout": "\u30ed\u30b0\u30a2\u30a6\u30c8",
+    "agenda": "\u30b9\u30b1\u30b8\u30e5\u30fc\u30eb",
+    "myStudents": "\u751f\u5f92",
+    "addStudent": "\u751f\u5f92\u8ffd\u52a0",
+    "openMenu": "\u30e1\u30cb\u30e5\u30fc\u3092\u958b\u304f",
+    "closeMenu": "\u30e1\u30cb\u30e5\u30fc\u3092\u9589\u3058\u308b"
+  },
+  "login": {
+    "title": "\u30ed\u30b0\u30a4\u30f3",
+    "subtitle": "\u4eca\u65e5\u306e\u30c8\u30ec\u30fc\u30cb\u30f3\u30b0\u306e\u6e96\u5099\u306f\u3067\u304d\u307e\u3057\u305f\u304b\uff1f",
+    "emailLabel": "\u30e1\u30fc\u30eb\u30a2\u30c9\u30ec\u30b9",
+    "passwordLabel": "\u30d1\u30b9\u30ef\u30fc\u30c9",
+    "signIn": "Wegym\u306b\u30ed\u30b0\u30a4\u30f3",
+    "noAccount": "\u30a2\u30ab\u30a6\u30f3\u30c8\u3092\u304a\u6301\u3061\u3067\u306a\u3044\u65b9"
+  },
+  "greeting": {
+    "morning": "\u304a\u306f\u3088\u3046\u3054\u3056\u3044\u307e\u3059",
+    "afternoon": "\u3053\u3093\u306b\u3061\u306f",
+    "evening": "\u3053\u3093\u3070\u3093\u306f",
+    "earlyMorning": "\u304a\u306f\u3088\u3046\u3054\u3056\u3044\u307e\u3059"
+  }
+}

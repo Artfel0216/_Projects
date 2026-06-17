@@ -9,9 +9,11 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { useTranslations } from '@/lib/i18n/hook';
 
 export default function StatsPage() {
   const router = useRouter();
+  const { t } = useTranslations();
   const [activeTab, setActiveTab] = useState('semana');
 
   useEffect(() => {
@@ -20,10 +22,10 @@ export default function StatsPage() {
   }, [router]);
 
   const stats = [
-    { label: 'Volume Total', value: '42.5t', icon: <Dumbbell size={18} />, color: 'text-orange-500' },
-    { label: 'Batimento Médio', value: '124 bpm', icon: <Heart size={18} />, color: 'text-rose-500' },
-    { label: 'Calorias', value: '12.400', icon: <Flame size={18} />, color: 'text-yellow-500' },
-    { label: 'Tempo Ativo', value: '18h 45m', icon: <Clock size={18} />, color: 'text-blue-500' },
+    { label: t('stats.totalVolume'), value: '42.5t', icon: <Dumbbell size={18} />, color: 'text-orange-500' },
+    { label: t('stats.avgHeartRate'), value: '124 bpm', icon: <Heart size={18} />, color: 'text-rose-500' },
+    { label: t('stats.calories'), value: '12.400', icon: <Flame size={18} />, color: 'text-yellow-500' },
+    { label: t('stats.activeTime'), value: '18h 45m', icon: <Clock size={18} />, color: 'text-blue-500' },
   ];
 
   return (
@@ -37,7 +39,7 @@ export default function StatsPage() {
         >
           <ChevronLeft size={20} />
         </button>
-        <h1 className="font-black italic uppercase tracking-tighter text-lg">Performance Hub</h1>
+        <h1 className="font-black italic uppercase tracking-tighter text-lg">{t('stats.title')}</h1>
         <div className="p-2 bg-orange-600/10 rounded-full text-orange-500">
           <TrendingUp size={20} />
         </div>
@@ -45,15 +47,15 @@ export default function StatsPage() {
 
       <main className="max-w-2xl mx-auto px-6 pt-8 space-y-8 relative z-10">
         <section className="flex bg-zinc-900/50 p-1 rounded-2xl border border-white/5">
-          {['Semana', 'Mês', 'Ano'].map((tab) => (
+          {[{label: t('stats.week'), key: 'semana'}, {label: t('stats.month'), key: 'mês'}, {label: t('stats.year'), key: 'ano'}].map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab.toLowerCase())}
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
               className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer ${
-                activeTab === tab.toLowerCase() ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-500'
+                activeTab === tab.key ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-500'
               }`}
             >
-              {tab}
+              {tab.label}
             </button>
           ))}
         </section>
@@ -79,7 +81,7 @@ export default function StatsPage() {
         <section className="bg-zinc-900/40 border border-white/5 rounded-[40px] p-8">
           <div className="flex justify-between items-end mb-8">
             <div>
-              <h3 className="font-black italic uppercase text-sm">Volume de Carga</h3>
+              <h3 className="font-black italic uppercase text-sm">{t('stats.loadVolume')}</h3>
             </div>
           </div>
           <div className="flex items-end justify-between h-40 gap-2">

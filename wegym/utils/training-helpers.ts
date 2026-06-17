@@ -49,14 +49,16 @@ interface Suggestion {
 
 export const getSuggestedTimeBlock = (
   km: number, 
-  modality: TrainingModalityId
+  modality: TrainingModalityId,
+  t: (key: string, fallback?: string) => string,
 ): Suggestion => {
+  const kmUnit = t('common.kmUnit');
   if (modality === 'running') {
     return {
       minTimeSec: Math.round(km * 4.5 * 60), 
       maxTimeSec: Math.round(km * 7.0 * 60), 
-      minHint: '~4:30 /km',
-      maxHint: '~7:00 /km'
+      minHint: `~4:30 /${kmUnit}`,
+      maxHint: `~7:00 /${kmUnit}`
     };
   }
 
@@ -66,7 +68,7 @@ export const getSuggestedTimeBlock = (
   return {
     minTimeSec: Math.round((km / SPEED_FAST) * 3600),
     maxTimeSec: Math.round((km / SPEED_SLOW) * 3600),
-    minHint: `~${SPEED_FAST} km/h`,
-    maxHint: `~${SPEED_SLOW} km/h`,
+    minHint: `~${SPEED_FAST} ${kmUnit}/h`,
+    maxHint: `~${SPEED_SLOW} ${kmUnit}/h`,
   };
 };

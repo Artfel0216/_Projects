@@ -1,0 +1,74 @@
+{
+  "app": {
+    "title": "WEGYM",
+    "description": "Ak\u0131ll\u0131 antrenman platformu \u2014 spor salonu, kardiyo ve performans"
+  },
+  "common": {
+    "brandName": "WEGYM",
+    "loading": "Y\u00fckleniyor...",
+    "save": "Kaydet",
+    "edit": "D\u00fczenle",
+    "cancel": "\u0130ptal",
+    "select": "Se\u00e7",
+    "athlete": "Sporcu",
+    "hourAbbr": "s",
+    "minAbbr": "dk",
+    "kmUnit": " km",
+    "dash": " \u2014"
+  },
+  "sidebar": {
+    "home": "Ana Sayfa",
+    "modalities": "Spor Dallar\u0131",
+    "stats": "\u0130statistikler",
+    "pro": "Wegym Pro",
+    "profile": "Profilim",
+    "privacy": "Gizlilik",
+    "logout": "\u00c7\u0131k\u0131\u015f Yap",
+    "agenda": "Takvim",
+    "myStudents": "\u00d6\u011frencilerim",
+    "addStudent": "\u00d6\u011frenci Ekle",
+    "openMenu": "Men\u00fcy\u00fc a\u00e7",
+    "closeMenu": "Men\u00fcy\u00fc kapat"
+  },
+  "login": {
+    "title": "G\u0130R\u0130\u015e YAP",
+    "subtitle": "Bug\u00fcnk\u00fc antrenmana haz\u0131r m\u0131s\u0131n?",
+    "emailLabel": "E-posta",
+    "passwordLabel": "\u015eifre",
+    "signIn": "Wegym\u2019e giri\u015f yap",
+    "noAccount": "Hesab\u0131n yok mu? "
+  },
+  "register": {
+    "title": "Kay\u0131t Ol",
+    "submit": "Kayd\u0131 Tamamla",
+    "alreadyMember": "Zaten \u00fcye misin? "
+  },
+  "greeting": {
+    "morning": "G\u00fcnayd\u0131n",
+    "afternoon": "T\u00fcnayd\u0131n",
+    "evening": "\u0130yi ak\u015famlar",
+    "earlyMorning": "G\u00fcnayd\u0131n"
+  },
+  "modality": {
+    "gym": "Spor Salonu",
+    "running": "Ko\u015fu",
+    "cycling": "Bisiklet",
+    "aerobic": "Kardiyo",
+    "combat": "D\u00f6v\u00fc\u015f",
+    "swimming": "Y\u00fczme",
+    "walking": "Y\u00fcr\u00fcy\u00fc\u015f",
+    "crossfit": "Cross Training",
+    "yoga": "Yoga & Pilates",
+    "hiking": "Do\u011fa Y\u00fcr\u00fcy\u00fc\u015f\u00fc",
+    "basketball": "Basketbol",
+    "soccer": "Futbol",
+    "tennis": "Tenis",
+    "climbing": "T\u0131rmanma",
+    "skate": "Kaykay",
+    "functional": "Fonksiyonel",
+    "hiit": "HIIT",
+    "dance": "Dans",
+    "rowing": "K\u00fcrek",
+    "other": "Di\u011fer"
+  }
+}

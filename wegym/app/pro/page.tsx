@@ -10,9 +10,11 @@ import {
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { useTranslations } from '@/lib/i18n/hook';
 
 export default function ProPage() {
   const router = useRouter();
+  const { t } = useTranslations();
   const [selectedPlan, setSelectedPlan] = useState('anual');
 
   useEffect(() => {
@@ -27,35 +29,35 @@ export default function ProPage() {
   const packages = [
     {
       id: 'personal',
-      title: 'Elite Coaching',
+      title: t('pro.packageElite'),
       icon: <MapPin className="text-orange-500" />,
       features: [
-        'Encontrar Personais por geolocalização',
-        'Agendar 1ª aula experimental grátis',
-        'Pagamento seguro via app (Escrow)',
-        'Consultoria por vídeo chamada'
+        t('pro.featureGeo'),
+        t('pro.featureTrial'),
+        t('pro.featurePayment'),
+        t('pro.featureVideo')
       ]
     },
     {
       id: 'recovery',
-      title: 'Performance & Recuperação',
+      title: t('pro.packageRecovery'),
       icon: <Activity className="text-emerald-500" />,
       features: [
-        'Foco em sono, descanso e gestão de carga',
-        'Mobilidade e prevenção de lesões',
-        'Acompanhe consistência e evolução no app',
-        'Conteúdo de preparação física e bem-estar'
+        t('pro.featureSleep'),
+        t('pro.featureMobility'),
+        t('pro.featureTracking'),
+        t('pro.featureWellness')
       ]
     },
     {
       id: 'wallet',
-      title: 'Wegym Pay & Perks',
+      title: t('pro.packageWallet'),
       icon: <Wallet className="text-blue-500" />,
       features: [
-        'Cashback em suplementos parceiros',
-        'Acesso a salas VIP em eventos',
-        'Gestão de mensalidades de personal',
-        'Seguro saúde esportivo incluso'
+        t('pro.featureCashback'),
+        t('pro.featureVIP'),
+        t('pro.featureFees'),
+        t('pro.featureInsurance')
       ]
     }
   ];
@@ -75,7 +77,7 @@ export default function ProPage() {
         </Link>
         <div className="flex items-center gap-2">
           <Crown size={18} className="text-orange-500 fill-orange-500" />
-          <span className="font-black italic uppercase tracking-tighter">Wegym Pro</span>
+          <span className="font-black italic uppercase tracking-tighter">{t('pro.title')}</span>
         </div>
         <div className="w-10 h-10" /> 
       </header>
@@ -89,13 +91,13 @@ export default function ProPage() {
             className="inline-flex items-center gap-2 bg-orange-600/10 border border-orange-500/20 px-4 py-1.5 rounded-full mb-6"
           >
             <Sparkles size={14} className="text-orange-500" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500">Upgrade de Atleta</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500">{t('pro.badge')}</span>
           </motion.div>
           <h1 className="text-5xl font-black italic uppercase tracking-tighter leading-none mb-4">
-            Alcance o <br /> <span className="text-orange-500">Próximo Nível</span>
+            {t('pro.heading1')} <br /> <span className="text-orange-500">{t('pro.heading2')}</span>
           </h1>
           <p className="text-zinc-500 text-sm font-medium max-w-70 mx-auto leading-relaxed">
-            Conecte-se com os melhores profissionais e gerencie sua rotina em um só lugar.
+            {t('pro.subtitle')}
           </p>
         </section>
 
@@ -136,22 +138,22 @@ export default function ProPage() {
               onClick={() => setSelectedPlan('mensal')}
               className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer ${selectedPlan === 'mensal' ? 'bg-zinc-800 text-white' : 'text-zinc-600'}`}
             >
-              Mensal
+              {t('pro.monthly')}
             </button>
             <button 
               onClick={() => setSelectedPlan('anual')}
               className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer ${selectedPlan === 'anual' ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-600'}`}
             >
-              Anual <span className="ml-1 opacity-70 text-[8px]">-40%</span>
+              {t('pro.yearly')} <span className="ml-1 opacity-70 text-[8px]">{t('pro.discountBadge')}</span>
             </button>
           </div>
 
           <div className="text-center relative z-10 mb-8">
             <div className="flex items-center justify-center gap-2">
               <span className="text-5xl font-black italic uppercase">
-                {selectedPlan === 'anual' ? 'R$ 29,90' : 'R$ 49,90'}
+                {selectedPlan === 'anual' ? t('pro.priceYearly') : t('pro.priceMonthly')}
               </span>
-              <span className="text-zinc-500 text-xs font-bold uppercase">/mês</span>
+              <span className="text-zinc-500 text-xs font-bold uppercase">{t('pro.perMonth')}</span>
             </div>
           </div>
 
@@ -161,7 +163,7 @@ export default function ProPage() {
             onClick={() => handleNavigation('/payment')}
             className="w-full bg-white text-black py-6 rounded-3xl font-black italic uppercase text-sm shadow-[0_20px_40px_rgba(255,255,255,0.1)] flex items-center justify-center gap-3 transition-colors hover:bg-zinc-100 cursor-pointer"
           >
-            Assinar Agora
+            {t('pro.subscribe')}
             <CreditCard size={18} className="fill-black/10" />
           </motion.button>
         </section>

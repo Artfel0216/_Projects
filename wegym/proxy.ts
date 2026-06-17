@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { match } from '@formatjs/intl-localematcher';
+import Negotiator from 'negotiator';
+import { locales, defaultLocale, COOKIE_NAME } from '@/lib/i18n/config';
 
 const PUBLIC_ROUTES = new Set(['/', '/login', '/register']);
 
@@ -22,7 +25,24 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Page authentication
+  // --- i18n: detect locale from cookie or Accept-Language ---
+  const cookieLocale = request.cookies.get(COOKIE_NAME)?.value;
+  let response: NextResponse | undefined;
+
+  if (!cookieLocale || !locales.includes(cookieLocale as typeof locales[number])) {
+    const acceptLanguage = request.headers.get('accept-language') || '';
+    const headers = { 'accept-language': acceptLanguage };
+    const languages = new Negotiator({ headers }).languages();
+    const detectedLocale = match(languages, [...locales], defaultLocale);
+    response = NextResponse.next();
+    response.cookies.set(COOKIE_NAME, detectedLocale, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    });
+  }
+
+  // --- Page authentication ---
   const hasSession = SESSION_COOKIES.some(name => request.cookies.has(name));
   const isPublic = PUBLIC_ROUTES.has(pathname);
 
@@ -36,7 +56,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  return NextResponse.next();
+  return response ?? NextResponse.next();
 }
 
 export const config = {

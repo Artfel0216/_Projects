@@ -69,9 +69,11 @@ export class BluetoothManager {
   private maxReconnectAttempts = 3;
   private onDisconnected: (() => void) | null = null;
   private onHRChange: ((event: Event) => void) | null = null;
+  private t: (key: string, fallback?: string) => string;
 
-  constructor(callbacks: BTEventCallback) {
+  constructor(callbacks: BTEventCallback, t: (key: string, fallback?: string) => string) {
     this.callbacks = callbacks;
+    this.t = t;
   }
 
   get state(): ConnectionState {
@@ -86,7 +88,7 @@ export class BluetoothManager {
   async scan(): Promise<void> {
     if (!isWebBluetoothSupported()) {
       this.setState("unsupported");
-      this.callbacks.onError("Bluetooth não suportado neste dispositivo.");
+      this.callbacks.onError(this.t('bluetooth.unsupported'));
       return;
     }
 
@@ -111,7 +113,7 @@ export class BluetoothManager {
       this.device.addEventListener("gattserverdisconnected", this.onDisconnected);
 
       this.callbacks.onDevice({
-        name: this.device.name || "Desconhecido",
+        name: this.device.name || this.t('bluetooth.unknownDevice'),
         id: this.device.id,
       });
 
@@ -122,7 +124,7 @@ export class BluetoothManager {
         return;
       }
       this.setState("disconnected");
-      this.callbacks.onError(err instanceof Error ? err.message : "Erro ao escanear");
+      this.callbacks.onError(err instanceof Error ? err.message : this.t('bluetooth.scanError'));
     }
   }
 
@@ -132,7 +134,7 @@ export class BluetoothManager {
 
     try {
       this.server = await this.device.gatt?.connect() ?? null;
-      if (!this.server) throw new Error("Falha ao conectar no GATT server");
+      if (!this.server) throw new Error(this.t('bluetooth.gattError'));
 
       const hrService = await this.server.getPrimaryService(HR_SERVICE);
       this.hrCharacteristic = await hrService.getCharacteristic(HR_MEASUREMENT);
@@ -152,7 +154,7 @@ export class BluetoothManager {
         const value = await this.batteryCharacteristic.readValue();
         this._battery = value.getUint8(0);
         this.callbacks.onDevice({
-          name: this.device.name || "Desconhecido",
+          name: this.device.name || this.t('bluetooth.unknownDevice'),
           id: this.device.id,
           battery: this._battery,
         });
@@ -163,7 +165,7 @@ export class BluetoothManager {
       this.setState("connected");
     } catch (err: unknown) {
       this.setState("disconnected");
-      this.callbacks.onError(err instanceof Error ? err.message : "Falha na conexão");
+      this.callbacks.onError(err instanceof Error ? err.message : this.t('bluetooth.connectionError'));
     }
   }
 
