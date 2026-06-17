@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PUBLIC_ROUTES = new Set(['/', '/LoginPage', '/RegisterPage']);
+const PUBLIC_ROUTES = new Set(['/', '/login', '/register']);
 
 const SESSION_COOKIES = [
   'next-auth.session-token',
@@ -27,7 +27,7 @@ export function proxy(request: NextRequest) {
   const isPublic = PUBLIC_ROUTES.has(pathname);
 
   if (!hasSession && !isPublic) {
-    const loginUrl = new URL('/LoginPage', request.url);
+    const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }

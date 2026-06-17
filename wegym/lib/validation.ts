@@ -14,6 +14,15 @@ export const nameSchema = z.string().min(2, 'Nome deve ter no mínimo 2 caracter
 
 export const ufSchema = z.string().length(2, 'UF deve ter 2 caracteres').toUpperCase();
 
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token obrigatório'),
+  password: passwordSchema,
+});
+
 export const registerSchema = z.object({
   email: emailSchema,
   password: passwordSchema,

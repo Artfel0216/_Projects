@@ -83,4 +83,17 @@ export function staleTime(route: string): number {
   return 0;
 }
 
+import { ratelimit } from './rate-limit';
+
+export async function withRateLimit(
+  request: Request,
+  key: string,
+): Promise<NextResponse | null> {
+  const { success } = await ratelimit.limit(key);
+  if (!success) {
+    return NextResponse.json({ error: 'Muitas requisições. Tente novamente em alguns segundos.' }, { status: 429 });
+  }
+  return null;
+}
+
 export { cache };

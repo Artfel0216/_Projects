@@ -1,0 +1,28 @@
+{
+  "version": "5.2",
+  "steps": [
+    {
+      "tag": "CreateMigration",
+      "tag": "AlterTable",
+      "table": "users",
+      "operations": [
+        {
+          "tag": "AddColumn",
+          "column": {
+            "name": "resetToken",
+            "type": "VarChar(255)",
+            "isNullable": true
+          }
+        },
+        {
+          "tag": "AddColumn",
+          "column": {
+            "name": "resetTokenExpires",
+            "type": "Timestamp",
+            "isNullable": true
+          }
+        }
+      ]
+    }
+  ]
+}

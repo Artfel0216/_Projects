@@ -1,0 +1,106 @@
+const CDN_BASE = 'https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0';
+
+const EXERCISE_MAP: Record<string, { dir: string; slug: string }> = {
+  'Supino Reto c/ Barra': { dir: 'pectorals', slug: 'barbell-bench-press' },
+  'Supino Inclinado Halter': { dir: 'pectorals', slug: 'dumbbell-incline-bench-press' },
+  'Crucifixo Máquina (Peck Deck)': { dir: 'pectorals', slug: 'lever-seated-fly' },
+  'Crossover Polia Alta': { dir: 'pectorals', slug: 'cable-upper-chest-crossovers' },
+  'Supino Reto c/ Halteres': { dir: 'pectorals', slug: 'dumbbell-bench-press' },
+  'Flexão de Braços': { dir: 'pectorals', slug: 'push-up' },
+  'Pull-over com Halter': { dir: 'pectorals', slug: 'dumbbell-around-pullover' },
+  'Supino Declinado c/ Barra': { dir: 'pectorals', slug: 'barbell-decline-bench-press' },
+  'Crucifixo Inclinado c/ Halteres': { dir: 'pectorals', slug: 'cable-incline-fly' },
+  'Chest Press Máquina': { dir: 'pectorals', slug: 'lever-chest-press' },
+  'Flexão Diamante': { dir: 'triceps', slug: 'diamond-push-up' },
+  'Crossover Polia Baixa': { dir: 'pectorals', slug: 'cable-low-fly' },
+  'Dips em Paralelas (Foco Peito)': { dir: 'pectorals', slug: 'chest-dip' },
+
+  'Puxada Frontal Aberta': { dir: 'lats', slug: 'cable-lat-pulldown-full-range-of-motion' },
+  'Remada Curvada Pronada': { dir: 'upper-back', slug: 'barbell-bent-over-row' },
+  'Barra Fixa (Pull-up)': { dir: 'lats', slug: 'pull-up' },
+  'Levantamento Terra': { dir: 'glutes', slug: 'barbell-deadlift' },
+  'Remada Unilateral (Serrote)': { dir: 'upper-back', slug: 'dumbbell-one-arm-bent-over-row' },
+  'Pull-Down na Polia': { dir: 'lats', slug: 'cable-straight-arm-pulldown' },
+  'Remada Cavalinho': { dir: 'upper-back', slug: 'lever-t-bar-row' },
+  'Puxada Triângulo': { dir: 'lats', slug: 'cable-lateral-pulldown-with-v-bar' },
+  'Remada Curvada Supinada': { dir: 'upper-back', slug: 'barbell-reverse-grip-bent-over-row' },
+  'Puxada Articulada Unilateral': { dir: 'lats', slug: 'cable-one-arm-pulldown' },
+  'Lombar no Banco Romano': { dir: 'spine', slug: 'hyperextension' },
+  'Barra Fixa Supinada (Chin-up)': { dir: 'lats', slug: 'chin-up' },
+  'Remada Pendlay': { dir: 'upper-back', slug: 'barbell-pendlay-row' },
+
+  'Desenvolvimento Militar': { dir: 'delts', slug: 'barbell-seated-overhead-press' },
+  'Elevação Lateral': { dir: 'delts', slug: 'dumbbell-lateral-raise' },
+  'Face Pull': { dir: 'delts', slug: 'cable-rear-delt-row-with-rope' },
+  'Desenvolvimento Arnold': { dir: 'delts', slug: 'dumbbell-arnold-press' },
+  'Elevação Lateral na Polia': { dir: 'delts', slug: 'cable-lateral-raise' },
+  'Crucifixo Inverso c/ Halteres': { dir: 'delts', slug: 'dumbbell-rear-fly' },
+  'Remada Alta c/ Barra': { dir: 'delts', slug: 'barbell-upright-row' },
+  'Elevação Frontal c/ Anilhas': { dir: 'delts', slug: 'barbell-front-raise' },
+  'Encolhimento c/ Halteres': { dir: 'traps', slug: 'dumbbell-shrug' },
+  'Elevação Lateral Inclinado (Banco 45)': { dir: 'delts', slug: 'dumbbell-incline-one-arm-lateral-raise' },
+  'Z-Press (Sentado no chão)': { dir: 'delts', slug: 'ez-barbell-anti-gravity-press' },
+
+  'Rosca Direta Barra W': { dir: 'biceps', slug: 'barbell-curl' },
+  'Rosca Martelo': { dir: 'biceps', slug: 'dumbbell-hammer-curl' },
+  'Rosca Inversa Polia': { dir: 'forearms', slug: 'cable-reverse-wrist-curl' },
+  'Rosca 45 (Banco Inclinado)': { dir: 'biceps', slug: 'dumbbell-incline-curl' },
+  'Rosca Concentrada': { dir: 'biceps', slug: 'dumbbell-concentration-curl' },
+  'Rosca 21': { dir: 'biceps', slug: 'barbell-curl' },
+  'Rosca Spider (Peito no banco)': { dir: 'biceps', slug: 'ez-barbell-spider-curl' },
+  'Rosca Zottman': { dir: 'biceps', slug: 'dumbbell-zottman-curl' },
+
+  'Tríceps Corda': { dir: 'triceps', slug: 'cable-pushdown-with-rope-attachment' },
+  'Tríceps Testa': { dir: 'triceps', slug: 'barbell-lying-triceps-extension-skull-crusher' },
+  'Tríceps Francês c/ Halter': { dir: 'triceps', slug: 'dumbbell-standing-triceps-extension' },
+  'Tríceps Pulley Barra Reta': { dir: 'triceps', slug: 'cable-pushdown' },
+  'Tríceps Coice na Polia': { dir: 'triceps', slug: 'cable-kickback' },
+  'Tríceps Supinado (Pegada Fechada)': { dir: 'triceps', slug: 'barbell-close-grip-bench-press' },
+  'Mergulho no Banco': { dir: 'triceps', slug: 'bench-dip' },
+
+  'Flexão de Punho c/ Barra': { dir: 'forearms', slug: 'barbell-palms-up-wrist-curl-over-a-bench' },
+  'Extensão de Punho c/ Barra': { dir: 'forearms', slug: 'barbell-reverse-wrist-curl' },
+
+  'Agachamento Livre': { dir: 'glutes', slug: 'barbell-full-squat' },
+  'Leg Press 45º': { dir: 'glutes', slug: 'sled-45-leg-press' },
+  'Cadeira Extensora': { dir: 'quads', slug: 'lever-leg-extension' },
+  'Mesa Flexora': { dir: 'hamstrings', slug: 'lever-lying-leg-curl' },
+  'Stiff': { dir: 'glutes', slug: 'barbell-stiff-leg-good-morning' },
+  'Agachamento Sumô': { dir: 'glutes', slug: 'barbell-sumo-deadlift' },
+  'Hack Squat': { dir: 'glutes', slug: 'barbell-hack-squat' },
+  'Agachamento Búlgaro': { dir: 'quads', slug: 'dumbbell-single-leg-split-squat' },
+  'Cadeira Flexora': { dir: 'hamstrings', slug: 'lever-seated-leg-curl' },
+  'Cadeira Adutora': { dir: 'adductors', slug: 'lever-seated-hip-adduction' },
+  'Cadeira Abdutora': { dir: 'abductors', slug: 'lever-seated-hip-abduction' },
+  'Passada / Afundo': { dir: 'glutes', slug: 'dumbbell-lunge' },
+
+  'Panturrilha em Pé (Máquina)': { dir: 'calves', slug: 'lever-standing-calf-raise' },
+  'Panturrilha Sentado (Cavalinho)': { dir: 'calves', slug: 'lever-seated-calf-raise' },
+  'Panturrilha no Leg Press': { dir: 'calves', slug: 'sled-calf-press-on-leg-press' },
+
+  'Elevação Pélvica': { dir: 'glutes', slug: 'barbell-glute-bridge' },
+  'Glúteo Coice no Cabo': { dir: 'glutes', slug: 'cable-standing-hip-extension' },
+  'Abdução de Quadril no Cabo': { dir: 'abductors', slug: 'lever-seated-hip-abduction' },
+  'Frog Pumps': { dir: 'glutes', slug: 'glute-bridge-march' },
+
+  'Prancha Abdominal': { dir: 'abs', slug: 'front-plank-with-twist' },
+  'Abdominal Infra': { dir: 'abs', slug: 'lying-leg-raise-flat-bench' },
+  'Abdominal Canivete': { dir: 'abs', slug: 'v-sit-on-floor' },
+  'Prancha Lateral': { dir: 'abs', slug: 'bodyweight-incline-side-plank' },
+  'Russian Twist': { dir: 'abs', slug: 'assisted-motion-russian-twist' },
+  'Abdominal Roda': { dir: 'abs', slug: 'wheel-rollerout' },
+  'Hanging Leg Raise (Na Barra)': { dir: 'abs', slug: 'hanging-leg-raise' },
+
+  'Burpees': { dir: 'cardio', slug: 'burpee' },
+  'Mountain Climbers': { dir: 'cardio', slug: 'mountain-climber' },
+  'Kettlebell Swing': { dir: 'glutes', slug: 'kettlebell-swing' },
+  'Thrusters (Halteres)': { dir: 'delts', slug: 'barbell-thruster' },
+  'Polichinelos': { dir: 'cardio', slug: 'star-jump-male' },
+  'Battle Rope (Corda Naval)': { dir: 'delts', slug: 'battling-ropes' },
+};
+
+export function getExerciseGifUrl(name: string): string | null {
+  const entry = EXERCISE_MAP[name];
+  if (!entry) return null;
+  return `${CDN_BASE}/${entry.dir}/${entry.slug}.gif`;
+}

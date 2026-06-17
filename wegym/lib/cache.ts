@@ -1,56 +1,33 @@
-import { Redis } from '@upstash/redis';
-
-const url = process.env.UPSTASH_REDIS_REST_URL;
-const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-const redis = url && token ? new Redis({ url, token }) : null;
-
-let warned = false;
-
 function prefix(key: string) {
   if (process.env.NODE_ENV === 'production') return `wegym:${key}`;
   return `wegym:dev:${key}`;
 }
 
+const store = new Map<string, { data: unknown; expiresAt: number }>();
+
 export const cache = {
   async get<T>(key: string): Promise<T | null> {
-    if (!redis) return null;
-    try {
-      return await redis.get<T>(prefix(key));
-    } catch (err) {
-      if (!warned) {
-        warned = true;
-        console.warn('[cache] Redis unreachable:', err instanceof Error ? err.message : err);
-      }
+    const entry = store.get(prefix(key));
+    if (!entry) return null;
+    if (Date.now() > entry.expiresAt) {
+      store.delete(prefix(key));
       return null;
     }
+    return entry.data as T;
   },
 
   async set(key: string, value: unknown, ttlSeconds = 60) {
-    if (!redis) return;
-    try {
-      await redis.set(prefix(key), value, { ex: ttlSeconds });
-    } catch {
-      // silent fail
-    }
+    store.set(prefix(key), { data: value, expiresAt: Date.now() + ttlSeconds * 1000 });
   },
 
   async del(key: string) {
-    if (!redis) return;
-    try {
-      await redis.del(prefix(key));
-    } catch {
-      // silent fail
-    }
+    store.delete(prefix(key));
   },
 
   async delPattern(pattern: string) {
-    if (!redis) return;
-    try {
-      const keys = await redis.keys(prefix(pattern));
-      if (keys.length > 0) await redis.del(...keys);
-    } catch {
-      // silent fail
+    const prefixKey = prefix(pattern);
+    for (const k of store.keys()) {
+      if (k.startsWith(prefixKey)) store.delete(k);
     }
   },
 

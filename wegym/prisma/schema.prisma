@@ -18,6 +18,9 @@ model User {
   privacyAcceptedAt DateTime?
   dataConsentAt     DateTime?
 
+  resetToken         String?  @unique @db.VarChar(255)
+  resetTokenExpires  DateTime?
+
   markedForDeletionAt DateTime?
   anonymizedAt        DateTime?
 

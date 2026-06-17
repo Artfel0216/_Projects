@@ -1,8 +1,8 @@
 import "./globals.css";
-import { SessionProviderWrapper } from "./components/providers/SessionProviderWrapper";
-import { AppShell } from "./components/ui/AppShell";
-import { PwaSync } from "./components/PwaSync";
-import { ConsentBanner } from "./components/lgpd/ConsentBanner";
+import { SessionProviderWrapper } from "@/components/providers/SessionProviderWrapper";
+import { AppShell } from "@/components/ui/AppShell";
+import { PwaSync } from "@/components/PwaSync";
+import { ConsentBanner } from "@/components/lgpd/ConsentBanner";
 
 export const metadata = {
   title: "WEGYM",

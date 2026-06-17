@@ -15,8 +15,6 @@
     "@mercadopago/sdk-react": "^1.0.7",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^6.19.3",
-    "@upstash/ratelimit": "^2.0.8",
-    "@upstash/redis": "^1.37.0",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.7.0",

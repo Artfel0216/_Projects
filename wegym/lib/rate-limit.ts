@@ -2,39 +2,20 @@
 // This file is kept as a shared import for per-route overrides if needed,
 // but all general API rate limiting is done at the proxy level.
 
-import { Redis } from "@upstash/redis";
-import { Ratelimit } from "@upstash/ratelimit";
-
-const url = process.env.UPSTASH_REDIS_REST_URL;
-const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-const redis = url && token ? new Redis({ url, token }) : null;
-
-const upstashLimiter = redis
-  ? new Ratelimit({
-      redis,
-      limiter: Ratelimit.slidingWindow(10, "10 s"),
-      analytics: true,
-    })
-  : null;
-
-let warnedUnreachable = false;
+const windows = new Map<string, number[]>();
+const WINDOW_MS = 10_000;
+const MAX_REQUESTS = 10;
 
 export const ratelimit = {
   async limit(identifier: string): Promise<{ success: boolean }> {
-    if (!upstashLimiter) return { success: true };
-    try {
-      const res = await upstashLimiter.limit(identifier);
-      return { success: res.success };
-    } catch (err) {
-      if (!warnedUnreachable) {
-        warnedUnreachable = true;
-        console.warn(
-          "[rate-limit] Upstash unreachable, allowing requests through:",
-          err instanceof Error ? err.message : err,
-        );
-      }
-      return { success: true };
+    const now = Date.now();
+    const timestamps = windows.get(identifier) ?? [];
+    const withinWindow = timestamps.filter((t) => now - t < WINDOW_MS);
+    if (withinWindow.length >= MAX_REQUESTS) {
+      return { success: false };
     }
+    withinWindow.push(now);
+    windows.set(identifier, withinWindow);
+    return { success: true };
   },
 };
