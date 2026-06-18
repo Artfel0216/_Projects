@@ -1,0 +1,16 @@
+node_modules
+.git
+.gitignore
+.env
+.env.example
+exemplo.env
+.next
+__tests__
+README.md
+AGENTS.md
+CLAUDE.md
+.eslint*
+.vscode
+.idea
+*.md
+coverage

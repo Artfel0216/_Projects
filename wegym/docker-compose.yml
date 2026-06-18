@@ -8,7 +8,33 @@ services:
       - wegym_data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: A12345fe
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-A12345fe}
       POSTGRES_DB: wegym
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:-A12345fe}@db:5432/wegym?schema=public"
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN}
+      NEXT_PUBLIC_MP_PUBLIC_KEY: ${NEXT_PUBLIC_MP_PUBLIC_KEY}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
 volumes:
   wegym_data:
