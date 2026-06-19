@@ -14,3 +14,7 @@ CLAUDE.md
 .idea
 *.md
 coverage
+secrets
+scripts
+nginx
+*.local

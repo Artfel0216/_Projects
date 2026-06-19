@@ -1,33 +1,97 @@
+type StoreEntry = { data: unknown; expiresAt: number };
+
+const redisUrl = () => process.env.REDIS_URL;
+
 function prefix(key: string) {
   if (process.env.NODE_ENV === 'production') return `wegym:${key}`;
   return `wegym:dev:${key}`;
 }
 
-const store = new Map<string, { data: unknown; expiresAt: number }>();
+let redisClient: Awaited<ReturnType<typeof createRedisClient>> | null = null;
+
+async function createRedisClient() {
+  const { createClient } = await import('redis');
+  const client = createClient({ url: redisUrl() });
+  client.on('error', () => { redisClient = null; });
+  await client.connect();
+  return client;
+}
+
+async function getRedis() {
+  if (!redisUrl()) return null;
+  if (redisClient?.isOpen) return redisClient;
+  try {
+    redisClient = await createRedisClient();
+    return redisClient;
+  } catch {
+    redisClient = null;
+    return null;
+  }
+}
+
+const memStore = new Map<string, StoreEntry>();
 
 export const cache = {
   async get<T>(key: string): Promise<T | null> {
-    const entry = store.get(prefix(key));
+    const redis = await getRedis();
+    if (redis) {
+      const raw = await redis.get(prefix(key));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as StoreEntry;
+      if (Date.now() > parsed.expiresAt) {
+        await redis.del(prefix(key));
+        return null;
+      }
+      return parsed.data as T;
+    }
+
+    const entry = memStore.get(prefix(key));
     if (!entry) return null;
     if (Date.now() > entry.expiresAt) {
-      store.delete(prefix(key));
+      memStore.delete(prefix(key));
       return null;
     }
     return entry.data as T;
   },
 
   async set(key: string, value: unknown, ttlSeconds = 60) {
-    store.set(prefix(key), { data: value, expiresAt: Date.now() + ttlSeconds * 1000 });
+    const prefixed = prefix(key);
+    const expiresAt = Date.now() + ttlSeconds * 1000;
+    const entry = { data: value, expiresAt };
+
+    const redis = await getRedis();
+    if (redis) {
+      await redis.set(prefixed, JSON.stringify(entry), { PX: ttlSeconds * 1000 });
+      return;
+    }
+
+    memStore.set(prefixed, entry);
   },
 
   async del(key: string) {
-    store.delete(prefix(key));
+    const prefixed = prefix(key);
+
+    const redis = await getRedis();
+    if (redis) {
+      await redis.del(prefixed);
+      return;
+    }
+
+    memStore.delete(prefixed);
   },
 
   async delPattern(pattern: string) {
-    const prefixKey = prefix(pattern);
-    for (const k of store.keys()) {
-      if (k.startsWith(prefixKey)) store.delete(k);
+    const prefixed = prefix(pattern);
+
+    const redis = await getRedis();
+    if (redis) {
+      const keys = await redis.keys(`${prefixed}*`);
+      if (keys.length > 0) await redis.del(keys);
+      return;
+    }
+
+    for (const k of memStore.keys()) {
+      if (k.startsWith(prefixed)) memStore.delete(k);
     }
   },
 

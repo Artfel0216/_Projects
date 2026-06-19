@@ -1,0 +1,106 @@
+services:
+  app:
+    image: ghcr.io/artfel0216/wegym:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://wegym.app}
+      NODE_ENV: production
+    secrets:
+      - db_password
+      - nextauth_secret
+      - gemini_api_key
+      - mp_access_token
+      - resend_api_key
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1'
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  db:
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - wegym_data:/var/lib/postgresql/data
+      - wegym_backups:/backups
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: wegym
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1'
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - wegym_ssl:/etc/nginx/ssl:ro
+    depends_on:
+      app:
+        condition: service_started
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.5'
+
+  backup:
+    image: postgres:16-alpine
+    volumes:
+      - wegym_backups:/backups
+    secrets:
+      - db_password
+    environment:
+      BACKUP_DIR: /backups
+      RETENTION_DAYS: 7
+      DB_HOST: db
+      DB_USER: postgres
+      DB_NAME: wegym
+      DB_PASSWORD_FILE: /run/secrets/db_password
+    entrypoint: |
+      sh -c '
+      while true; do
+        PGPASSWORD="$$(cat $$DB_PASSWORD_FILE)" pg_dump -h $$DB_HOST -U $$DB_USER $$DB_NAME | gzip > /backups/wegym_$$(date +%Y%m%d_%H%M%S).sql.gz
+        find /backups -name "wegym_*.sql.gz" -type f -mtime +$${RETENTION_DAYS:-7} -delete
+        sleep 86400
+      done
+      '
+    restart: on-failure
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  nextauth_secret:
+    file: ./secrets/nextauth_secret.txt
+  gemini_api_key:
+    file: ./secrets/gemini_api_key.txt
+  mp_access_token:
+    file: ./secrets/mp_access_token.txt
+  resend_api_key:
+    file: ./secrets/resend_api_key.txt
+
+volumes:
+  wegym_backups:
+  wegym_ssl:
